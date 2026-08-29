@@ -1,0 +1,7 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/landing" },
+    { "path": "./apps/pos-system" }
+  ]
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Crave</string>
+    <string name="title_activity_main">Crave</string>
+    <string name="package_name">com.example.simplepoint</string>
+    <string name="custom_url_scheme">com.example.simplepoint</string>
+</resources>

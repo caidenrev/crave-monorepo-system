@@ -1,0 +1,8 @@
+android/
+node_modules/
+.output/
+.wrangler/
+.github/
+dist/
+build/
+routeTree.gen.ts
