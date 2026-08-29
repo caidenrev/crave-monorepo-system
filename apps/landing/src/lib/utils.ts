@@ -5,5 +5,5 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const POS_URL = "/pos";
+export const POS_URL = "/pos-system";
 

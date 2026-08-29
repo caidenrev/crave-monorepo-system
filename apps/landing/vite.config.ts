@@ -57,7 +57,7 @@ export default defineConfig(({ command }) => {
       host: "::",
       port: 8080,
       proxy: {
-        "/pos": {
+        "/pos-system": {
           target: "http://localhost:8081",
           changeOrigin: true,
         },
