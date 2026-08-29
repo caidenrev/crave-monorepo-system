@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/pos/:path*",
+      "destination": "https://crave-pos-system.vercel.app/pos/:path*"
+    }
+  ]
+}

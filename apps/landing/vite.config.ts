@@ -56,6 +56,12 @@ export default defineConfig(({ command }) => {
     server: {
       host: "::",
       port: 8080,
+      proxy: {
+        "/pos": {
+          target: "http://localhost:8081",
+          changeOrigin: true,
+        },
+      },
     },
     plugins,
   };
