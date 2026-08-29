@@ -6,7 +6,10 @@ import { Loader2 } from "lucide-react";
 export function AuthWrapper({ children }: { children: React.ReactNode }) {
   const { session, loading, isUnlocked } = useAuth();
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const rawPathname = useRouterState({ select: (s) => s.location.pathname });
+  const pathname = rawPathname.startsWith("/pos-system")
+    ? rawPathname.replace("/pos-system", "") || "/"
+    : rawPathname;
 
   useEffect(() => {
     if (!loading) {
