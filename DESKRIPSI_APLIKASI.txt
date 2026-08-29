@@ -1,0 +1,35 @@
+DESKRIPSI APLIKASI: SIMPLE-POINT (CRAVE POS SYSTEM)
+==================================================
+
+1. LATAR BELAKANG & PERMASALAHAN UMKM
+Banyak pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) serta bisnis skala kecil di Indonesia masih mengandalkan pencatatan transaksi, manajemen stok, dan pembukuan utang-piutang secara manual menggunakan kertas. Metode konvensional ini memiliki risiko tinggi seperti:
+- Kesalahan pencatatan (human error) yang menyebabkan kerugian finansial.
+- Sulitnya memantau arus keluar-masuk stok barang secara real-time (risiko kehilangan atau kebocoran inventaris).
+- Pencatatan utang-piutang pelanggan/pemasok yang tidak tertata, sering lupa ditagih, atau hilang catatannya.
+- Keterbatasan akses terhadap laporan keuangan yang instan untuk menganalisis kesehatan bisnis.
+- Biaya perangkat lunak kasir (POS) komersial yang terlalu mahal dan antarmuka yang terlalu rumit bagi pemilik usaha kecil.
+
+2. SOLUSI: SIMPLE-POINT (CRAVE POS)
+Simple-Point adalah aplikasi Point of Sale (POS) & Manajemen Finansial digital yang dirancang khusus untuk kebutuhan UMKM dan bisnis skala kecil. Aplikasi ini mengedepankan kesederhanaan penggunaan (user-friendly), performa yang cepat, serta fitur pelacakan keuangan yang komprehensif tanpa memerlukan biaya langganan yang memberatkan.
+
+Aplikasi ini mendigitalisasi seluruh rantai transaksi harian, pengelolaan gudang, hingga pembukuan utang-piutang dalam satu platform yang terintegrasi.
+
+3. FITUR-FITUR UTAMA APLIKASI
+- **Dashboard Bisnis Terintegrasi**: Menyajikan ringkasan penjualan harian, grafik performa, status stok kritis, dan total utang-piutang aktif secara visual dan mudah dipahami.
+- **Transaksi Penjualan Harian (POS)**: Sistem kasir digital cepat untuk mencatat setiap penjualan produk, lengkap dengan kalkulasi otomatis dan integrasi database produk.
+- **Manajemen Stok & Kartu Stok**: Pelacakan inventaris secara mendetail. Fitur "Kartu Stok" mendokumentasikan riwayat keluar-masuk setiap produk secara kronologis guna meminimalkan manipulasi atau kehilangan barang.
+- **Modul Utang & Piutang**: Pencatatan utang kepada pemasok (supplier) dan piutang dari pelanggan secara rapi, dilengkapi dengan jatuh tempo untuk menjaga kelancaran arus kas (cash flow).
+- **Manajemen Karyawan & Akses PIN**: Keamanan operasional dengan membatasi akses fitur sensitif menggunakan kode PIN personal untuk setiap karyawan/kasir.
+- **Integrasi Dokumen & Spreadsheet**: Fitur tampilan dan ekspor laporan dalam format lembar kerja spreadsheet untuk analisis finansial tingkat lanjut secara fleksibel.
+- **Laporan Keuangan Otomatis**: Menghasilkan laporan laba rugi, penjualan terlaris, dan mutasi kas secara instan tanpa perlu keahlian akuntansi khusus.
+
+4. DAMPAK BAGI UMKM & BISNIS KECIL
+- **Efisiensi Waktu & Operasional**: Menghemat waktu operasional hingga 70% dibandingkan pencatatan manual. Proses transaksi kasir menjadi jauh lebih cepat dan akurat.
+- **Mencegah Kerugian Finansial**: Fitur pencatatan utang-piutang yang rapi memastikan tidak ada tagihan yang terlewat, yang sering kali menjadi penyebab utama kebangkrutan bisnis kecil.
+- **Optimasi Stok Barang (Inventory Control)**: Menghindari penumpukan modal pada barang mati (slow-moving) dan mencegah kekosongan barang terlaris (fast-moving) dengan notifikasi stok minimum.
+- **Analisis Data untuk Keputusan Bisnis**: Membantu pemilik UMKM mengetahui produk apa yang paling menguntungkan dan kapan waktu puncak transaksi berdasarkan laporan historis yang akurat.
+
+5. DAMPAK SOSIAL BAGI MASYARAKAT
+- **Meningkatkan Literasi Keuangan Digital**: Membantu mengedukasi masyarakat pelaku usaha akar rumput agar terbiasa mengelola keuangan bisnis secara modern, profesional, dan akuntabel.
+- **Pemberdayaan Ekonomi Lokal**: Membantu keberlanjutan usaha kecil yang menjadi tulang punggung perekonomian masyarakat sekitar, menjaga ketersediaan lapangan kerja lokal.
+- **Transparansi Operasional**: Meminimalkan potensi kecurangan internal dan eksternal, sehingga menciptakan budaya bisnis lokal yang sehat, jujur, dan berlandaskan data.
