@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/pos-system/assets/:path*",
+      "destination": "/assets/:path*"
+    },
+    {
+      "source": "/pos-system/light-mode-logo.png",
+      "destination": "/light-mode-logo.png"
+    },
+    {
+      "source": "/pos-system/dark-mode-logo.png",
+      "destination": "/dark-mode-logo.png"
+    }
+  ]
+}
