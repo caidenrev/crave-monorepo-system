@@ -55,27 +55,6 @@ export function useNotifications() {
         });
       }
 
-      const { data: debts } = await supabase.from("debts").select("*").eq("type", "utang");
-
-      if (debts) {
-        debts.forEach((d) => {
-          if (d.paid < d.amount && d.due_date) {
-            const dueDate = parseISO(d.due_date);
-            if (isToday(dueDate) || isPast(dueDate)) {
-              notifs.push({
-                id: `debt-${d.id}`,
-                type: "utang",
-                title:
-                  isPast(dueDate) && !isToday(dueDate) ? "Utang Terlambat" : "Utang Jatuh Tempo",
-                description: `Tagihan ${d.customer} jatuh tempo ${isToday(dueDate) ? "hari ini" : "sudah lewat"} (Rp${(d.amount - d.paid).toLocaleString("id-ID")}).`,
-                time: d.due_date,
-                timestamp: new Date(d.due_date).getTime(),
-              });
-            }
-          }
-        });
-      }
-
       notifs.sort((a, b) => b.timestamp - a.timestamp);
 
       return notifs;

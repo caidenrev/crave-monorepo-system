@@ -30,6 +30,7 @@ interface NavItemsProps {
   }[];
   className?: string;
   onItemClick?: () => void;
+  isScrolled?: boolean;
 }
 
 interface MobileNavProps {
@@ -113,7 +114,7 @@ export const NavBody = ({ children, className, visible }: NavBodyProps) => {
   );
 };
 
-export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
+export const NavItems = ({ items, className, onItemClick, isScrolled }: NavItemsProps) => {
   const [hovered, setHovered] = useState<number | null>(null);
 
   
@@ -149,7 +150,12 @@ export const NavItems = ({ items, className, onItemClick }: NavItemsProps) => {
                 className="absolute inset-0 h-full w-full rounded-full bg-white/20 dark:bg-neutral-800 -z-10"
               />
             )}
-            <span className="relative z-20">{item.name}</span>
+            <span className="relative z-20 flex items-start">
+              <span className="font-black uppercase tracking-tight">{item.name}</span>
+              <span className={cn("text-[10px] font-bold ml-0.5 mt-0.5", isScrolled ? "text-[#1B5CFE]" : "text-white/60")}>
+                {String(idx + 1).padStart(2, "0")}
+              </span>
+            </span>
           </a>
         ))}
       </LayoutGroup>

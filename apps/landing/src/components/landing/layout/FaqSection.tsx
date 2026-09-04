@@ -10,20 +10,20 @@ import type { FaqItem } from "@/types/landingtypes";
 
 const FAQS: FaqItem[] = [
   {
-    q: "Can I import my existing policies?",
-    a: "Yes. Upload a spreadsheet or connect your current system and Crave maps every policy, document, and renewal date automatically.",
+    q: "Apakah saya bisa memasukkan data barang lama saya?",
+    a: "Tentu saja. Kamu bisa langsung mengimpor data barang dan laporan sebelumnya menggunakan fitur Spreadsheet kami melalui file Excel/CSV.",
   },
   {
-    q: "How do renewal reminders work?",
-    a: "Every policy gets an automated timeline. You and your client are notified before expiry, and the task lands in the right agent's queue.",
+    q: "Apakah ada batasan pengguna atau karyawan?",
+    a: "Crave sepenuhnya gratis tanpa batasan jumlah pengguna, barang, maupun transaksi.",
   },
   {
-    q: "Is my client data secure?",
-    a: "All documents are encrypted at rest and in transit, with role-based access and a full audit trail on every file action.",
+    q: "Apakah data toko saya aman?",
+    a: "Data kamu tersimpan aman di cloud dengan sistem keamanan modern. Ditambah lagi, kamu bisa membatasi akses karyawan ke menu tertentu menggunakan fitur keamanan PIN.",
   },
   {
-    q: "Can I invite my whole team?",
-    a: "Business and Enterprise plans include unlimited seats, shared workspaces, and per-agent performance reporting.",
+    q: "Apakah bisa digunakan tanpa internet?",
+    a: "Saat ini Crave membutuhkan koneksi internet agar data penjualan, stok, dan pengeluaran bisa selalu sinkron dan terpantau secara realtime dari mana saja.",
   },
 ];
 
@@ -39,8 +39,13 @@ export function FaqSection() {
           <div className="flex flex-col w-full max-w-xl mx-auto lg:mx-0">
             {}
             <div className="mb-8">
+              <div className="flex justify-start mb-4">
+                <span className="rounded-full border border-foreground/15 bg-white px-4 py-1.5 text-xs font-medium text-[#1B5CFE] shadow-sm">
+                  FAQ
+                </span>
+              </div>
               <h2 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-                Frequently Asked Questions
+                Pertanyaan yang Sering Diajukan
               </h2>
               <div className="w-16 h-1 mt-4 bg-blue-500 rounded-full"></div>
             </div>

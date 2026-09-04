@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabase";
 import type { Product } from "./pos-data";
@@ -6,10 +7,11 @@ export type SupabaseProduct = {
   id: string;
   name: string;
   sku: string;
-  category: "Minuman" | "Makanan" | "Snack" | "Lainnya";
+  category: string;
   price: number;
   stock: number;
   min_stock: number;
+  supplier_id?: string | null;
 };
 
 const mapProduct = (p: SupabaseProduct): Product => ({
@@ -48,6 +50,7 @@ export function useProducts() {
             price: newProduct.price,
             stock: newProduct.stock,
             min_stock: newProduct.min_stock,
+            supplier_id: newProduct.supplier_id || null,
           },
         ])
         .select()
@@ -91,6 +94,7 @@ export function useProducts() {
           price: product.price,
           stock: product.stock,
           min_stock: product.min_stock,
+          supplier_id: product.supplier_id || null,
         })
         .eq("id", product.id)
         .select()
@@ -117,6 +121,26 @@ export function useProducts() {
       queryClient.invalidateQueries({ queryKey: ["reports"] });
     },
   });
+
+  useEffect(() => {
+    const channelId = `realtime_products_${Math.random()}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "products" },
+        (payload) => {
+          console.log("Realtime products update:", payload);
+          queryClient.invalidateQueries({ queryKey: ["products"] });
+          queryClient.invalidateQueries({ queryKey: ["reports"] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return { ...query, addProductMutation, updateProductMutation };
 }

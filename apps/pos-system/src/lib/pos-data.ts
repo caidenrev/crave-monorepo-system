@@ -2,10 +2,11 @@ export type Product = {
   id: string;
   name: string;
   sku: string;
-  category: "Minuman" | "Makanan" | "Snack" | "Lainnya";
+  category: string;
   price: number;
   stock: number;
   minStock: number;
+  supplier_id?: string | null;
 };
 
 export type CartLine = { product: Product; qty: number };
@@ -121,7 +122,7 @@ export const products: Product[] = [
   },
 ];
 
-export const categories = ["Semua", "Minuman", "Makanan", "Snack", "Lainnya"] as const;
+export const categories = ["Semua"] as const;
 
 export type Debt = {
   id: string;

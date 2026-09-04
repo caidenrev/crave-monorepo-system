@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AlertTriangle, PackagePlus, ScanLine, Search, Loader2 } from "lucide-react";
+import { AlertTriangle, PackagePlus, ScanLine, Search, Loader2, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import { rupiah } from "@/lib/pos-data";
 import { useProducts, SupabaseProduct } from "@/lib/useProducts";
+import { useSuppliers } from "@/lib/useSuppliers";
+import { useCategories } from "@/lib/useCategories";
 
 export const Route = createFileRoute("/stok")({
   head: () => ({
@@ -54,6 +56,9 @@ function StokPage() {
     addProductMutation,
     updateProductMutation,
   } = useProducts();
+  const { data: suppliers = [] } = useSuppliers();
+  const { data: categories = [] } = useCategories();
+  const productCats = categories.filter((c) => c.type === "product" || c.type === "all");
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newProduct, setNewProduct] = useState<Omit<SupabaseProduct, "id">>({
@@ -63,6 +68,7 @@ function StokPage() {
     price: 0,
     stock: 0,
     min_stock: 10,
+    supplier_id: null,
   });
 
   const [editProduct, setEditProduct] = useState<SupabaseProduct | null>(null);
@@ -88,6 +94,7 @@ function StokPage() {
           price: 0,
           stock: 0,
           min_stock: 10,
+          supplier_id: null,
         });
       },
       onError: (err) => {
@@ -155,7 +162,18 @@ function StokPage() {
       title="Stok Barang"
       subtitle={`${products.length} produk aktif · ${lowCount} perlu restok`}
       actions={
-        <Button className="rounded-xl" onClick={() => setIsAddOpen(true)}>
+        <Button className="rounded-xl" onClick={() => {
+          setNewProduct({
+            name: "",
+            sku: Math.floor(10000000 + Math.random() * 90000000).toString(),
+            category: "Makanan",
+            price: 0,
+            stock: 0,
+            min_stock: 10,
+            supplier_id: null,
+          });
+          setIsAddOpen(true);
+        }}>
           <PackagePlus className="size-4" /> <span className="hidden sm:inline">Produk baru</span>
         </Button>
       }
@@ -241,36 +259,49 @@ function StokPage() {
                   </div>
                   <Progress value={pct} className="mt-3 h-2 rounded-full" />
                   <div className="mt-3 flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 rounded-xl"
-                      onClick={() =>
-                        setAddStockProduct({
-                          id: p.id,
-                          name: p.name,
-                          sku: p.sku,
-                          category: p.category,
-                          price: p.price,
-                          stock: p.stock,
-                          min_stock: p.minStock,
-                        })
-                      }
-                    >
-                      Tambah stok
-                    </Button>
+                    {low ? (
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 text-white shadow-soft"
+                        onClick={() => {
+                          if (!p.supplier_id) {
+                            toast.error("Supplier belum di-set!", {
+                              description: "Silakan edit produk ini untuk memilih supplier terlebih dahulu.",
+                            });
+                            return;
+                          }
+                          const supplier = suppliers.find((s) => s.id === p.supplier_id);
+                          if (!supplier) return;
+                          
+                          const text = `Halo ${supplier.name}, saya mau pesan ulang stok produk: *${p.name}* (SKU: ${p.sku}) sebanyak 10 pcs ya. Terima kasih!`;
+                          window.open(`https://wa.me/${supplier.phone}?text=${encodeURIComponent(text)}`, "_blank");
+                        }}
+                      >
+                        <MessageCircle className="size-3.5 mr-1.5" /> Order via WA
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 rounded-xl"
+                        onClick={() =>
+                          setAddStockProduct({
+                            ...p,
+                            min_stock: p.minStock,
+                          })
+                        }
+                      >
+                        Tambah stok
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
                       className="rounded-xl border-primary/20 bg-primary/5 text-primary hover:bg-primary/15"
                       onClick={() =>
                         setEditProduct({
-                          id: p.id,
-                          name: p.name,
-                          sku: p.sku,
-                          category: p.category,
-                          price: p.price,
-                          stock: p.stock,
+                          ...p,
                           min_stock: p.minStock,
                         })
                       }
@@ -307,13 +338,23 @@ function StokPage() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold">SKU / Barcode</label>
-                <Input
-                  className="rounded-xl"
-                  placeholder="899123456"
-                  value={newProduct.sku}
-                  onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
-                  required
-                />
+                <div className="flex gap-2">
+                  <Input
+                    className="rounded-xl flex-1"
+                    placeholder="899123456"
+                    value={newProduct.sku}
+                    onChange={(e) => setNewProduct({ ...newProduct, sku: e.target.value })}
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="rounded-xl shrink-0 font-semibold"
+                    onClick={() => setNewProduct({ ...newProduct, sku: Math.floor(10000000 + Math.random() * 90000000).toString() })}
+                  >
+                    Random
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -333,16 +374,17 @@ function StokPage() {
                   <label className="text-sm font-semibold">Kategori</label>
                   <Select
                     value={newProduct.category}
-                    onValueChange={(val: any) => setNewProduct({ ...newProduct, category: val })}
+                    onValueChange={(val: any) => {
+                      setNewProduct({ ...newProduct, category: val });
+                    }}
                   >
                     <SelectTrigger className="rounded-xl">
-                      <SelectValue placeholder="Pilih" />
+                      <SelectValue placeholder="Pilih Kategori" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      <SelectItem value="Minuman">Minuman</SelectItem>
-                      <SelectItem value="Makanan">Makanan</SelectItem>
-                      <SelectItem value="Snack">Snack</SelectItem>
-                      <SelectItem value="Lainnya">Lainnya</SelectItem>
+                      {productCats.map((c) => (
+                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -372,6 +414,23 @@ function StokPage() {
                     }
                   />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold">Supplier (Pemasok)</label>
+                <Select
+                  value={newProduct.supplier_id || "none"}
+                  onValueChange={(val: any) => setNewProduct({ ...newProduct, supplier_id: val === "none" ? null : val })}
+                >
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Pilih Supplier" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-xl">
+                    <SelectItem value="none">Tanpa Supplier</SelectItem>
+                    {suppliers.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name} ({s.category})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
@@ -436,18 +495,17 @@ function StokPage() {
                     <label className="text-sm font-semibold">Kategori</label>
                     <Select
                       value={editProduct.category}
-                      onValueChange={(val: any) =>
+                      onValueChange={(val: any) => {
                         setEditProduct({ ...editProduct, category: val })
-                      }
+                      }}
                     >
                       <SelectTrigger className="rounded-xl">
-                        <SelectValue placeholder="Pilih" />
+                        <SelectValue placeholder="Pilih Kategori" />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl">
-                        <SelectItem value="Minuman">Minuman</SelectItem>
-                        <SelectItem value="Makanan">Makanan</SelectItem>
-                        <SelectItem value="Snack">Snack</SelectItem>
-                        <SelectItem value="Lainnya">Lainnya</SelectItem>
+                        {productCats.map((c) => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -477,6 +535,25 @@ function StokPage() {
                       }
                     />
                   </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold">Supplier (Pemasok)</label>
+                  <Select
+                    value={editProduct.supplier_id || "none"}
+                    onValueChange={(val: any) =>
+                      setEditProduct({ ...editProduct, supplier_id: val === "none" ? null : val })
+                    }
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue placeholder="Pilih Supplier" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      <SelectItem value="none">Tanpa Supplier</SelectItem>
+                      {suppliers.map(s => (
+                        <SelectItem key={s.id} value={s.id}>{s.name} ({s.category})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             )}

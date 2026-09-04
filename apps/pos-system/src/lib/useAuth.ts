@@ -30,6 +30,8 @@ export function useAuth() {
   const signOut = async () => {
     await supabase.auth.signOut();
     localStorage.removeItem("app_unlocked");
+    // Reload the page to clear all memory state and cache
+    window.location.reload();
   };
 
   const lockApp = () => {

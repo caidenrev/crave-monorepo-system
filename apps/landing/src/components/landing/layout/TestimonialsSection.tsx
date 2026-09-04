@@ -6,27 +6,27 @@ const TESTIMONIAL_DATA: TestimonialData[] = [
   {
     id: 1,
     name: "Mark Lee",
-    role: "Illustrator",
+    role: "Pemilik Kedai Kopi",
     quote:
-      "I couldn't have asked for more than this. Course is worth much more than I paid. Your company is truly upstanding and is behind its product 100%.",
+      "Aplikasi kasir paling gampang yang pernah saya coba. Tinggal masukin barang, dan laporan penjualan hariannya beres semua otomatis!",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mark&backgroundColor=transparent",
     bgColor: "bg-teal-400",
   },
   {
     id: 2,
     name: "Sarah Chen",
-    role: "UX Designer",
+    role: "Manajer Toko Baju",
     quote:
-      "The interface is so intuitive and beautiful. It completely changed how our team collaborates on projects daily. Highly recommended!",
+      "Buku kas sama fitur stoknya bener-bener nolong banget. Fitur import spreadsheet-nya juara buat mindahin data barang lama ke sistem baru!",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=transparent",
     bgColor: "bg-blue-400",
   },
   {
     id: 3,
     name: "James Wilson",
-    role: "Product Manager",
+    role: "Pengusaha Retail",
     quote:
-      "We've seen a 40% increase in productivity since switching. The features are exactly what we needed to scale our operations effectively.",
+      "Udah cobain banyak POS, tapi cuma Crave yang UI-nya cakep dan navigasinya nggak bikin bingung karyawan baru. Sistem PIN-nya juga bikin tenang.",
     avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James&backgroundColor=transparent",
     bgColor: "bg-indigo-400",
   },
@@ -39,9 +39,11 @@ export function TestimonialsSection() {
         <GridCross className="absolute -bottom-[15.5px] -left-[15.5px] z-10" />
         <GridCross className="absolute -bottom-[15.5px] -right-[15.5px] z-10" />
         <StripedPattern className="!-z-10 text-foreground/20 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black_100%)]" />
-        <p className="text-center text-[11px] font-bold tracking-[0.25em] text-blue-500 uppercase">
-          Testimonials
-        </p>
+        <div className="flex justify-center">
+          <span className="rounded-full border border-foreground/15 bg-card px-4 py-1.5 text-xs font-medium text-[#1B5CFE]">
+            Testimoni
+          </span>
+        </div>
         <div className="flex flex-col items-center mt-4">
           <h2 className="mx-auto max-w-xl text-center text-3xl font-bold tracking-tight text-blue-800 sm:text-4xl">
             Apa kata pengguna kita?

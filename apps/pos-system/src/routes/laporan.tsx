@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/table";
 import { rupiah } from "@/lib/pos-data";
 import { useReports, type ReportFilters } from "@/lib/useReports";
-import { useDebts } from "@/lib/useDebts";
 import { useEmployees } from "@/lib/useEmployees";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
@@ -45,7 +44,6 @@ function LaporanPage() {
   const [filters, setFilters] = useState<ReportFilters>({ period: "hari", cashier: "semua" });
 
   const { data, isLoading } = useReports(filters);
-  const { data: debts = [] } = useDebts("utang");
   const { data: employees = [] } = useEmployees();
 
   const txs = data?.transactions || [];
@@ -58,7 +56,6 @@ function LaporanPage() {
       rows: txs.length,
     },
     { title: "Kartu stok barang", desc: "Mutasi masuk, keluar, dan sisa stok", rows: movs.length },
-    { title: "Piutang pelanggan", desc: "Sisa tagihan dan jadwal jatuh tempo", rows: debts.length },
     {
       title: "Performa kasir",
       desc: "Penjualan per karyawan dan per shift",

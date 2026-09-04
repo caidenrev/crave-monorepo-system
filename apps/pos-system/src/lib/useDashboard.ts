@@ -1,9 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { supabase } from "./supabase";
 import { format, subDays, startOfDay, isSameDay } from "date-fns";
 
 export function useDashboard() {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: async () => {
       const today = new Date();
@@ -136,4 +139,26 @@ export function useDashboard() {
       };
     },
   });
+
+  useEffect(() => {
+    const channelId = `realtime_dashboard_${Math.random()}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "transactions" },
+        (payload) => {
+          console.log("Realtime transactions update:", payload);
+          queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+          queryClient.invalidateQueries({ queryKey: ["reports"] });
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  return query;
 }

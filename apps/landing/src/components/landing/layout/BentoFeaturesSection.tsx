@@ -9,15 +9,15 @@ export function BentoFeaturesSection() {
         <GridCross className="absolute -bottom-[15.5px] -right-[15.5px] z-10" />
         <StripedPattern className="!-z-10 text-foreground/20 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black_100%)]" />
         <div className="flex justify-center">
-          <span className="border border-foreground/15 rounded-full bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground">
-            Features
+          <span className="border border-foreground/15 rounded-full bg-card px-4 py-1.5 text-xs font-medium text-[#1B5CFE]">
+            Fitur Unggulan
           </span>
         </div>
         <h2 className="mt-8 text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Lakukan semua di satu tempat
         </h2>
         <p className="mt-3 text-center text-sm text-muted-foreground">
-          Lakukan pekerjaan tanpa banyak software yang di pakai
+          Kelola toko kamu cukup dari satu aplikasi kasir yang lengkap
         </p>
 
         <div className="mt-12 grid gap-6 lg:grid-cols-5">
@@ -40,10 +40,9 @@ export function BentoFeaturesSection() {
 
           <article className="shadow-card relative overflow-hidden flex flex-col rounded-3xl bg-card lg:col-span-3">
             <div className="p-8 pb-0 z-10 w-full sm:w-2/3">
-              <h3 className="text-xl font-bold text-foreground">Live Spreadsheet</h3>
+              <h3 className="text-xl font-bold text-foreground">Spreadsheet Data</h3>
               <p className="mt-3 text-sm text-muted-foreground">
-                Ga perlu lagi buka tutup excel untuk hitung semua nya, tinggal import dan export dan
-                hitung di satu tempat
+                Ga perlu lagi buka tutup excel untuk cek laporan. Kamu bisa import file CSV/Excel langsung di aplikasi!
               </p>
             </div>
             <div className="flex-1 flex items-end justify-end mt-8">
@@ -57,9 +56,9 @@ export function BentoFeaturesSection() {
 
           <article className="shadow-card relative overflow-hidden flex flex-col rounded-3xl bg-card lg:col-span-3">
             <div className="p-8 pb-0 z-10 w-full sm:w-2/3">
-              <h3 className="text-xl font-bold text-foreground">Realtime Cust Tracker</h3>
+              <h3 className="text-xl font-bold text-foreground">Buku Kas (Pengeluaran)</h3>
               <p className="mt-3 text-sm text-muted-foreground">
-                Pantau transaksi customer dan auto update keuangan harian
+                Catat biaya operasional dan bahan baku agar laba bersih toko kamu terhitung akurat.
               </p>
             </div>
             <div className="flex-1 flex items-end justify-end mt-8">
@@ -73,9 +72,9 @@ export function BentoFeaturesSection() {
 
           <article className="relative overflow-hidden flex flex-col justify-center items-center rounded-3xl lg:col-span-2">
             <div className="p-8 pb-0 z-10 w-full">
-              <h3 className="text-center text-xl font-bold text-foreground">Scan barcode</h3>
+              <h3 className="text-center text-xl font-bold text-foreground">Akses Karyawan</h3>
               <p className="mt-3 text-center text-sm text-muted-foreground">
-                Scan barcode untuk cepat auto <br /> update stok dan harga
+                Lindungi akses kasir <br /> menggunakan PIN aman
               </p>
             </div>
             <img
@@ -87,7 +86,7 @@ export function BentoFeaturesSection() {
         </div>
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
-          and a lot more features...
+          dan masih banyak fitur lainnya...
         </p>
       </div>
     </section>

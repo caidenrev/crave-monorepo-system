@@ -88,26 +88,12 @@ function LoginPage() {
   const strength = password.length > 8 ? 3 : password.length > 5 ? 2 : password.length > 0 ? 1 : 0;
 
   return (
-    <div className="relative min-h-screen bg-slate-50 md:flex md:items-center md:justify-center overflow-x-hidden">
+    <div className="relative min-h-screen bg-slate-50 md:flex md:items-center overflow-x-hidden">
       {}
-      <div className="absolute top-0 inset-x-0 z-50 p-6 flex items-center justify-between text-white/90 md:w-1/2">
+      <div className="absolute top-0 inset-x-0 z-50 p-6 flex items-center justify-between text-white/90">
         <button className="flex items-center justify-center size-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer">
           <ChevronLeft className="size-5" />
         </button>
-
-        <div className="flex items-center gap-2 text-sm">
-          <span className="hidden sm:inline">
-            {isRegistering ? "Already have an account?" : "Don't have an account?"}
-          </span>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setIsRegistering(!isRegistering)}
-            className="rounded-full bg-white/20 hover:bg-white/30 border-none text-white shadow-none h-8 px-4 text-xs font-semibold cursor-pointer"
-          >
-            {isRegistering ? "Sign in" : "Get Started"}
-          </Button>
-        </div>
       </div>
 
       {}
@@ -131,11 +117,25 @@ function LoginPage() {
           <p className="hidden md:block mt-6 text-white/80 text-left max-w-sm text-base leading-relaxed font-medium">
             Solusi POS Digital untuk UMKM. Kelola penjualan, stok, dan utang dengan mudah.
           </p>
+
+          <div className="absolute top-6 right-6 md:top-auto md:bottom-12 md:left-16 md:right-auto flex items-center gap-3 text-sm pointer-events-auto z-50">
+            <span className="hidden sm:inline text-white/90">
+              {isRegistering ? "Already have an account?" : "Don't have an account?"}
+            </span>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsRegistering(!isRegistering)}
+              className="rounded-full bg-white/20 hover:bg-white/30 border-none text-white shadow-none h-8 px-4 text-xs font-semibold cursor-pointer"
+            >
+              {isRegistering ? "Sign in" : "Get Started"}
+            </Button>
+          </div>
         </div>
       </div>
 
       {}
-      <div className="w-full max-w-md mx-auto relative z-10 md:w-1/2 md:max-w-xl md:ml-auto md:mr-10 xl:mr-32 mt-[28vh] sm:mt-[32vh] md:mt-0 px-0 sm:px-6">
+      <div className="w-full max-w-md mx-auto relative z-10 md:w-full md:max-w-2xl xl:max-w-3xl md:ml-[calc(50%-2.5rem)] lg:ml-[calc(50%-3rem)] xl:ml-[calc(50%-6rem)] 2xl:ml-[calc(50%-8rem)] md:mr-10 lg:mr-12 xl:mr-24 2xl:mr-32 mt-[28vh] sm:mt-[32vh] md:mt-0 px-0 sm:px-6 md:px-0">
         <div className="bg-white rounded-t-[2.5rem] md:rounded-3xl shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.1)] md:shadow-2xl px-6 py-8 sm:px-10 flex flex-col min-h-[70vh] md:min-h-0 md:py-10">
           <div className="mb-8">
             <h2 className="text-[28px] font-bold text-slate-900 tracking-tight leading-tight">

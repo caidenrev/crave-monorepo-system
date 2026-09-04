@@ -9,9 +9,11 @@ export function AboutSection() {
         <GridCross className="absolute -bottom-[15.5px] -left-[15.5px] z-10" />
         <GridCross className="absolute -bottom-[15.5px] -right-[15.5px] z-10" />
         <DotPattern className="!-z-10 text-foreground/60 [mask-image:radial-gradient(ellipse_at_center,white,transparent_85%)]" />
-        <p className="text-center text-[11px] font-bold tracking-[0.25em] text-brand uppercase">
-          About Us
-        </p>
+        <div className="flex justify-center">
+          <span className="rounded-full border border-foreground/15 bg-card px-4 py-1.5 text-xs font-medium text-[#1B5CFE]">
+            Tentang Kami
+          </span>
+        </div>
         <h2 className="mx-auto mt-4 max-w-2xl text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl leading-tight">
           Misi Kami: Membantu Pelaku UMKM Naik Kelas dengan Digitalisasi Sederhana
         </h2>

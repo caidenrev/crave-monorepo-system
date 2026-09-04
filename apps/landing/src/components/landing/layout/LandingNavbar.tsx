@@ -13,7 +13,7 @@ import {
   MobileNavMenu,
 } from "@/components/ui/navbar";
 
-const NAV = ["Product", "Solution", "Features", "Testimonials", "FAQ"];
+const NAV = ["Produk", "Solusi", "Fitur", "Testimoni", "FAQ"];
 
 export function LandingNavbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,7 +32,7 @@ export function LandingNavbar() {
       {}
       <NavBody>
         <Logo isScrolled={isScrolled} />
-        <NavItems items={NAV.map((item) => ({ name: item, link: `#${item.toLowerCase()}` }))} />
+        <NavItems items={NAV.map((item) => ({ name: item, link: `#${item.toLowerCase()}` }))} isScrolled={isScrolled} />
         <div className="flex justify-end hidden lg:flex">
           <NavbarButton href={POS_URL}>Coba Sekarang</NavbarButton>
         </div>

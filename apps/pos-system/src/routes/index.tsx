@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { categories, rupiah, type CartLine, type Product } from "@/lib/pos-data";
 import { useProducts } from "@/lib/useProducts";
+import { useCategories } from "@/lib/useCategories";
 import { useTransactions } from "@/lib/useTransactions";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
@@ -70,13 +71,20 @@ const payments = [
   { key: "QRIS", icon: QrCode },
   { key: "Kartu", icon: CreditCard },
   { key: "Tunai", icon: Wallet },
-  { key: "Utang", icon: HandCoins },
 ] as const;
 
 function KasirPage() {
   const isMobile = useIsMobile();
   const { data: products = [], isLoading: isLoadingProducts, error: productsError } = useProducts();
+  const { data: catData = [] } = useCategories();
   const { checkoutMutation } = useTransactions();
+  
+  const productCats = useMemo(() => {
+    // Only get unique categories that are actually used by products, or all product categories
+    // For now, let's just use all categories from the database of type 'product' or 'all'
+    return ["Semua", ...catData.filter(c => c.type === 'product' || c.type === 'all').map(c => c.name)];
+  }, [catData]);
+
   const { user } = useAuth();
   const userName = user?.user_metadata?.["name"] || user?.email?.split("@")[0] || "User";
 
@@ -87,7 +95,7 @@ function KasirPage() {
   const [cat, setCat] = useState<string>("Semua");
   const [q, setQ] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
-  const [method, setMethod] = useState<"QRIS" | "Kartu" | "Tunai" | "Utang">("QRIS");
+  const [method, setMethod] = useState<"QRIS" | "Kartu" | "Tunai">("QRIS");
 
   const list = useMemo(
     () =>
@@ -309,7 +317,7 @@ function KasirPage() {
 
           <ScrollArea className="w-full">
             <div className="flex gap-2 pb-2">
-              {categories.map((c) => (
+              {productCats.map((c) => (
                 <Button
                   key={c}
                   size="sm"

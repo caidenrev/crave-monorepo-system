@@ -14,36 +14,42 @@ import { cn } from "@/lib/utils";
 
 const PLANS = [
   {
-    name: "Basic Plan",
+    name: "Starter (POS)",
     price: "Rp 150rb",
-    note: "Untuk individu atau tim kecil yang baru mulai.",
-    listTitle: "TERMASUK:",
+    note: "Sistem Point of Sale lengkap untuk mengelola transaksi toko harian.",
+    listTitle: "FITUR TERMASUK:",
     items: [
-      "Pelacakan polis otomatis",
-      "Pemantauan status dokumen",
-      "Notifikasi pintar",
+      "Akses penuh Crave POS",
+      "Manajemen Stok & Penjualan",
+      "Buku Kas & Pengeluaran",
+      "Spreadsheet Live",
     ],
     featured: false,
   },
   {
-    name: "Business Plan",
+    name: "Pro (POS + HRM)",
     price: "Rp 299rb",
-    note: "Untuk tim yang butuh alat compliance tingkat lanjut.",
-    listTitle: "BASIC, DITAMBAH:",
+    note: "Solusi ideal untuk toko yang sudah memiliki banyak karyawan.",
+    listTitle: "SEMUA FITUR STARTER, DITAMBAH:",
     items: [
-      "Dashboard kolaborasi tim",
-      "Alur kerja yang bisa disesuaikan",
-      "Laporan & analitik tingkat lanjut",
-      "Prioritas dukungan",
+      "Akses penuh Crave HRM",
+      "Manajemen Absensi Karyawan",
+      "Pengaturan Gaji & Bonus",
+      "Shift & Hak Akses",
     ],
     featured: true,
   },
   {
-    name: "Enterprise Plan",
-    price: "Rp 749rb",
-    note: "Untuk perusahaan besar dengan ribuan polis.",
-    listTitle: "BUSINESS, DITAMBAH:",
-    items: ["Manajer sukses dedikasi", "Integrasi khusus", "Penyimpanan tak terbatas"],
+    name: "Enterprise (Ultimate)",
+    price: "Rp 499rb",
+    note: "Bundling terlengkap (POS + HRM + CRM) untuk skala bisnis besar.",
+    listTitle: "SEMUA FITUR PRO, DITAMBAH:",
+    items: [
+      "Akses penuh Crave CRM",
+      "Manajemen Pelanggan (Loyalty)",
+      "Promo & Diskon Otomatis",
+      "Dukungan Manajer Prioritas",
+    ],
     featured: false,
   },
 ];
@@ -207,23 +213,23 @@ export function PricingSection() {
                   <div>
                     <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-full text-xs font-semibold text-slate-600 mb-6">
                       <Lock className="w-3.5 h-3.5" />
-                      <span>Enterprise Plan</span>
+                      <span>Enterprise (Ultimate) Plan</span>
                     </div>
                     <h3 className="text-4xl md:text-5xl font-extrabold mb-4 tracking-tight leading-tight">
-                      Best Value For<br />Your Budget
+                      Investasi Terbaik<br />Untuk Bisnismu
                     </h3>
                     <p className="text-slate-500 mb-8 max-w-sm text-sm">
-                      Kalkulator Pay-as-you-go yang sangat fleksibel. Bayar hanya untuk pengguna yang Anda butuhkan secara tahunan dan hemat lebih banyak biaya.
+                      Kalkulator Pay-as-you-go yang sangat fleksibel. Bayangkan mendapatkan sistem POS, HRM, dan CRM sekaligus dengan bayar tahunan sesuai jumlah pengguna.
                     </p>
                     
                     <h4 className="font-bold text-xl mb-4">Yang Anda Dapatkan</h4>
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 text-sm font-semibold text-slate-700">
-                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Advanced Security</li>
-                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Team Collaboration</li>
-                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> All Fill Access</li>
-                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Custom Integrations</li>
-                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Priority Support</li>
-                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Unlimited Storage</li>
+                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Sistem Kasir Lanjutan</li>
+                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Manajemen Karyawan</li>
+                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> CRM & Pelanggan</li>
+                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Import File Excel</li>
+                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Dukungan Prioritas</li>
+                      <li className="flex items-center gap-2"><div className="bg-emerald-100 p-0.5 rounded-full"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /></div> Kapasitas Tanpa Batas</li>
                     </ul>
                   </div>
                 </div>

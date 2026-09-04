@@ -10,6 +10,7 @@ import {
   Search,
   Bell,
   LogOut,
+  Wallet,
   User as UserIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -39,7 +40,7 @@ const nav = [
   { to: "/", label: "Kasir", icon: ScanBarcode },
   { to: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
   { to: "/stok", label: "Stok", icon: Boxes },
-  { to: "/utang", label: "Utang", icon: HandCoins },
+  { to: "/pengeluaran", label: "Pengeluaran", icon: Wallet },
   { to: "#menu", label: "Lainnya", icon: Menu },
 ];
 
@@ -127,12 +128,10 @@ export function AppShell({
                               "mt-0.5 rounded-full p-1.5",
                               notif.type === "stok" && "bg-destructive/10 text-destructive",
                               notif.type === "pesanan" && "bg-primary/10 text-primary",
-                              notif.type === "utang" && "bg-warning/10 text-warning",
                             )}
                           >
                             {notif.type === "stok" && <AlertTriangle className="size-4" />}
                             {notif.type === "pesanan" && <Receipt className="size-4" />}
-                            {notif.type === "utang" && <HandCoins className="size-4" />}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="text-sm font-semibold text-foreground">{notif.title}</p>

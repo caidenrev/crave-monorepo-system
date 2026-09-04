@@ -15,15 +15,16 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as InfoRouteImport } from './routes/info'
 import { Route as KartuStokRouteImport } from './routes/kartu-stok'
 import { Route as KaryawanRouteImport } from './routes/karyawan'
+import { Route as KategoriRouteImport } from './routes/kategori'
 import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
+import { Route as PengeluaranRouteImport } from './routes/pengeluaran'
 import { Route as PenjualanHarianRouteImport } from './routes/penjualan-harian'
 import { Route as PinRouteImport } from './routes/pin'
-import { Route as PiutangRouteImport } from './routes/piutang'
 import { Route as SpreadsheetRouteImport } from './routes/spreadsheet'
 import { Route as StokRouteImport } from './routes/stok'
-import { Route as UtangRouteImport } from './routes/utang'
+import { Route as SupplierRouteImport } from './routes/supplier'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -55,6 +56,11 @@ const KaryawanRoute = KaryawanRouteImport.update({
   path: '/karyawan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const KategoriRoute = KategoriRouteImport.update({
+  id: '/kategori',
+  path: '/kategori',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LaporanRoute = LaporanRouteImport.update({
   id: '/laporan',
   path: '/laporan',
@@ -70,6 +76,11 @@ const PengaturanRoute = PengaturanRouteImport.update({
   path: '/pengaturan',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PengeluaranRoute = PengeluaranRouteImport.update({
+  id: '/pengeluaran',
+  path: '/pengeluaran',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PenjualanHarianRoute = PenjualanHarianRouteImport.update({
   id: '/penjualan-harian',
   path: '/penjualan-harian',
@@ -78,11 +89,6 @@ const PenjualanHarianRoute = PenjualanHarianRouteImport.update({
 const PinRoute = PinRouteImport.update({
   id: '/pin',
   path: '/pin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PiutangRoute = PiutangRouteImport.update({
-  id: '/piutang',
-  path: '/piutang',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SpreadsheetRoute = SpreadsheetRouteImport.update({
@@ -95,9 +101,9 @@ const StokRoute = StokRouteImport.update({
   path: '/stok',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UtangRoute = UtangRouteImport.update({
-  id: '/utang',
-  path: '/utang',
+const SupplierRoute = SupplierRouteImport.update({
+  id: '/supplier',
+  path: '/supplier',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -108,15 +114,16 @@ export interface FileRoutesByFullPath {
   '/info': typeof InfoRoute
   '/kartu-stok': typeof KartuStokRoute
   '/karyawan': typeof KaryawanRoute
+  '/kategori': typeof KategoriRoute
   '/laporan': typeof LaporanRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
+  '/pengeluaran': typeof PengeluaranRoute
   '/penjualan-harian': typeof PenjualanHarianRoute
   '/pin': typeof PinRoute
-  '/piutang': typeof PiutangRoute
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
-  '/utang': typeof UtangRoute
+  '/supplier': typeof SupplierRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -125,15 +132,16 @@ export interface FileRoutesByTo {
   '/info': typeof InfoRoute
   '/kartu-stok': typeof KartuStokRoute
   '/karyawan': typeof KaryawanRoute
+  '/kategori': typeof KategoriRoute
   '/laporan': typeof LaporanRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
+  '/pengeluaran': typeof PengeluaranRoute
   '/penjualan-harian': typeof PenjualanHarianRoute
   '/pin': typeof PinRoute
-  '/piutang': typeof PiutangRoute
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
-  '/utang': typeof UtangRoute
+  '/supplier': typeof SupplierRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,15 +151,16 @@ export interface FileRoutesById {
   '/info': typeof InfoRoute
   '/kartu-stok': typeof KartuStokRoute
   '/karyawan': typeof KaryawanRoute
+  '/kategori': typeof KategoriRoute
   '/laporan': typeof LaporanRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
+  '/pengeluaran': typeof PengeluaranRoute
   '/penjualan-harian': typeof PenjualanHarianRoute
   '/pin': typeof PinRoute
-  '/piutang': typeof PiutangRoute
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
-  '/utang': typeof UtangRoute
+  '/supplier': typeof SupplierRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -162,15 +171,16 @@ export interface FileRouteTypes {
     | '/info'
     | '/kartu-stok'
     | '/karyawan'
+    | '/kategori'
     | '/laporan'
     | '/login'
     | '/pengaturan'
+    | '/pengeluaran'
     | '/penjualan-harian'
     | '/pin'
-    | '/piutang'
     | '/spreadsheet'
     | '/stok'
-    | '/utang'
+    | '/supplier'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -179,15 +189,16 @@ export interface FileRouteTypes {
     | '/info'
     | '/kartu-stok'
     | '/karyawan'
+    | '/kategori'
     | '/laporan'
     | '/login'
     | '/pengaturan'
+    | '/pengeluaran'
     | '/penjualan-harian'
     | '/pin'
-    | '/piutang'
     | '/spreadsheet'
     | '/stok'
-    | '/utang'
+    | '/supplier'
   id:
     | '__root__'
     | '/'
@@ -196,15 +207,16 @@ export interface FileRouteTypes {
     | '/info'
     | '/kartu-stok'
     | '/karyawan'
+    | '/kategori'
     | '/laporan'
     | '/login'
     | '/pengaturan'
+    | '/pengeluaran'
     | '/penjualan-harian'
     | '/pin'
-    | '/piutang'
     | '/spreadsheet'
     | '/stok'
-    | '/utang'
+    | '/supplier'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -214,15 +226,16 @@ export interface RootRouteChildren {
   InfoRoute: typeof InfoRoute
   KartuStokRoute: typeof KartuStokRoute
   KaryawanRoute: typeof KaryawanRoute
+  KategoriRoute: typeof KategoriRoute
   LaporanRoute: typeof LaporanRoute
   LoginRoute: typeof LoginRoute
   PengaturanRoute: typeof PengaturanRoute
+  PengeluaranRoute: typeof PengeluaranRoute
   PenjualanHarianRoute: typeof PenjualanHarianRoute
   PinRoute: typeof PinRoute
-  PiutangRoute: typeof PiutangRoute
   SpreadsheetRoute: typeof SpreadsheetRoute
   StokRoute: typeof StokRoute
-  UtangRoute: typeof UtangRoute
+  SupplierRoute: typeof SupplierRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -269,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KaryawanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/kategori': {
+      id: '/kategori'
+      path: '/kategori'
+      fullPath: '/kategori'
+      preLoaderRoute: typeof KategoriRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/laporan': {
       id: '/laporan'
       path: '/laporan'
@@ -290,6 +310,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PengaturanRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pengeluaran': {
+      id: '/pengeluaran'
+      path: '/pengeluaran'
+      fullPath: '/pengeluaran'
+      preLoaderRoute: typeof PengeluaranRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/penjualan-harian': {
       id: '/penjualan-harian'
       path: '/penjualan-harian'
@@ -302,13 +329,6 @@ declare module '@tanstack/react-router' {
       path: '/pin'
       fullPath: '/pin'
       preLoaderRoute: typeof PinRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/piutang': {
-      id: '/piutang'
-      path: '/piutang'
-      fullPath: '/piutang'
-      preLoaderRoute: typeof PiutangRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/spreadsheet': {
@@ -325,11 +345,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StokRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/utang': {
-      id: '/utang'
-      path: '/utang'
-      fullPath: '/utang'
-      preLoaderRoute: typeof UtangRouteImport
+    '/supplier': {
+      id: '/supplier'
+      path: '/supplier'
+      fullPath: '/supplier'
+      preLoaderRoute: typeof SupplierRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -342,15 +362,16 @@ const rootRouteChildren: RootRouteChildren = {
   InfoRoute: InfoRoute,
   KartuStokRoute: KartuStokRoute,
   KaryawanRoute: KaryawanRoute,
+  KategoriRoute: KategoriRoute,
   LaporanRoute: LaporanRoute,
   LoginRoute: LoginRoute,
   PengaturanRoute: PengaturanRoute,
+  PengeluaranRoute: PengeluaranRoute,
   PenjualanHarianRoute: PenjualanHarianRoute,
   PinRoute: PinRoute,
-  PiutangRoute: PiutangRoute,
   SpreadsheetRoute: SpreadsheetRoute,
   StokRoute: StokRoute,
-  UtangRoute: UtangRoute,
+  SupplierRoute: SupplierRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

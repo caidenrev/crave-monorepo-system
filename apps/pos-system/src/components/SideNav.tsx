@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   ScanBarcode,
   Boxes,
-  HandCoins,
   Users,
   FileSpreadsheet,
   Search,
@@ -21,7 +20,10 @@ import {
   Package,
   Settings,
   LogOut,
+  Wallet,
   User as UserIcon,
+  Truck,
+  Tags,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -99,7 +101,6 @@ export function SideNav({
   const { user, signOut } = useAuth();
 
   const { data: notifications = [] } = useNotifications();
-  const utangCount = notifications.filter((n) => n.type === "utang").length;
   const stokCount = notifications.filter((n) => n.type === "stok").length;
 
   const menu: Item[] = [
@@ -118,14 +119,15 @@ export function SideNav({
       ],
     },
     {
-      to: "/utang",
-      label: "Utang",
-      icon: HandCoins,
-      badge: utangCount > 0 ? utangCount : undefined,
+      to: "/pengeluaran",
+      label: "Pengeluaran",
+      icon: Wallet,
     },
   ];
 
   const others: Item[] = [
+    { to: "/supplier", label: "Supplier", icon: Truck },
+    { to: "/kategori", label: "Kategori", icon: Tags },
     { to: "/pengaturan", label: "Pengaturan", icon: Settings },
     { to: "/karyawan", label: "Karyawan", icon: Users },
     { to: "/bantuan", label: "Bantuan", icon: MessageSquare },

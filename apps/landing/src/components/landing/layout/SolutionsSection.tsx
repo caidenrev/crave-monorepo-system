@@ -27,8 +27,8 @@ export function SolutionsSection() {
         <StripedPattern className="!-z-10 text-foreground/20 [mask-image:linear-gradient(to_bottom,black_5%,transparent_25%)]" />
 
         <div className="flex justify-center">
-          <span className="rounded-full border border-foreground/15 bg-card px-4 py-1.5 text-xs font-medium text-muted-foreground">
-            Solutions
+          <span className="rounded-full border border-foreground/15 bg-card px-4 py-1.5 text-xs font-medium text-[#1B5CFE]">
+            Solusi
           </span>
         </div>
         <h2 className="mx-auto mt-8 max-w-xl text-center text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
