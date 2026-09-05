@@ -4,7 +4,7 @@ import { PricingSection } from "@/components/ui/PricingSection";
 
 export function PricingSectionLayout() {
   return (
-    <section id="product" className="border-b border-foreground/15 bg-secondary/40">
+    <section id="produk" className="border-b border-foreground/15 bg-secondary/40">
       <div className="relative z-0 mx-auto max-w-6xl md:border-x border-foreground/15 px-6 py-24">
         <GridCross className="absolute -bottom-[15.5px] -left-[15.5px] z-10" />
         <GridCross className="absolute -bottom-[15.5px] -right-[15.5px] z-10" />

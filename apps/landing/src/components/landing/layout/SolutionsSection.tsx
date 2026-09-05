@@ -20,7 +20,7 @@ const SOLUTIONS: SolutionItem[] = [
 
 export function SolutionsSection() {
   return (
-    <section id="solution" className="relative border-b border-foreground/15">
+    <section id="solusi" className="relative border-b border-foreground/15">
       <div className="relative z-0 mx-auto max-w-6xl overflow-hidden md:border-x border-foreground/15 px-6 pb-0 pt-24">
         <GridCross className="absolute -bottom-[15.5px] -left-[15.5px] z-10" />
         <GridCross className="absolute -bottom-[15.5px] -right-[15.5px] z-10" />

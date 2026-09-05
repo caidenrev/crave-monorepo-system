@@ -4,7 +4,7 @@ import { DashboardGallery } from "@/components/ui/DashboardGallery";
 
 export function KeyFeaturesSection() {
   return (
-    <section id="gallery" className="border-b border-foreground/15">
+    <section id="fitur" className="border-b border-foreground/15">
       <div className="relative z-0 mx-auto max-w-6xl md:border-x border-foreground/15 px-6 py-24">
         <GridCross className="absolute -bottom-[15.5px] -left-[15.5px] z-10" />
         <GridCross className="absolute -bottom-[15.5px] -right-[15.5px] z-10" />
