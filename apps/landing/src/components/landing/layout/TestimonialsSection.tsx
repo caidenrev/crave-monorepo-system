@@ -5,29 +5,29 @@ import { TestimonialCarousel, type TestimonialData } from "@/components/ui/Testi
 const TESTIMONIAL_DATA: TestimonialData[] = [
   {
     id: 1,
-    name: "Mark Lee",
+    name: "Budi Santoso",
     role: "Pemilik Kedai Kopi",
     quote:
       "Aplikasi kasir paling gampang yang pernah saya coba. Tinggal masukin barang, dan laporan penjualan hariannya beres semua otomatis!",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Mark&backgroundColor=transparent",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Budi&backgroundColor=transparent",
     bgColor: "bg-teal-400",
   },
   {
     id: 2,
-    name: "Sarah Chen",
+    name: "Siti Rahmawati",
     role: "Manajer Toko Baju",
     quote:
       "Buku kas sama fitur stoknya bener-bener nolong banget. Fitur import spreadsheet-nya juara buat mindahin data barang lama ke sistem baru!",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah&backgroundColor=transparent",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Siti&backgroundColor=transparent",
     bgColor: "bg-blue-400",
   },
   {
     id: 3,
-    name: "James Wilson",
+    name: "Hendra Wijaya",
     role: "Pengusaha Retail",
     quote:
       "Udah cobain banyak POS, tapi cuma Crave yang UI-nya cakep dan navigasinya nggak bikin bingung karyawan baru. Sistem PIN-nya juga bikin tenang.",
-    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=James&backgroundColor=transparent",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Hendra&backgroundColor=transparent",
     bgColor: "bg-indigo-400",
   },
 ];
