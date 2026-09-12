@@ -339,3 +339,46 @@ export const transactions: Transaction[] = [
 ];
 
 export const rupiah = (n: number) => "Rp" + n.toLocaleString("id-ID", { maximumFractionDigits: 0 });
+
+// === Business Planner Mock Data ===
+
+export type RawMaterial = {
+  id: string;
+  name: string;
+  unit: string;
+  pricePerUnit: number;
+};
+
+export const mockRawMaterials: RawMaterial[] = [
+  { id: "rm1", name: "Biji Kopi House Blend", unit: "gram", pricePerUnit: 150 }, // 150.000 / 1000g
+  { id: "rm2", name: "Susu Segar", unit: "ml", pricePerUnit: 20 }, // 20.000 / 1000ml
+  { id: "rm3", name: "Sirup Gula Aren", unit: "ml", pricePerUnit: 30 },
+  { id: "rm4", name: "Cup Plastik 16oz + Tutup", unit: "pcs", pricePerUnit: 1200 },
+  { id: "rm5", name: "Sedotan", unit: "pcs", pricePerUnit: 100 },
+  { id: "rm6", name: "Sirup Vanilla", unit: "ml", pricePerUnit: 40 },
+];
+
+export type RecipeIngredient = {
+  rawMaterialId: string;
+  amount: number;
+};
+
+export type Recipe = {
+  id: string;
+  name: string;
+  ingredients: RecipeIngredient[];
+};
+
+export const mockRecipes: Recipe[] = [
+  {
+    id: "r1",
+    name: "Kopi Susu Gula Aren",
+    ingredients: [
+      { rawMaterialId: "rm1", amount: 18 },
+      { rawMaterialId: "rm2", amount: 120 },
+      { rawMaterialId: "rm3", amount: 20 },
+      { rawMaterialId: "rm4", amount: 1 },
+      { rawMaterialId: "rm5", amount: 1 },
+    ],
+  },
+];

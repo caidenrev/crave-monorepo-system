@@ -24,6 +24,7 @@ import {
   User as UserIcon,
   Truck,
   Tags,
+  Lightbulb,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -123,6 +124,9 @@ export function SideNav({
       label: "Pengeluaran",
       icon: Wallet,
     },
+    ...(user?.user_metadata?.["role"] === "Owner" || !user?.user_metadata?.["role"]
+      ? [{ to: "/perencana", label: "Perencana Bisnis", icon: Lightbulb }]
+      : []),
   ];
 
   const others: Item[] = [

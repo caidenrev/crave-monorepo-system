@@ -133,7 +133,7 @@ function SupplierPage() {
               </div>
             ) : (
               suppliers.map((s) => (
-                <div key={s.id} className="flex flex-col gap-3 rounded-xl bg-muted/50 p-4 shadow-sm border">
+                <div key={s.id} className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm border">
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       <Avatar className="size-10 shrink-0">
@@ -154,10 +154,10 @@ function SupplierPage() {
                       href={`https://wa.me/${s.phone}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="flex items-center gap-1.5 text-xs font-semibold text-success hover:underline"
+                      className="inline-flex h-8 items-center justify-center rounded-lg bg-[#25D366] px-3 text-xs font-bold text-white hover:bg-[#25D366]/90 transition-colors gap-1.5 shadow-sm"
                     >
                       <Phone className="size-3.5" />
-                      {s.phone}
+                      WhatsApp
                     </a>
                     <div className="flex items-center gap-1">
                       <Button

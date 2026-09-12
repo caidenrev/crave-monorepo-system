@@ -21,6 +21,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
 import { Route as PengeluaranRouteImport } from './routes/pengeluaran'
 import { Route as PenjualanHarianRouteImport } from './routes/penjualan-harian'
+import { Route as PerencanaRouteImport } from './routes/perencana'
 import { Route as PinRouteImport } from './routes/pin'
 import { Route as SpreadsheetRouteImport } from './routes/spreadsheet'
 import { Route as StokRouteImport } from './routes/stok'
@@ -86,6 +87,11 @@ const PenjualanHarianRoute = PenjualanHarianRouteImport.update({
   path: '/penjualan-harian',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PerencanaRoute = PerencanaRouteImport.update({
+  id: '/perencana',
+  path: '/perencana',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PinRoute = PinRouteImport.update({
   id: '/pin',
   path: '/pin',
@@ -120,6 +126,7 @@ export interface FileRoutesByFullPath {
   '/pengaturan': typeof PengaturanRoute
   '/pengeluaran': typeof PengeluaranRoute
   '/penjualan-harian': typeof PenjualanHarianRoute
+  '/perencana': typeof PerencanaRoute
   '/pin': typeof PinRoute
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/pengaturan': typeof PengaturanRoute
   '/pengeluaran': typeof PengeluaranRoute
   '/penjualan-harian': typeof PenjualanHarianRoute
+  '/perencana': typeof PerencanaRoute
   '/pin': typeof PinRoute
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/pengaturan': typeof PengaturanRoute
   '/pengeluaran': typeof PengeluaranRoute
   '/penjualan-harian': typeof PenjualanHarianRoute
+  '/perencana': typeof PerencanaRoute
   '/pin': typeof PinRoute
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
@@ -177,6 +186,7 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/pengeluaran'
     | '/penjualan-harian'
+    | '/perencana'
     | '/pin'
     | '/spreadsheet'
     | '/stok'
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/pengeluaran'
     | '/penjualan-harian'
+    | '/perencana'
     | '/pin'
     | '/spreadsheet'
     | '/stok'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/pengaturan'
     | '/pengeluaran'
     | '/penjualan-harian'
+    | '/perencana'
     | '/pin'
     | '/spreadsheet'
     | '/stok'
@@ -232,6 +244,7 @@ export interface RootRouteChildren {
   PengaturanRoute: typeof PengaturanRoute
   PengeluaranRoute: typeof PengeluaranRoute
   PenjualanHarianRoute: typeof PenjualanHarianRoute
+  PerencanaRoute: typeof PerencanaRoute
   PinRoute: typeof PinRoute
   SpreadsheetRoute: typeof SpreadsheetRoute
   StokRoute: typeof StokRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PenjualanHarianRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/perencana': {
+      id: '/perencana'
+      path: '/perencana'
+      fullPath: '/perencana'
+      preLoaderRoute: typeof PerencanaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pin': {
       id: '/pin'
       path: '/pin'
@@ -368,6 +388,7 @@ const rootRouteChildren: RootRouteChildren = {
   PengaturanRoute: PengaturanRoute,
   PengeluaranRoute: PengeluaranRoute,
   PenjualanHarianRoute: PenjualanHarianRoute,
+  PerencanaRoute: PerencanaRoute,
   PinRoute: PinRoute,
   SpreadsheetRoute: SpreadsheetRoute,
   StokRoute: StokRoute,
