@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import {
   Minus,
   Plus,
@@ -9,9 +9,13 @@ import {
   Wallet,
   QrCode,
   CreditCard,
-  HandCoins,
   ShoppingCart,
   ArrowRight,
+  ChevronLeft,
+  RefreshCw,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -40,13 +44,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { categories, rupiah, type CartLine, type Product } from "@/lib/pos-data";
+import { rupiah, type CartLine, type Product } from "@/lib/pos-data";
 import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useTransactions } from "@/lib/useTransactions";
-import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
-import { PosQrisModal } from "@/components/pos/PosQrisModal";
+import {
+  createPaymentGTInvoice,
+  getPaymentGTStatus,
+  type PaymentGTCreateResponse,
+} from "@/lib/paymentgt-service";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -79,11 +86,9 @@ function KasirPage() {
   const { data: products = [], isLoading: isLoadingProducts, error: productsError } = useProducts();
   const { data: catData = [] } = useCategories();
   const { checkoutMutation } = useTransactions();
-  
+
   const productCats = useMemo(() => {
-    // Only get unique categories that are actually used by products, or all product categories
-    // For now, let's just use all categories from the database of type 'product' or 'all'
-    return ["Semua", ...catData.filter(c => c.type === 'product' || c.type === 'all').map(c => c.name)];
+    return ["Semua", ...catData.filter((c) => c.type === "product" || c.type === "all").map((c) => c.name)];
   }, [catData]);
 
   const { user } = useAuth();
@@ -97,8 +102,20 @@ function KasirPage() {
   const [q, setQ] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [method, setMethod] = useState<"QRIS" | "Kartu" | "Tunai">("QRIS");
-  const [qrisModalOpen, setQrisModalOpen] = useState(false);
-  const [currentOrderId, setCurrentOrderId] = useState("");
+  const [mobileCartOpen, setMobileCartOpen] = useState(false);
+
+  // In-Sheet QRIS Payment States (No extra modals/AI slop)
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "qris">("cart");
+  const [qrisLoading, setQrisLoading] = useState(false);
+  const [qrisData, setQrisData] = useState<PaymentGTCreateResponse | null>(null);
+  const [qrisError, setQrisError] = useState<string | null>(null);
+  const [qrisTimeLeft, setQrisTimeLeft] = useState(600);
+  const [qrisPaid, setQrisPaid] = useState(false);
+  const [qrisChecking, setQrisChecking] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState("27363");
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const list = useMemo(
     () =>
@@ -117,6 +134,7 @@ function KasirPage() {
       return [...c, { product: p, qty: 1 }];
     });
   };
+
   const step = (id: string, d: number) =>
     setCart((c) =>
       c.map((l) => (l.product.id === id ? { ...l, qty: l.qty + d } : l)).filter((l) => l.qty > 0),
@@ -126,181 +144,394 @@ function KasirPage() {
   const tax = Math.round(subtotal * 0.11);
   const total = subtotal + tax;
 
-  const [mobileCartOpen, setMobileCartOpen] = useState(false);
+  // Cleanup timers & polling when sheet closes
+  useEffect(() => {
+    if (!mobileCartOpen) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      setCheckoutStep("cart");
+      setQrisData(null);
+      setQrisPaid(false);
+      setQrisError(null);
+    }
+  }, [mobileCartOpen]);
 
+  const startQrisPaymentFlow = async () => {
+    const orderId = `POS-${Date.now().toString().slice(-6)}`;
+    setCurrentOrderId(orderId);
+    setCheckoutStep("qris");
+    setQrisLoading(true);
+    setQrisError(null);
+    setQrisPaid(false);
+    setQrisTimeLeft(600);
+
+    try {
+      const invoice = await createPaymentGTInvoice({
+        orderId,
+        amount: total,
+        expiresInMinutes: 10,
+      });
+
+      setQrisData(invoice);
+      setQrisLoading(false);
+
+      // Start countdown timer
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setQrisTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current!);
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Start real-time settlement polling
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await getPaymentGTStatus(invoice.payment_id, total);
+          const status = (res.status || "").toUpperCase();
+          if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
+            handleQrisSuccess();
+          }
+        } catch {
+          // ignore transient poll errors
+        }
+      }, 2000);
+    } catch (err: any) {
+      setQrisError(err.message || "Gagal membuat invoice QRIS");
+      setQrisLoading(false);
+    }
+  };
+
+  const handleQrisSuccess = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    setQrisPaid(true);
+    toast.success("Pembayaran QRIS Berhasil!", {
+      description: `Dana ${rupiah(total)} telah diterima oleh merchant.`,
+    });
+
+    checkoutMutation.mutate(
+      { cart, method: "QRIS", cashierName: userName },
+      {
+        onSuccess: () => {
+          setTimeout(() => {
+            setCart([]);
+            setMobileCartOpen(false);
+            setCheckoutStep("cart");
+            setQrisPaid(false);
+          }, 1200);
+        },
+      },
+    );
+  };
+
+  const handleManualCheck = async () => {
+    if (!qrisData?.payment_id) return;
+    setQrisChecking(true);
+    try {
+      const res = await getPaymentGTStatus(qrisData.payment_id, total);
+      const status = (res.status || "").toUpperCase();
+      if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
+        handleQrisSuccess();
+      } else {
+        toast.info("Belum Ada Pembayaran Masuk", {
+          description: "Silakan selesaikan scan & transfer di aplikasi bank/e-wallet pembeli.",
+        });
+      }
+    } catch {
+      toast.error("Gagal menghubungi payment gateway");
+    } finally {
+      setQrisChecking(false);
+    }
+  };
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+  };
+
+  // --------------------------------------------------------------------------
+  // SHEET CONTENT: CART VIEW vs QRIS PAYMENT VIEW
+  // --------------------------------------------------------------------------
   const cartContent = (
     <div className="flex flex-1 min-h-0 flex-col">
-      <div className="shrink-0">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-extrabold">Keranjang</p>
-            <p className="text-[11px] text-muted-foreground">Struk #27363</p>
+      {checkoutStep === "cart" ? (
+        // VIEW 1: REGULAR CART VIEW (GAMBAR 2)
+        <>
+          <div className="shrink-0">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-base font-extrabold text-foreground">Keranjang</p>
+                <p className="text-xs text-muted-foreground">Struk #{currentOrderId}</p>
+              </div>
+              {cart.length > 0 ? (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button className="flex items-center gap-1.5 text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors p-1">
+                      <Trash2 className="size-4" /> Kosongkan
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-2xl max-w-sm">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Kosongkan Keranjang?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Apakah Anda yakin ingin membatalkan transaksi ini? Semua produk di keranjang
+                        akan dihapus.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={() => setCart([])}
+                      >
+                        Ya, Kosongkan
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              ) : null}
+            </div>
+            <Separator className="my-3" />
           </div>
-          {cart.length > 0 ? (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="rounded-xl text-destructive">
-                  <Trash2 className="size-4" /> Kosongkan
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="rounded-2xl max-w-sm">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Kosongkan Keranjang?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Apakah Anda yakin ingin membatalkan transaksi ini? Semua produk di keranjang
-                    akan dihapus.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
-                  <AlertDialogAction
-                    className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    onClick={() => setCart([])}
-                  >
-                    Ya, Kosongkan
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          ) : null}
-        </div>
-        <Separator className="my-3" />
-      </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 max-h-[200px] xl:max-h-none">
-        {cart.length === 0 ? (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            Pilih produk atau pindai barcode untuk mulai transaksi.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {cart.map((l) => (
-              <div
-                key={l.product.id}
-                className="flex items-center gap-3 rounded-xl bg-muted/60 p-2.5"
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 max-h-[35vh] sm:max-h-[40vh] xl:max-h-none">
+            {cart.length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                Pilih produk atau pindai barcode untuk mulai transaksi.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {cart.map((l) => (
+                  <div
+                    key={l.product.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3.5 border border-slate-100/80"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-slate-800">{l.product.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {rupiah(l.product.price)} × {l.qty}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        className="flex size-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 transition-colors active:scale-95"
+                        onClick={() => step(l.product.id, -1)}
+                      >
+                        <Minus className="size-3.5" />
+                      </button>
+                      <span className="w-5 text-center text-sm font-bold text-slate-800">{l.qty}</span>
+                      <button
+                        className="flex size-7 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors active:scale-95 shadow-sm"
+                        onClick={() => step(l.product.id, 1)}
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="shrink-0 mt-auto pt-2">
+            <Separator className="my-3" />
+            <div className="space-y-1.5 text-sm">
+              <div className="flex justify-between text-muted-foreground">
+                <span>Subtotal</span>
+                <span className="font-semibold text-foreground">{rupiah(subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-muted-foreground">
+                <span>Pajak 11%</span>
+                <span className="font-semibold text-foreground">{rupiah(tax)}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1 text-base">
+                <span className="font-bold">Total</span>
+                <span className="font-extrabold text-blue-600 text-lg">{rupiah(total)}</span>
+              </div>
+            </div>
+
+            <p className="mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Metode Pembayaran
+            </p>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {payments.map((p) => (
+                <button
+                  key={p.key}
+                  onClick={() => setMethod(p.key)}
+                  className={
+                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-3 px-2 text-xs font-bold transition-all " +
+                    (method === p.key
+                      ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/20"
+                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")
+                  }
+                >
+                  <p.icon className="size-4.5" />
+                  {p.key}
+                </button>
+              ))}
+            </div>
+
+            {method === "QRIS" ? (
+              <Button
+                className="mt-4 h-13 w-full rounded-2xl text-[15px] font-bold shadow-lg shadow-emerald-600/20 bg-emerald-600 hover:bg-emerald-700 text-white transition-all active:scale-[0.99]"
+                disabled={cart.length === 0}
+                onClick={startQrisPaymentFlow}
               >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold">{l.product.name}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {rupiah(l.product.price)} × {l.qty}
+                <QrCode className="size-5 mr-2" />
+                Bayar QRIS {cart.length > 0 ? rupiah(total) : ""}
+              </Button>
+            ) : (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    className="mt-4 h-13 w-full rounded-2xl text-[15px] font-bold shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700 text-white transition-all"
+                    disabled={cart.length === 0}
+                  >
+                    Bayar {cart.length > 0 ? rupiah(total) : ""}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="rounded-2xl max-w-sm">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Selesaikan pembayaran sebesar{" "}
+                      <strong className="text-foreground">{rupiah(total)}</strong> dengan metode{" "}
+                      <strong>{method}</strong>?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="rounded-xl"
+                      disabled={checkoutMutation.isPending}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        checkoutMutation.mutate(
+                          { cart, method, cashierName: userName },
+                          {
+                            onSuccess: () => {
+                              setCart([]);
+                              setMobileCartOpen(false);
+                            },
+                          },
+                        );
+                      }}
+                    >
+                      {checkoutMutation.isPending ? "Memproses..." : "Konfirmasi"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </>
+      ) : (
+        // VIEW 2: IN-SHEET QRIS PAYMENT (CLEAN, NO AI SLOP)
+        <div className="flex flex-1 flex-col justify-between py-1">
+          <div className="shrink-0">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setCheckoutStep("cart")}
+                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors p-1"
+              >
+                <ChevronLeft className="size-4" /> Kembali ke Keranjang
+              </button>
+              <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
+                {formatTimer(qrisTimeLeft)}
+              </span>
+            </div>
+            <Separator className="my-3" />
+          </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-2">
+            {qrisLoading ? (
+              <div className="py-12 flex flex-col items-center space-y-3">
+                <Loader2 className="size-8 animate-spin text-blue-600" />
+                <p className="text-sm font-semibold text-slate-700">Menyiapkan QRIS Pembayaran...</p>
+              </div>
+            ) : qrisError ? (
+              <div className="py-8 flex flex-col items-center space-y-3">
+                <AlertCircle className="size-8 text-rose-500" />
+                <p className="text-sm font-semibold text-slate-800">{qrisError}</p>
+                <Button size="sm" variant="outline" className="rounded-xl" onClick={startQrisPaymentFlow}>
+                  <RefreshCw className="size-3.5 mr-1.5" /> Coba Lagi
+                </Button>
+              </div>
+            ) : qrisPaid ? (
+              <div className="py-8 flex flex-col items-center space-y-3 animate-in zoom-in-95">
+                <div className="size-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 className="size-8" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Pembayaran Berhasil!</h3>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Dana sebesar <strong>{rupiah(total)}</strong> telah terverifikasi.
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="size-7 rounded-lg"
-                    onClick={() => step(l.product.id, -1)}
-                  >
-                    <Minus className="size-3.5" />
-                  </Button>
-                  <span className="w-6 text-center text-sm font-bold">{l.qty}</span>
-                  <Button
-                    size="icon"
-                    className="size-7 rounded-lg"
-                    onClick={() => step(l.product.id, 1)}
-                  >
-                    <Plus className="size-3.5" />
-                  </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center w-full max-w-[280px]">
+                <div className="text-center mb-3">
+                  <p className="text-xs text-slate-500 font-medium">Total Tagihan</p>
+                  <p className="text-2xl font-black text-blue-600 tracking-tight">{rupiah(total)}</p>
+                </div>
+
+                {qrisData?.qris_image_base64 && (
+                  <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <img
+                      src={qrisData.qris_image_base64}
+                      alt="QRIS"
+                      className="size-48 sm:size-52 object-contain rounded-lg"
+                    />
+                  </div>
+                )}
+
+                <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>Menunggu pembayaran pelanggan...</span>
                 </div>
               </div>
-            ))}
+            )}
           </div>
-        )}
-      </div>
 
-      <div className="shrink-0 mt-auto">
-        <Separator className="my-3" />
-        <div className="space-y-1.5 text-sm">
-          <div className="flex justify-between text-muted-foreground">
-            <span>Subtotal</span>
-            <span className="font-semibold text-foreground">{rupiah(subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-muted-foreground">
-            <span>Pajak 11%</span>
-            <span className="font-semibold text-foreground">{rupiah(tax)}</span>
-          </div>
-          <div className="flex items-center justify-between pt-1 text-base">
-            <span className="font-bold">Total</span>
-            <span className="font-extrabold text-primary">{rupiah(total)}</span>
-          </div>
-        </div>
-
-        <p className="mt-4 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-          Metode pembayaran
-        </p>
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          {payments.map((p) => (
-            <button
-              key={p.key}
-              onClick={() => setMethod(p.key)}
-              className={
-                "flex flex-col items-center gap-1 rounded-xl border p-2 text-[10px] font-bold transition-colors " +
-                (method === p.key
-                  ? "border-primary bg-primary text-primary-foreground shadow-soft"
-                  : "bg-card text-muted-foreground hover:bg-accent")
-              }
-            >
-              <p.icon className="size-4" />
-              {p.key}
-            </button>
-          ))}
-        </div>
-
-        {method === "QRIS" ? (
-          <Button
-            className="mt-4 h-12 w-full rounded-2xl text-base shadow-soft bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
-            disabled={cart.length === 0}
-            onClick={() => {
-              const orderId = `POS-${Date.now().toString().slice(-6)}`;
-              setCurrentOrderId(orderId);
-              setQrisModalOpen(true);
-            }}
-          >
-            <QrCode className="size-4.5 mr-2" />
-            Bayar QRIS {cart.length > 0 ? rupiah(total) : ""}
-          </Button>
-        ) : (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button className="mt-4 h-12 w-full rounded-2xl text-base font-bold" disabled={cart.length === 0}>
-                Bayar {cart.length > 0 ? rupiah(total) : ""}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="rounded-2xl max-w-sm">
-              <AlertDialogHeader>
-                <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Selesaikan pembayaran sebesar{" "}
-                  <strong className="text-foreground">{rupiah(total)}</strong> dengan metode{" "}
-                  <strong>{method}</strong>?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
-                <AlertDialogAction
-                  className="rounded-xl"
-                  disabled={checkoutMutation.isPending}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    checkoutMutation.mutate(
-                      { cart, method, cashierName: userName },
-                      {
-                        onSuccess: () => {
-                          setCart([]);
-                          setMobileCartOpen(false);
-                        },
-                      },
-                    );
-                  }}
+          <div className="shrink-0 mt-auto pt-3 space-y-2">
+            {!qrisPaid && (
+              <>
+                <Button
+                  className="h-12 w-full rounded-2xl text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
+                  onClick={handleManualCheck}
+                  disabled={qrisChecking || qrisLoading}
                 >
-                  {checkoutMutation.isPending ? "Memproses..." : "Konfirmasi"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </div>
+                  {qrisChecking ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin mr-2" /> Memeriksa Status...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="size-4 mr-2" /> Cek Status Pembayaran
+                    </>
+                  )}
+                </Button>
+
+                <button
+                  type="button"
+                  onClick={() => setCheckoutStep("cart")}
+                  className="w-full text-center text-xs font-semibold text-slate-500 hover:text-slate-800 py-1 transition-colors"
+                >
+                  Batalkan & Kembali ke Keranjang
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -424,38 +655,19 @@ function KasirPage() {
               side={isMobile ? "bottom" : "right"}
               className={
                 isMobile
-                  ? "flex max-h-[90vh] flex-col rounded-t-3xl bg-background p-4"
-                  : "flex h-full w-[380px] sm:max-w-[400px] flex-col bg-background p-4"
+                  ? "flex max-h-[92vh] min-h-[520px] flex-col rounded-t-[2.5rem] bg-white p-5 sm:p-6 shadow-2xl border-t"
+                  : "flex h-full w-[400px] sm:max-w-[440px] flex-col bg-white p-6 shadow-2xl border-l"
               }
             >
               <SheetHeader className="sr-only">
-                <SheetTitle>Pembayaran</SheetTitle>
-                <SheetDescription>Selesaikan pembayaran</SheetDescription>
+                <SheetTitle>Pembayaran Kasir</SheetTitle>
+                <SheetDescription>Selesaikan transaksi kasir POS</SheetDescription>
               </SheetHeader>
               {cartContent}
             </SheetContent>
           </Sheet>
         </div>
       )}
-
-      {/* Real-time Dynamic QRIS Payment Modal */}
-      <PosQrisModal
-        open={qrisModalOpen}
-        onOpenChange={setQrisModalOpen}
-        totalAmount={total}
-        orderId={currentOrderId}
-        onPaid={() => {
-          checkoutMutation.mutate(
-            { cart, method: "QRIS", cashierName: userName },
-            {
-              onSuccess: () => {
-                setCart([]);
-                setMobileCartOpen(false);
-              },
-            },
-          );
-        }}
-      />
     </AppShell>
   );
 }
