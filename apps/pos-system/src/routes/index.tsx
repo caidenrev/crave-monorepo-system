@@ -46,6 +46,7 @@ import { useCategories } from "@/lib/useCategories";
 import { useTransactions } from "@/lib/useTransactions";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
+import { PosQrisModal } from "@/components/pos/PosQrisModal";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -96,6 +97,8 @@ function KasirPage() {
   const [q, setQ] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [method, setMethod] = useState<"QRIS" | "Kartu" | "Tunai">("QRIS");
+  const [qrisModalOpen, setQrisModalOpen] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState("");
 
   const list = useMemo(
     () =>
@@ -244,44 +247,59 @@ function KasirPage() {
           ))}
         </div>
 
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button className="mt-4 h-12 w-full rounded-2xl text-base" disabled={cart.length === 0}>
-              Bayar {cart.length > 0 ? rupiah(total) : ""}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="rounded-2xl max-w-sm">
-            <AlertDialogHeader>
-              <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
-              <AlertDialogDescription>
-                Selesaikan pembayaran sebesar{" "}
-                <strong className="text-foreground">{rupiah(total)}</strong> dengan metode{" "}
-                <strong>{method}</strong>?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
-              <AlertDialogAction
-                className="rounded-xl"
-                disabled={checkoutMutation.isPending}
-                onClick={(e) => {
-                  e.preventDefault();
-                  checkoutMutation.mutate(
-                    { cart, method, cashierName: userName },
-                    {
-                      onSuccess: () => {
-                        setCart([]);
-                        setMobileCartOpen(false);
+        {method === "QRIS" ? (
+          <Button
+            className="mt-4 h-12 w-full rounded-2xl text-base shadow-soft bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+            disabled={cart.length === 0}
+            onClick={() => {
+              const orderId = `POS-${Date.now().toString().slice(-6)}`;
+              setCurrentOrderId(orderId);
+              setQrisModalOpen(true);
+            }}
+          >
+            <QrCode className="size-4.5 mr-2" />
+            Bayar QRIS {cart.length > 0 ? rupiah(total) : ""}
+          </Button>
+        ) : (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button className="mt-4 h-12 w-full rounded-2xl text-base font-bold" disabled={cart.length === 0}>
+                Bayar {cart.length > 0 ? rupiah(total) : ""}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-2xl max-w-sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Konfirmasi Pembayaran</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Selesaikan pembayaran sebesar{" "}
+                  <strong className="text-foreground">{rupiah(total)}</strong> dengan metode{" "}
+                  <strong>{method}</strong>?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+                <AlertDialogAction
+                  className="rounded-xl"
+                  disabled={checkoutMutation.isPending}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    checkoutMutation.mutate(
+                      { cart, method, cashierName: userName },
+                      {
+                        onSuccess: () => {
+                          setCart([]);
+                          setMobileCartOpen(false);
+                        },
                       },
-                    },
-                  );
-                }}
-              >
-                {checkoutMutation.isPending ? "Memproses..." : "Konfirmasi"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                    );
+                  }}
+                >
+                  {checkoutMutation.isPending ? "Memproses..." : "Konfirmasi"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
     </div>
   );
@@ -419,6 +437,25 @@ function KasirPage() {
           </Sheet>
         </div>
       )}
+
+      {/* Real-time Dynamic QRIS Payment Modal */}
+      <PosQrisModal
+        open={qrisModalOpen}
+        onOpenChange={setQrisModalOpen}
+        totalAmount={total}
+        orderId={currentOrderId}
+        onPaid={() => {
+          checkoutMutation.mutate(
+            { cart, method: "QRIS", cashierName: userName },
+            {
+              onSuccess: () => {
+                setCart([]);
+                setMobileCartOpen(false);
+              },
+            },
+          );
+        }}
+      />
     </AppShell>
   );
 }
