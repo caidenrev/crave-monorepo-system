@@ -13,7 +13,7 @@ import {
   ArrowRight,
   ChevronLeft,
   RefreshCw,
-  CheckCircle2,
+  Check,
   AlertCircle,
   Loader2,
 } from "lucide-react";
@@ -116,6 +116,7 @@ function KasirPage() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const isSettlingRef = useRef<boolean>(false);
 
   const list = useMemo(
     () =>
@@ -147,8 +148,15 @@ function KasirPage() {
   // Cleanup timers & polling when sheet closes
   useEffect(() => {
     if (!mobileCartOpen) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      if (pollingRef.current) clearInterval(pollingRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      isSettlingRef.current = false;
       setCheckoutStep("cart");
       setQrisData(null);
       setQrisPaid(false);
@@ -164,6 +172,7 @@ function KasirPage() {
     setQrisError(null);
     setQrisPaid(false);
     setQrisTimeLeft(600);
+    isSettlingRef.current = false;
 
     try {
       const invoice = await createPaymentGTInvoice({
@@ -180,8 +189,14 @@ function KasirPage() {
       timerRef.current = setInterval(() => {
         setQrisTimeLeft((prev) => {
           if (prev <= 1) {
-            clearInterval(timerRef.current!);
-            if (pollingRef.current) clearInterval(pollingRef.current);
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            if (pollingRef.current) {
+              clearInterval(pollingRef.current);
+              pollingRef.current = null;
+            }
             return 0;
           }
           return prev - 1;
@@ -191,6 +206,7 @@ function KasirPage() {
       // Start real-time settlement polling
       if (pollingRef.current) clearInterval(pollingRef.current);
       pollingRef.current = setInterval(async () => {
+        if (isSettlingRef.current) return;
         try {
           const res = await getPaymentGTStatus(invoice.payment_id, total);
           const status = (res.status || "").toUpperCase();
@@ -208,30 +224,48 @@ function KasirPage() {
   };
 
   const handleQrisSuccess = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (pollingRef.current) clearInterval(pollingRef.current);
+    // Synchronous guard to prevent duplicate executions from fast polling ticks
+    if (isSettlingRef.current) return;
+    isSettlingRef.current = true;
+
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+
     setQrisPaid(true);
-    toast.success("Pembayaran QRIS Berhasil!", {
-      description: `Dana ${rupiah(total)} telah diterima oleh merchant.`,
+    toast.success("Pembayaran Berhasil!", {
+      description: `Dana ${rupiah(total)} telah diterima.`,
     });
 
+    // Capture the cart snapshot for checkout mutation
+    const currentCart = [...cart];
     checkoutMutation.mutate(
-      { cart, method: "QRIS", cashierName: userName },
+      { cart: currentCart, method: "QRIS", cashierName: userName },
       {
         onSuccess: () => {
+          // Auto close sheet and reset state after displaying success animation
           setTimeout(() => {
             setCart([]);
             setMobileCartOpen(false);
             setCheckoutStep("cart");
             setQrisPaid(false);
-          }, 1200);
+            isSettlingRef.current = false;
+          }, 2200);
+        },
+        onError: () => {
+          isSettlingRef.current = false;
         },
       },
     );
   };
 
   const handleManualCheck = async () => {
-    if (!qrisData?.payment_id) return;
+    if (isSettlingRef.current || !qrisData?.payment_id) return;
     setQrisChecking(true);
     try {
       const res = await getPaymentGTStatus(qrisData.payment_id, total);
@@ -437,15 +471,25 @@ function KasirPage() {
         <div className="flex flex-1 flex-col justify-between py-1">
           <div className="shrink-0">
             <div className="flex items-center justify-between">
-              <button
-                onClick={() => setCheckoutStep("cart")}
-                className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors p-1"
-              >
-                <ChevronLeft className="size-4" /> Kembali ke Keranjang
-              </button>
-              <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
-                {formatTimer(qrisTimeLeft)}
-              </span>
+              {!qrisPaid ? (
+                <>
+                  <button
+                    onClick={() => setCheckoutStep("cart")}
+                    className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors p-1"
+                  >
+                    <ChevronLeft className="size-4" /> Kembali ke Keranjang
+                  </button>
+                  <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
+                    {formatTimer(qrisTimeLeft)}
+                  </span>
+                </>
+              ) : (
+                <div className="w-full text-center py-1">
+                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                    Konfirmasi Transaksi
+                  </span>
+                </div>
+              )}
             </div>
             <Separator className="my-3" />
           </div>
@@ -465,14 +509,20 @@ function KasirPage() {
                 </Button>
               </div>
             ) : qrisPaid ? (
-              <div className="py-8 flex flex-col items-center space-y-3 animate-in zoom-in-95">
-                <div className="size-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
-                  <CheckCircle2 className="size-8" />
+              <div className="flex flex-col items-center justify-center py-8 space-y-4 animate-in fade-in zoom-in-75 duration-300">
+                <div className="relative flex items-center justify-center">
+                  <div className="absolute size-24 rounded-full bg-emerald-100 animate-ping opacity-75" />
+                  <div className="relative size-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/30 text-white animate-in zoom-in duration-300">
+                    <Check className="size-10 stroke-[3.5] text-white animate-in zoom-in-50 duration-500" />
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Pembayaran Berhasil!</h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Dana sebesar <strong>{rupiah(total)}</strong> telah terverifikasi.
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                    Pembayaran Berhasil!
+                  </h3>
+                  <p className="text-base font-extrabold text-emerald-600">{rupiah(total)}</p>
+                  <p className="text-xs text-slate-500 max-w-[240px] mx-auto">
+                    Transaksi telah terverifikasi dan stok otomatis terpotong.
                   </p>
                 </div>
               </div>
