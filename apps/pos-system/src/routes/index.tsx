@@ -176,13 +176,19 @@ function KasirPage() {
     setQrisTimeLeft(600);
     isSettlingRef.current = false;
 
+    if (!merchantSettings?.static_qris?.trim()) {
+      setQrisError("QRIS Statis toko belum diatur. Silakan masukkan String QRIS toko Anda di menu Pengaturan > QRIS Merchant.");
+      setQrisLoading(false);
+      return;
+    }
+
     try {
       const invoice = await createPaymentGTInvoice({
         orderId,
         amount: total,
         expiresInMinutes: 10,
-        staticQris: merchantSettings?.static_qris || undefined,
-        sessionJson: merchantSettings?.session_json || undefined,
+        staticQris: merchantSettings.static_qris.trim(),
+        sessionJson: merchantSettings.session_json || undefined,
       });
 
       setQrisData(invoice);
