@@ -946,14 +946,13 @@ function PengaturanPage() {
               <div className="card-soft p-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-4">
-                    <Avatar className="size-16 ring-4 ring-blue-500/10 shadow-md">
-                      <AvatarImage src="/profile-logo.jpeg" alt="Profile" className="object-cover" />
-                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xl">
-                        {userName
-                          ? userName.substring(0, 2).toUpperCase()
-                          : user?.email?.substring(0, 2).toUpperCase() || "EK"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="size-16 rounded-full overflow-hidden shrink-0 ring-4 ring-blue-500/15 shadow-md border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
+                      <img
+                        src="/profile-logo.jpeg"
+                        alt="Profile"
+                        className="size-full object-cover"
+                      />
+                    </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <h3 className="text-lg font-bold text-slate-900 dark:text-white">

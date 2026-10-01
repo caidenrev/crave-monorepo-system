@@ -159,14 +159,13 @@ export function AppShell({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-xl border bg-card px-2 py-1.5 shadow-soft hover:bg-accent outline-none transition-colors">
-                    <Avatar className="size-7">
-                      <AvatarImage src="/profile-logo.jpeg" alt="Profile" className="object-cover" />
-                      <AvatarFallback className="bg-primary text-[11px] text-primary-foreground font-bold">
-                        {user?.user_metadata?.["name"]
-                          ? user.user_metadata["name"].substring(0, 2).toUpperCase()
-                          : user?.email?.substring(0, 2).toUpperCase() || "EK"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="size-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
+                      <img
+                        src="/profile-logo.jpeg"
+                        alt="Profile"
+                        className="size-full object-cover"
+                      />
+                    </div>
                     <div className="hidden leading-tight text-left sm:block">
                       <p className="text-xs font-bold">
                         {user?.user_metadata?.["name"] || user?.email?.split("@")[0] || "User"}
