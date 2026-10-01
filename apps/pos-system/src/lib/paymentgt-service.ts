@@ -122,13 +122,20 @@ export async function checkPaymentGTHealth(): Promise<{
 export async function requestShopeeOtp(params: {
   phone: string;
   password?: string | undefined;
-}): Promise<{ success: boolean; challenge: ShopeeOtpChallenge; message: string }> {
+  channel?: number | undefined;
+}): Promise<{
+  success: boolean;
+  challenge: ShopeeOtpChallenge;
+  channel_name?: string;
+  message: string;
+}> {
   const res = await fetch(`${PAYMENTGT_BASE_URL}/api/otp/request`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       phone: params.phone,
       password: params.password || "",
+      channel: params.channel || 3, // 3 = WhatsApp, 1 = SMS
     }),
   });
 

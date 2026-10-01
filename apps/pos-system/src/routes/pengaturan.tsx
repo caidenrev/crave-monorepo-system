@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Store,
   Percent,
@@ -18,8 +18,12 @@ import {
   Building2,
   Loader2,
   Check,
+  MessageCircle,
+  MessageSquare,
+  Delete,
 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +82,7 @@ function PengaturanPage() {
   const [staticQris, setStaticQris] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [otpChannel, setOtpChannel] = useState<3 | 1>(3); // 3 = WhatsApp, 1 = SMS
   const [otp, setOtp] = useState("");
 
   // OTP Wizard Flow States
@@ -86,11 +91,14 @@ function PengaturanPage() {
   const [merchantsList, setMerchantsList] = useState<ShopeeMerchantSummary[]>([]);
   const [verificationData, setVerificationData] = useState<any>(null);
   const [selectedMerchantId, setSelectedMerchantId] = useState<string>("");
+  const [channelLabel, setChannelLabel] = useState<string>("WhatsApp");
 
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
   const [sessionActive, setSessionActive] = useState<boolean | null>(null);
+
+  const otpInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (settings) {
@@ -104,7 +112,14 @@ function PengaturanPage() {
     }
   }, [settings]);
 
-  // Request OTP from Shopee
+  // Focus OTP hidden input when step enters "requested"
+  useEffect(() => {
+    if (otpStep === "requested") {
+      setTimeout(() => otpInputRef.current?.focus(), 150);
+    }
+  }, [otpStep]);
+
+  // Request OTP from Shopee with channel selection
   const handleRequestOtp = async () => {
     if (!phone.trim()) {
       toast.error("Nomor telepon Shopee wajib diisi");
@@ -116,12 +131,15 @@ function PengaturanPage() {
       const res = await requestShopeeOtp({
         phone: phone.trim(),
         password: password.trim() || undefined,
+        channel: otpChannel,
       });
 
       setChallenge(res.challenge);
+      setChannelLabel(res.channel_name || (otpChannel === 3 ? "WhatsApp" : "SMS"));
       setOtpStep("requested");
+      setOtp("");
       toast.success("Kode OTP Berhasil Dikirim!", {
-        description: res.message || `Silakan periksa WhatsApp/SMS di nomor ${phone}.`,
+        description: res.message || `Silakan periksa ${res.channel_name || "WhatsApp"} di nomor ${phone}.`,
       });
     } catch (err: any) {
       toast.error("Gagal Meminta OTP", {
@@ -498,7 +516,7 @@ function PengaturanPage() {
                             </p>
                           </div>
 
-                          <div className="space-y-3">
+                          <div className="space-y-3.5">
                             <div className="space-y-1.5">
                               <label className="text-xs font-semibold text-slate-700">
                                 Nomor HP Akun Shopee
@@ -524,9 +542,51 @@ function PengaturanPage() {
                                   type="password"
                                   value={password}
                                   onChange={(e) => setPassword(e.target.value)}
-                                  placeholder="Kosongkan jika akun menggunakan login OTP saja"
+                                  placeholder="Masukkan jika akun memiliki password"
                                   className="pl-10 h-11 rounded-xl bg-white"
                                 />
+                              </div>
+                            </div>
+
+                            {/* PILIHAN METODE PENGIRIMAN OTP (WHATSAPP vs SMS) */}
+                            <div className="space-y-1.5 pt-0.5">
+                              <label className="text-xs font-semibold text-slate-700">
+                                Metode Pengiriman Kode OTP
+                              </label>
+                              <div className="grid grid-cols-2 gap-2.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setOtpChannel(3)}
+                                  className={cn(
+                                    "flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all",
+                                    otpChannel === 3
+                                      ? "border-emerald-500 bg-emerald-50/80 text-emerald-800 shadow-sm ring-1 ring-emerald-500/20"
+                                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                                  )}
+                                >
+                                  <MessageCircle className="size-4 text-emerald-600 shrink-0" />
+                                  <span>WhatsApp</span>
+                                  {otpChannel === 3 && (
+                                    <Check className="size-3.5 stroke-[3] text-emerald-600 ml-auto" />
+                                  )}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setOtpChannel(1)}
+                                  className={cn(
+                                    "flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all",
+                                    otpChannel === 1
+                                      ? "border-blue-500 bg-blue-50/80 text-blue-800 shadow-sm ring-1 ring-blue-500/20"
+                                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                                  )}
+                                >
+                                  <MessageSquare className="size-4 text-blue-600 shrink-0" />
+                                  <span>SMS</span>
+                                  {otpChannel === 1 && (
+                                    <Check className="size-3.5 stroke-[3] text-blue-600 ml-auto" />
+                                  )}
+                                </button>
                               </div>
                             </div>
 
@@ -541,7 +601,7 @@ function PengaturanPage() {
                                   OTP...
                                 </>
                               ) : (
-                                "Kirim Kode OTP Shopee"
+                                `Kirim Kode OTP via ${otpChannel === 3 ? "WhatsApp" : "SMS"}`
                               )}
                             </Button>
                           </div>
@@ -550,35 +610,67 @@ function PengaturanPage() {
 
                       {otpStep === "requested" && (
                         <>
-                          <div className="space-y-1">
+                          <div className="space-y-1 text-center sm:text-left">
                             <h4 className="text-sm font-bold text-slate-800">
-                              Masukkan Kode OTP Shopee
+                              Masukkan 6 Digit Kode OTP Shopee
                             </h4>
                             <p className="text-xs text-muted-foreground">
-                              Kode OTP telah dikirim ke nomor <strong>{phone}</strong> via WhatsApp
-                              atau SMS.
+                              Kode OTP telah dikirim via <strong>{channelLabel}</strong> ke nomor{" "}
+                              <strong>{phone}</strong>.
                             </p>
                           </div>
 
-                          <div className="space-y-3">
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-700">
-                                Kode OTP (4 - 6 Digit)
-                              </label>
-                              <Input
+                          <div className="space-y-4">
+                            {/* PIN-STYLE SEGMENTED 6-DIGIT BOX INPUT */}
+                            <div className="relative flex flex-col items-center justify-center my-3">
+                              <input
+                                ref={otpInputRef}
+                                type="text"
+                                inputMode="numeric"
+                                autoComplete="one-time-code"
+                                pattern="[0-9]*"
+                                maxLength={6}
                                 value={otp}
-                                onChange={(e) => setOtp(e.target.value)}
-                                placeholder="Contoh: 123456"
-                                className="h-12 text-center text-lg font-mono font-bold tracking-widest rounded-xl bg-white"
-                                maxLength={8}
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                                  setOtp(val);
+                                }}
+                                className="absolute inset-0 size-full opacity-0 cursor-pointer z-10"
+                                autoFocus
                               />
+                              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                {Array.from({ length: 6 }).map((_, index) => {
+                                  const char = otp[index] || "";
+                                  const isCurrent = otp.length === index;
+                                  const isFilled = index < otp.length;
+                                  return (
+                                    <div
+                                      key={index}
+                                      onClick={() => otpInputRef.current?.focus()}
+                                      className={cn(
+                                        "size-11 sm:size-13 rounded-2xl border-2 flex items-center justify-center font-mono text-xl sm:text-2xl font-black transition-all cursor-pointer select-none",
+                                        isCurrent
+                                          ? "border-blue-600 bg-blue-50/80 shadow-md shadow-blue-500/20 scale-105 ring-2 ring-blue-500/20 text-blue-600"
+                                          : isFilled
+                                            ? "border-slate-300 bg-white text-slate-900 shadow-2xs"
+                                            : "border-slate-200 bg-white/70 text-slate-300",
+                                      )}
+                                    >
+                                      {char || (isCurrent ? <span className="inline-block w-0.5 h-6 bg-blue-600 animate-pulse" /> : "•")}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <p className="text-[11px] text-muted-foreground mt-2 text-center">
+                                Klik kotak untuk mengetik atau menempel (paste) kode OTP Anda
+                              </p>
                             </div>
 
                             <div className="flex items-center gap-2 pt-1">
                               <Button
                                 className="h-11 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-md shadow-emerald-600/20"
                                 onClick={handleVerifyOtp}
-                                disabled={isVerifyingOtp || !otp.trim()}
+                                disabled={isVerifyingOtp || otp.length < 4}
                               >
                                 {isVerifyingOtp ? (
                                   <>
@@ -597,7 +689,7 @@ function PengaturanPage() {
                                   setOtp("");
                                 }}
                               >
-                                Batal
+                                Ganti Nomor / Batal
                               </Button>
                             </div>
                           </div>
@@ -825,7 +917,7 @@ function PengaturanPage() {
                   Tambahan biaya layanan untuk transaksi makan di tempat (Dine In).
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between p-4 bg-muted/30 rounded-xl border">
+                <div className="flex flex-col sm:flex-row gap-5 items-start sm:items-center justify-between p-4 bg-muted-foreground/15 rounded-xl border">
                   <div>
                     <p className="font-bold">Terapkan Service Charge</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
