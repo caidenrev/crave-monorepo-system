@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import {
-  Store,
+  User,
   Percent,
   Printer,
   Bluetooth,
@@ -21,10 +21,19 @@ import {
   MessageCircle,
   MessageSquare,
   Delete,
+  Mail,
+  Calendar,
+  Lock,
+  Store,
+  Shield,
+  Phone,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/AppShell";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +51,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useAuth } from "@/lib/useAuth";
+import { supabase } from "@/lib/supabase";
 import {
   useMerchantSettings,
   type MerchantSettings,
@@ -69,6 +80,7 @@ export const Route = createFileRoute("/pengaturan")({
 });
 
 function PengaturanPage() {
+  const { user, signOut, lockApp } = useAuth();
   const {
     settings,
     isLoading: isLoadingSettings,
@@ -77,6 +89,19 @@ function PengaturanPage() {
     disconnect,
     isDisconnecting,
   } = useMerchantSettings();
+
+  // User Profile states
+  const [userName, setUserName] = useState("");
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  // Store & Business Info states
+  const [storeName, setStoreName] = useState("Crave - Point of Sales");
+  const [storeAddress, setStoreAddress] = useState("Jl. Sudirman No. 123, Jakarta Selatan");
+  const [storePhone, setStorePhone] = useState("0812-3456-7890");
+  const [storeFooter, setStoreFooter] = useState("Terima kasih atas kunjungannya!");
 
   // QRIS & Shopee Merchant Form States
   const [staticQris, setStaticQris] = useState("");
@@ -101,6 +126,24 @@ function PengaturanPage() {
   const otpInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    if (user) {
+      const metaName =
+        (user.user_metadata?.["name"] as string) ||
+        (user.user_metadata?.["full_name"] as string) ||
+        "";
+      if (metaName) setUserName(metaName);
+    }
+    const savedStoreName = localStorage.getItem("store_name");
+    if (savedStoreName) setStoreName(savedStoreName);
+    const savedStoreAddress = localStorage.getItem("store_address");
+    if (savedStoreAddress) setStoreAddress(savedStoreAddress);
+    const savedStorePhone = localStorage.getItem("store_phone");
+    if (savedStorePhone) setStorePhone(savedStorePhone);
+    const savedStoreFooter = localStorage.getItem("store_footer");
+    if (savedStoreFooter) setStoreFooter(savedStoreFooter);
+  }, [user]);
+
+  useEffect(() => {
     if (settings) {
       if (settings.static_qris) setStaticQris(settings.static_qris);
       if (settings.phone) setPhone(settings.phone);
@@ -118,6 +161,63 @@ function PengaturanPage() {
       setTimeout(() => otpInputRef.current?.focus(), 150);
     }
   }, [otpStep]);
+
+  // Handle user profile update in Supabase
+  const handleUpdateProfile = async () => {
+    if (!userName.trim()) {
+      toast.error("Nama lengkap tidak boleh kosong");
+      return;
+    }
+    setIsUpdatingProfile(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { name: userName.trim(), full_name: userName.trim() },
+      });
+      if (error) throw error;
+      toast.success("Profil akun berhasil diperbarui!");
+    } catch (err: any) {
+      toast.error("Gagal memperbarui profil: " + (err.message || "Terjadi kesalahan"));
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  // Handle user password update in Supabase
+  const handleUpdatePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("Kata sandi minimal harus 6 karakter");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("Konfirmasi kata sandi baru tidak cocok");
+      return;
+    }
+    setIsUpdatingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (error) throw error;
+      toast.success("Kata sandi berhasil diperbarui!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err: any) {
+      toast.error("Gagal memperbarui kata sandi: " + (err.message || "Terjadi kesalahan"));
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  // Handle saving store & business information
+  const handleSaveStoreInfo = () => {
+    localStorage.setItem("store_name", storeName);
+    localStorage.setItem("store_address", storeAddress);
+    localStorage.setItem("store_phone", storePhone);
+    localStorage.setItem("store_footer", storeFooter);
+    toast.success("Informasi bisnis & toko berhasil disimpan!", {
+      description: "Data akan otomatis tercetak pada bagian atas & bawah struk.",
+    });
+  };
 
   // Request OTP from Shopee with channel selection
   const handleRequestOtp = async () => {
@@ -308,12 +408,12 @@ function PengaturanPage() {
     >
       <div className="space-y-6">
         <Tabs
-          defaultValue="qris"
+          defaultValue="profile"
           className="w-full space-y-6"
           onValueChange={(v) => {
             const el = document.getElementById("pengaturan-slider");
             if (el) {
-              if (v === "toko") el.style.transform = "translateX(0)";
+              if (v === "profile") el.style.transform = "translateX(0)";
               if (v === "qris") el.style.transform = "translateX(100%)";
               if (v === "pajak") el.style.transform = "translateX(200%)";
               if (v === "perangkat") el.style.transform = "translateX(300%)";
@@ -325,21 +425,21 @@ function PengaturanPage() {
               <div
                 id="pengaturan-slider"
                 className="absolute left-1 top-1 bottom-1 w-[calc(25%-2px)] rounded-xl sm:rounded-full bg-background shadow-md border border-black/5 dark:border-white/10 transition-transform duration-300 ease-in-out z-0"
-                style={{ transform: "translateX(100%)" }}
+                style={{ transform: "translateX(0)" }}
               />
               <TabsTrigger
-                value="toko"
+                value="profile"
                 className="relative z-10 flex-1 flex-col sm:flex-row justify-center gap-1 sm:gap-2 rounded-xl sm:rounded-full py-2 sm:py-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground font-semibold transition-colors duration-300"
               >
-                <Store className="size-4 sm:size-4.5 shrink-0" />
-                <span className="text-[10px] sm:text-sm leading-none">Toko</span>
+                <User className="size-4 sm:size-4.5 shrink-0" />
+                <span className="text-[10px] sm:text-sm leading-none">Profil</span>
               </TabsTrigger>
               <TabsTrigger
                 value="qris"
                 className="relative z-10 flex-1 flex-col sm:flex-row justify-center gap-1 sm:gap-2 rounded-xl sm:rounded-full py-2 sm:py-0 data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-foreground font-semibold transition-colors duration-300"
               >
-                <QrCode className="size-4 sm:size-4.5 shrink-0" />
-                <span className="text-[10px] sm:text-sm leading-none">QRIS Merchant</span>
+                <Store className="size-4 sm:size-4.5 shrink-0" />
+                <span className="text-[10px] sm:text-sm leading-none">Merchant</span>
               </TabsTrigger>
               <TabsTrigger
                 value="pajak"
@@ -839,40 +939,271 @@ function PengaturanPage() {
             </TabsContent>
 
             {/* ========================================================= */}
-            {/* TAB 2: TOKO                                               */}
+            {/* TAB: PROFIL AKUN & INFORMASI BISNIS                      */}
             {/* ========================================================= */}
-            <TabsContent value="toko" className="mt-0 space-y-4">
-              <div className="card-soft p-5">
-                <h3 className="text-lg font-bold">Informasi Bisnis</h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Informasi ini akan tercetak di bagian atas (header) struk pelanggan.
-                </p>
+            <TabsContent value="profile" className="mt-0 space-y-6">
+              {/* Card 1: Identitas Akun Pengguna */}
+              <div className="card-soft p-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="size-16 ring-4 ring-blue-500/10 shadow-md">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xl">
+                        {userName
+                          ? userName.substring(0, 2).toUpperCase()
+                          : user?.email?.substring(0, 2).toUpperCase() || "CR"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                          {userName || user?.user_metadata?.["name"] || user?.email?.split("@")[0] || "Pengguna POS"}
+                        </h3>
+                        <Badge className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20 text-[10px] font-bold">
+                          <ShieldCheck className="size-3 mr-1" /> Terverifikasi
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Mail className="size-3.5 text-slate-400" /> {user?.email || "Tidak ada email"}
+                      </p>
+                      <div className="flex items-center gap-2 pt-0.5">
+                        <Badge variant="outline" className="text-[10px] font-medium text-slate-600 bg-slate-50 dark:bg-slate-800 dark:text-slate-300">
+                          Role: Owner / Admin UMKM
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="rounded-xl text-xs font-semibold gap-1.5 flex-1 sm:flex-initial"
+                      onClick={lockApp}
+                    >
+                      <Lock className="size-3.5" /> Kunci Aplikasi
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="rounded-xl text-xs font-semibold gap-1.5 flex-1 sm:flex-initial"
+                      onClick={signOut}
+                    >
+                      <LogOut className="size-3.5" /> Keluar
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Form Edit Data Akun */}
+                <div className="pt-5 space-y-4 max-w-2xl">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Data Akun Pengguna
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Nama Lengkap / Nama Tampilan
+                      </label>
+                      <Input
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                        placeholder="Masukkan nama Anda"
+                        className="rounded-xl bg-background"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Email Akun (Login)
+                      </label>
+                      <Input
+                        value={user?.email || ""}
+                        disabled
+                        className="rounded-xl bg-muted/50 text-muted-foreground font-mono text-xs cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        User ID (Supabase Auth UID)
+                      </label>
+                      <Input
+                        value={user?.id || "-"}
+                        disabled
+                        className="rounded-xl bg-muted/50 text-muted-foreground font-mono text-xs cursor-not-allowed"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Tanggal Terdaftar
+                      </label>
+                      <Input
+                        value={
+                          user?.created_at
+                            ? new Date(user.created_at).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              })
+                            : "-"
+                        }
+                        disabled
+                        className="rounded-xl bg-muted/50 text-muted-foreground text-xs cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 shadow-md shadow-blue-500/20"
+                      onClick={handleUpdateProfile}
+                      disabled={isUpdatingProfile}
+                    >
+                      {isUpdatingProfile ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin mr-2" /> Menyimpan...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="size-3.5 mr-1.5" /> Simpan Profil Akun
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 2: Informasi Bisnis & Toko */}
+              <div className="card-soft p-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Informasi Bisnis & Outlet
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Informasi ini akan dicantumkan pada struk transaksi fisik dan laporan penjualan.
+                  </p>
+                </div>
+
+                <div className="space-y-4 max-w-2xl">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Nama Toko / Brand
+                      </label>
+                      <Input
+                        value={storeName}
+                        onChange={(e) => setStoreName(e.target.value)}
+                        placeholder="Contoh: Crave Cafe & Eatery"
+                        className="rounded-xl bg-background"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Nomor Telepon / CS Toko
+                      </label>
+                      <Input
+                        value={storePhone}
+                        onChange={(e) => setStorePhone(e.target.value)}
+                        placeholder="Contoh: 0812-3456-7890"
+                        className="rounded-xl bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Alamat Toko
+                    </label>
+                    <Input
+                      value={storeAddress}
+                      onChange={(e) => setStoreAddress(e.target.value)}
+                      placeholder="Contoh: Jl. Sudirman No. 123, Jakarta Selatan"
+                      className="rounded-xl bg-background"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Pesan Bawah Struk (Footer)
+                    </label>
+                    <Input
+                      value={storeFooter}
+                      onChange={(e) => setStoreFooter(e.target.value)}
+                      placeholder="Contoh: Terima kasih atas kunjungannya!"
+                      className="rounded-xl bg-background"
+                    />
+                  </div>
+
+                  <div className="pt-2">
+                    <Button
+                      className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 shadow-md shadow-blue-500/20"
+                      onClick={handleSaveStoreInfo}
+                    >
+                      <Save className="size-3.5 mr-1.5" /> Simpan Info Toko
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card 3: Keamanan & Kata Sandi */}
+              <div className="card-soft p-6">
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                    Keamanan & Kata Sandi Akun
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Perbarui kata sandi login Anda untuk menjaga keamanan akun toko.
+                  </p>
+                </div>
 
                 <div className="space-y-4 max-w-xl">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold">Nama Toko</label>
-                    <Input
-                      defaultValue="Crave - Point of Sales"
-                      className="rounded-xl bg-background"
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Kata Sandi Baru
+                      </label>
+                      <Input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="Minimal 6 karakter"
+                        className="rounded-xl bg-background"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Konfirmasi Kata Sandi
+                      </label>
+                      <Input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="Ulangi kata sandi baru"
+                        className="rounded-xl bg-background"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold">Alamat</label>
-                    <Input
-                      defaultValue="Jl. Sudirman No. 123, Jakarta Selatan"
-                      className="rounded-xl bg-background"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-semibold">Nomor Telepon / WhatsApp</label>
-                    <Input defaultValue="0812-3456-7890" className="rounded-xl bg-background" />
-                  </div>
-                  <div className="space-y-1.5 pt-2">
-                    <label className="text-sm font-semibold">Pesan Bawah Struk (Footer)</label>
-                    <Input
-                      defaultValue="Terima kasih atas kunjungannya!"
-                      className="rounded-xl bg-background"
-                    />
+
+                  <div className="pt-2">
+                    <Button
+                      variant="outline"
+                      className="h-10 rounded-xl font-bold text-xs px-5 border-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      onClick={handleUpdatePassword}
+                      disabled={isUpdatingPassword || !newPassword}
+                    >
+                      {isUpdatingPassword ? (
+                        <>
+                          <Loader2 className="size-3.5 animate-spin mr-2" /> Memperbarui...
+                        </>
+                      ) : (
+                        <>
+                          <KeyRound className="size-3.5 mr-1.5" /> Perbarui Kata Sandi
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               </div>
