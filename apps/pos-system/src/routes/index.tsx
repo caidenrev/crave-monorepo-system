@@ -48,6 +48,7 @@ import { rupiah, type CartLine, type Product } from "@/lib/pos-data";
 import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useTransactions } from "@/lib/useTransactions";
+import { useMerchantSettings } from "@/lib/useMerchantSettings";
 import { useAuth } from "@/lib/useAuth";
 import {
   createPaymentGTInvoice,
@@ -86,6 +87,7 @@ function KasirPage() {
   const { data: products = [], isLoading: isLoadingProducts, error: productsError } = useProducts();
   const { data: catData = [] } = useCategories();
   const { checkoutMutation } = useTransactions();
+  const { settings: merchantSettings } = useMerchantSettings();
 
   const productCats = useMemo(() => {
     return ["Semua", ...catData.filter((c) => c.type === "product" || c.type === "all").map((c) => c.name)];
@@ -179,6 +181,8 @@ function KasirPage() {
         orderId,
         amount: total,
         expiresInMinutes: 10,
+        staticQris: merchantSettings?.static_qris || undefined,
+        sessionJson: merchantSettings?.session_json || undefined,
       });
 
       setQrisData(invoice);
@@ -208,7 +212,11 @@ function KasirPage() {
       pollingRef.current = setInterval(async () => {
         if (isSettlingRef.current) return;
         try {
-          const res = await getPaymentGTStatus(invoice.payment_id, total);
+          const res = await getPaymentGTStatus(
+            invoice.payment_id,
+            total,
+            merchantSettings?.session_json || undefined,
+          );
           const status = (res.status || "").toUpperCase();
           if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
             handleQrisSuccess();
@@ -268,7 +276,11 @@ function KasirPage() {
     if (isSettlingRef.current || !qrisData?.payment_id) return;
     setQrisChecking(true);
     try {
-      const res = await getPaymentGTStatus(qrisData.payment_id, total);
+      const res = await getPaymentGTStatus(
+        qrisData.payment_id,
+        total,
+        merchantSettings?.session_json || undefined,
+      );
       const status = (res.status || "").toUpperCase();
       if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
         handleQrisSuccess();

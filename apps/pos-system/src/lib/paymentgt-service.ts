@@ -1,6 +1,6 @@
 /**
  * ============================================================================
- * CRAVE POS — PAYMENTGT CLIENT SERVICE ADAPTER
+ * CRAVE POS — PAYMENTGT CLIENT SERVICE ADAPTER (MULTI-TENANT)
  * ============================================================================
  * Menghubungkan Crave POS dengan gateway QRIS dinamis & real-time settlement
  * Crave Payment Services (Vercel Serverless Go backend).
@@ -45,6 +45,46 @@ export type PaymentGTStatusResponse = {
   payment_type?: string;
 };
 
+export type ShopeeOtpChallenge = {
+  version: number;
+  phoneNumber: string;
+  channel: number;
+  availableChannels?: number[];
+  deviceFingerprint: string;
+  riskToken: string;
+  hasPassword?: boolean;
+  cookies?: Record<string, string>;
+  requestedAt: number;
+};
+
+export type ShopeeMerchantSummary = {
+  id: string;
+  name: string;
+  staffUserId: number;
+  isActive: boolean;
+  isBanned: boolean;
+  currency?: string;
+};
+
+export type ShopeeStore = {
+  id: string;
+  name: string;
+  merchantId: string;
+  address?: string;
+};
+
+export type ShopeeOtpVerifyResponse = {
+  success: boolean;
+  status: "CONNECTED" | "MERCHANT_SELECTION_NEEDED";
+  session?: any;
+  merchant?: ShopeeMerchantSummary;
+  store_id?: string;
+  stores?: ShopeeStore[];
+  merchants?: ShopeeMerchantSummary[];
+  verification?: any;
+  error?: string;
+};
+
 /**
  * Memeriksa apakah gateway server PaymentGT aktif dan terhubung
  */
@@ -55,7 +95,7 @@ export async function checkPaymentGTHealth(): Promise<{
 }> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
     const res = await fetch(`${PAYMENTGT_BASE_URL}/api`, {
       method: "GET",
       signal: controller.signal,
@@ -77,24 +117,138 @@ export async function checkPaymentGTHealth(): Promise<{
 }
 
 /**
+ * Meminta OTP login Shopee Merchant langsung dari browser via PaymentGT API
+ */
+export async function requestShopeeOtp(params: {
+  phone: string;
+  password?: string | undefined;
+}): Promise<{ success: boolean; challenge: ShopeeOtpChallenge; message: string }> {
+  const res = await fetch(`${PAYMENTGT_BASE_URL}/api/otp/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone: params.phone,
+      password: params.password || "",
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || "Gagal meminta kode OTP Shopee");
+  }
+
+  return data;
+}
+
+/**
+ * Memverifikasi kode OTP Shopee Merchant dan mendapatkan Session JSON
+ */
+export async function verifyShopeeOtp(params: {
+  challenge: ShopeeOtpChallenge;
+  otp: string;
+  merchantId?: string | undefined;
+  storeId?: string | undefined;
+}): Promise<ShopeeOtpVerifyResponse> {
+  const res = await fetch(`${PAYMENTGT_BASE_URL}/api/otp/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      challenge: params.challenge,
+      otp: params.otp,
+      merchant_id: params.merchantId || "",
+      store_id: params.storeId || "",
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || "Verifikasi OTP Shopee gagal");
+  }
+
+  return data;
+}
+
+/**
+ * Menyelesaikan login jika ada pemilihan multi-merchant
+ */
+export async function completeShopeeLogin(params: {
+  verification: any;
+  merchantId: string;
+  storeId?: string | undefined;
+}): Promise<ShopeeOtpVerifyResponse> {
+  const res = await fetch(`${PAYMENTGT_BASE_URL}/api/auth/complete`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      verification: params.verification,
+      merchant_id: params.merchantId,
+      store_id: params.storeId || "",
+    }),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.error || "Penyelesaian login merchant gagal");
+  }
+
+  return data;
+}
+
+/**
+ * Mengecek keaktifan Session Shopee Merchant dan mengambil info akun
+ */
+export async function checkShopeeMerchantInfo(sessionJson: string | object): Promise<{
+  active: boolean;
+  merchant?: ShopeeMerchantSummary | undefined;
+  storeId?: string | undefined;
+  stores?: ShopeeStore[] | undefined;
+  error?: string | undefined;
+}> {
+  try {
+    const raw = typeof sessionJson === "string" ? sessionJson : JSON.stringify(sessionJson);
+    const res = await fetch(`${PAYMENTGT_BASE_URL}/api/merchant/check`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_json: raw }),
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success && data.active) {
+      return {
+        active: true,
+        merchant: data.merchant,
+        storeId: data.store_id,
+        stores: data.stores || [],
+      };
+    }
+    return { active: false, error: data.error || "Sesi tidak aktif" };
+  } catch (err: any) {
+    return { active: false, error: err.message };
+  }
+}
+
+/**
  * Membuat invoice tagihan QRIS dinamis dengan nominal pas (Clean Pricing)
  */
 export async function createPaymentGTInvoice(params: {
   orderId: string;
   amount: number;
-  expiresInMinutes?: number;
-  callbackUrl?: string;
+  expiresInMinutes?: number | undefined;
+  staticQris?: string | undefined;
+  sessionJson?: string | undefined;
 }): Promise<PaymentGTCreateResponse> {
   const res = await fetch(`${PAYMENTGT_BASE_URL}/api/payments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(params.staticQris ? { "X-Static-Qris": params.staticQris } : {}),
     },
     body: JSON.stringify({
       order_id: params.orderId,
       amount: params.amount,
       expires_in_minutes: params.expiresInMinutes || 10,
-      callback_url: params.callbackUrl || "",
+      static_qris: params.staticQris || "",
+      session_json: params.sessionJson || "",
     }),
   });
 
@@ -112,15 +266,33 @@ export async function createPaymentGTInvoice(params: {
  */
 export async function getPaymentGTStatus(
   paymentId: string,
-  amount?: number,
+  amount?: number | undefined,
+  sessionJson?: string | undefined,
 ): Promise<PaymentGTStatusResponse> {
-  const query = amount ? `?amount=${amount}` : "";
-  const res = await fetch(`${PAYMENTGT_BASE_URL}/api/payments/${paymentId}${query}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  let res: Response;
+
+  if (sessionJson) {
+    // Gunakan POST jika session json disertakan untuk multi-tenant query
+    res = await fetch(`${PAYMENTGT_BASE_URL}/api/payment/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payment_id: paymentId,
+        amount: amount || 0,
+        session_json: sessionJson,
+      }),
+    });
+  } else {
+    const query = amount ? `?amount=${amount}` : "";
+    res = await fetch(`${PAYMENTGT_BASE_URL}/api/payments/${paymentId}${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   if (!res.ok) {
     throw new Error(`Gagal mengecek status pembayaran ${paymentId}`);
