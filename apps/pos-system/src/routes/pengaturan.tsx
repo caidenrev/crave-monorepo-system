@@ -622,7 +622,7 @@ function PengaturanPage() {
 
                           <div className="space-y-4">
                             {/* PIN-STYLE SEGMENTED 6-DIGIT BOX INPUT */}
-                            <div className="relative flex flex-col items-center justify-center my-3">
+                            <div className="relative flex flex-col items-center justify-center my-3 w-full">
                               <input
                                 ref={otpInputRef}
                                 type="text"
@@ -638,7 +638,7 @@ function PengaturanPage() {
                                 className="absolute inset-0 size-full opacity-0 cursor-pointer z-10"
                                 autoFocus
                               />
-                              <div className="flex items-center justify-center gap-2 sm:gap-3">
+                              <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-full px-1">
                                 {Array.from({ length: 6 }).map((_, index) => {
                                   const char = otp[index] || "";
                                   const isCurrent = otp.length === index;
@@ -648,7 +648,7 @@ function PengaturanPage() {
                                       key={index}
                                       onClick={() => otpInputRef.current?.focus()}
                                       className={cn(
-                                        "size-11 sm:size-13 rounded-2xl border-2 flex items-center justify-center font-mono text-xl sm:text-2xl font-black transition-all cursor-pointer select-none",
+                                        "size-10 sm:size-12 rounded-xl sm:rounded-2xl border-2 flex items-center justify-center font-mono text-lg sm:text-2xl font-black transition-all cursor-pointer select-none shrink-0",
                                         isCurrent
                                           ? "border-blue-600 bg-blue-50/80 shadow-md shadow-blue-500/20 scale-105 ring-2 ring-blue-500/20 text-blue-600"
                                           : isFilled
@@ -656,7 +656,7 @@ function PengaturanPage() {
                                             : "border-slate-200 bg-white/70 text-slate-300",
                                       )}
                                     >
-                                      {char || (isCurrent ? <span className="inline-block w-0.5 h-6 bg-blue-600 animate-pulse" /> : "•")}
+                                      {char || (isCurrent ? <span className="inline-block w-0.5 h-5 sm:h-6 bg-blue-600 animate-pulse" /> : "•")}
                                     </div>
                                   );
                                 })}
@@ -666,7 +666,7 @@ function PengaturanPage() {
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-2 pt-1">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1 w-full">
                               <Button
                                 className="h-11 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-md shadow-emerald-600/20"
                                 onClick={handleVerifyOtp}
@@ -683,7 +683,7 @@ function PengaturanPage() {
                               </Button>
                               <Button
                                 variant="outline"
-                                className="h-11 rounded-xl"
+                                className="h-11 rounded-xl w-full sm:w-auto"
                                 onClick={() => {
                                   setOtpStep("idle");
                                   setOtp("");
@@ -736,7 +736,7 @@ function PengaturanPage() {
                               </button>
                             ))}
 
-                            <div className="flex items-center gap-2 pt-2">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 w-full">
                               <Button
                                 className="h-11 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-white shadow-md shadow-blue-500/20"
                                 onClick={handleCompleteMerchantSelection}
@@ -752,7 +752,7 @@ function PengaturanPage() {
                               </Button>
                               <Button
                                 variant="outline"
-                                className="h-11 rounded-xl"
+                                className="h-11 rounded-xl w-full sm:w-auto"
                                 onClick={() => {
                                   setOtpStep("idle");
                                   setOtp("");
