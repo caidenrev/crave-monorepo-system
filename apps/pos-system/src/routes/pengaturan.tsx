@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuth } from "@/lib/useAuth";
 import { supabase } from "@/lib/supabase";
+import profileLogo from "@/assets/profile-logo.jpeg";
 import {
   useMerchantSettings,
   type MerchantSettings,
@@ -948,7 +949,7 @@ function PengaturanPage() {
                   <div className="flex items-center gap-4">
                     <div className="size-16 rounded-full overflow-hidden shrink-0 ring-4 ring-blue-500/15 shadow-md border-2 border-white dark:border-slate-800 bg-slate-100 dark:bg-slate-800">
                       <img
-                        src="/profile-logo.jpeg"
+                        src={profileLogo}
                         alt="Profile"
                         className="size-full object-cover"
                       />

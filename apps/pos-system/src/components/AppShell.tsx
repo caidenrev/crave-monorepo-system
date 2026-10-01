@@ -35,6 +35,7 @@ import { useNotifications } from "@/lib/useNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { useAuth } from "@/lib/useAuth";
+import profileLogo from "@/assets/profile-logo.jpeg";
 
 const nav = [
   { to: "/", label: "Kasir", icon: ScanBarcode },
@@ -161,7 +162,7 @@ export function AppShell({
                   <button className="flex items-center gap-2 rounded-xl border bg-card px-2 py-1.5 shadow-soft hover:bg-accent outline-none transition-colors">
                     <div className="size-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
                       <img
-                        src="/profile-logo.jpeg"
+                        src={profileLogo}
                         alt="Profile"
                         className="size-full object-cover"
                       />

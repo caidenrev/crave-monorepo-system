@@ -42,6 +42,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/lib/useNotifications";
 import { useAuth } from "@/lib/useAuth";
+import profileLogo from "@/assets/profile-logo.jpeg";
 
 type Item = {
   to: string;
@@ -360,7 +361,7 @@ export function SideNav({
               >
                 <div className="size-8 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
                   <img
-                    src="/profile-logo.jpeg"
+                    src={profileLogo}
                     alt="Profile"
                     className="size-full object-cover"
                   />
