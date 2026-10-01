@@ -14,7 +14,7 @@ import {
   User as UserIcon,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -160,10 +160,11 @@ export function AppShell({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-xl border bg-card px-2 py-1.5 shadow-soft hover:bg-accent outline-none transition-colors">
                     <Avatar className="size-7">
-                      <AvatarFallback className="bg-primary text-[11px] text-primary-foreground">
+                      <AvatarImage src="/profile-logo.jpeg" alt="Profile" className="object-cover" />
+                      <AvatarFallback className="bg-primary text-[11px] text-primary-foreground font-bold">
                         {user?.user_metadata?.["name"]
                           ? user.user_metadata["name"].substring(0, 2).toUpperCase()
-                          : user?.email?.substring(0, 2).toUpperCase() || "U"}
+                          : user?.email?.substring(0, 2).toUpperCase() || "EK"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden leading-tight text-left sm:block">

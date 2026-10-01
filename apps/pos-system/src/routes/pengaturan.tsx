@@ -33,7 +33,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { AppShell } from "@/components/AppShell";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -947,10 +947,11 @@ function PengaturanPage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-4">
                     <Avatar className="size-16 ring-4 ring-blue-500/10 shadow-md">
+                      <AvatarImage src="/profile-logo.jpeg" alt="Profile" className="object-cover" />
                       <AvatarFallback className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xl">
                         {userName
                           ? userName.substring(0, 2).toUpperCase()
-                          : user?.email?.substring(0, 2).toUpperCase() || "CR"}
+                          : user?.email?.substring(0, 2).toUpperCase() || "EK"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">

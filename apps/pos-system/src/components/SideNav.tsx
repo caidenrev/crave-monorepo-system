@@ -27,7 +27,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -359,10 +359,11 @@ export function SideNav({
                 )}
               >
                 <Avatar className="size-8">
-                  <AvatarFallback className="bg-primary text-[11px] text-primary-foreground">
+                  <AvatarImage src="/profile-logo.jpeg" alt="Profile" className="object-cover" />
+                  <AvatarFallback className="bg-primary text-[11px] text-primary-foreground font-bold">
                     {user?.user_metadata?.["name"]
                       ? user.user_metadata["name"].substring(0, 2).toUpperCase()
-                      : user?.email?.substring(0, 2).toUpperCase() || "U"}
+                      : user?.email?.substring(0, 2).toUpperCase() || "EK"}
                   </AvatarFallback>
                 </Avatar>
                 {!isCollapsed && (
