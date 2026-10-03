@@ -3,6 +3,10 @@
     {
       "source": "/pos-system/:path*",
       "destination": "https://crave-pos-system.vercel.app/pos-system/:path*"
+    },
+    {
+      "source": "/crave-event/:path*",
+      "destination": "https://crave-event.vercel.app/crave-event/:path*"
     }
   ]
 }

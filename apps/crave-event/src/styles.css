@@ -1,0 +1,769 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* SF Pro Display Local Fonts */
+/* Upright / Normal weights */
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYREGULAR.OTF") format("opentype");
+  font-weight: 300 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYMEDIUM.OTF") format("opentype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYBOLD.OTF") format("opentype");
+  font-weight: 600 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Italic weights */
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYTHINITALIC.OTF") format("opentype");
+  font-weight: 100;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYULTRALIGHTITALIC.OTF") format("opentype");
+  font-weight: 200;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYLIGHTITALIC.OTF") format("opentype");
+  font-weight: 300 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYSEMIBOLDITALIC.OTF") format("opentype");
+  font-weight: 500 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYHEAVYITALIC.OTF") format("opentype");
+  font-weight: 700 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/font/SFPRODISPLAYBLACKITALIC.OTF") format("opentype");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/*
+ * Aether UI design system (design.md)
+ * iOS-inspired liquid glass, single blue accent, white/off-white canvas.
+ * Never hardcode hex in components — use these tokens.
+ */
+
+:root {
+  /* Surface */
+  --canvas: #f5f7fb;
+  --surface: #ffffff;
+  --surface-glass: rgba(255, 255, 255, 0.55);
+  --surface-glass-strong: rgba(255, 255, 255, 0.75);
+
+  /* Ink */
+  --ink: #1d1d1f;
+  --ink-secondary: #54545a;
+  --ink-tertiary: #86868b;
+  --ink-inverse: #f5f5f7;
+  --hairline: rgba(15, 23, 42, 0.08);
+
+  /* Accent */
+  --accent: #0a84ff;
+  --accent-strong: #0056b3;
+  --accent-soft: #4c9beb;
+  --accent-tint: #e6eef9;
+  --accent-ring: rgba(10, 132, 255, 0.32);
+  --accent-glass: rgba(0, 122, 255, 0.4);
+
+  /* Status */
+  --success: #22c55e;
+  --warning: #fcbb04;
+  --danger: #ff3b30;
+
+  /* Radius */
+  --radius-pill: 9999px;
+
+  /* Glass */
+  --glass-blur: blur(20px) saturate(180%);
+  --glass-bevel-inset:
+    inset 1.5px 1.5px 0 0 rgba(255, 255, 255, 0.9), inset -1px -1px 0 0 rgba(255, 255, 255, 0.55),
+    inset 0 0 0 1px rgba(15, 23, 42, 0.04);
+  --glass-shadow-resting:
+    0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 28px -10px rgba(15, 23, 42, 0.16);
+  --glass-shadow-raised: 0 2px 4px rgba(15, 23, 42, 0.06), 0 22px 44px -14px rgba(15, 23, 42, 0.22);
+  --glass-bevel-pressed:
+    inset 1px 1px 1px rgba(15, 23, 42, 0.08), inset -1px -1px 0 rgba(255, 255, 255, 0.55);
+
+  /* Neumorphic blue-white */
+  --neu-base: #f0f4fa;
+  --neu-shadow-dark: #d3ddea;
+  --neu-shadow-light: #ffffff;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-spring: cubic-bezier(0.5, 1.6, 0.4, 1);
+  --dur-fast: 140ms;
+  --dur-med: 220ms;
+
+  --focus-ring: 0 0 0 3px var(--accent-ring);
+
+  --font-sans: "SF Pro Display", -apple-system, "SF Pro Text", "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* shadcn compatibility layer, mapped onto Aether tokens */
+  --radius: 1.375rem;
+  --background: var(--canvas);
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--accent);
+  --primary-foreground: #ffffff;
+  --secondary: var(--accent-tint);
+  --secondary-foreground: var(--accent-strong);
+  --muted: var(--neu-base);
+  --muted-foreground: var(--ink-tertiary);
+  --accent-bg: var(--accent-tint);
+  --destructive: var(--danger);
+  --destructive-foreground: #ffffff;
+  --border: var(--hairline);
+  --input: var(--hairline);
+  --ring: var(--accent-ring);
+}
+
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-2xl: 34px;
+  --radius-pill: 9999px;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-glass: var(--surface-glass);
+  --color-glass-strong: var(--surface-glass-strong);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-tertiary: var(--ink-tertiary);
+  --color-ink-inverse: var(--ink-inverse);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-glass: var(--accent-glass);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-neu: var(--neu-base);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+@utility glass {
+  background: var(--surface-glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--glass-bevel-inset), var(--glass-shadow-resting);
+}
+
+@utility glass-light {
+  background: var(--surface-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--glass-bevel-inset);
+}
+
+@utility neu {
+  background: var(--neu-base);
+  box-shadow: 8px 8px 16px var(--neu-shadow-dark), -8px -8px 16px var(--neu-shadow-light);
+}
+
+@utility neu-inset {
+  background: var(--neu-base);
+  box-shadow:
+    inset 4px 4px 10px var(--neu-shadow-dark), inset -4px -4px 10px var(--neu-shadow-light);
+}
+
+@utility lift {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-med) var(--ease-out);
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--glass-bevel-inset), var(--glass-shadow-raised);
+  }
+
+  &:active {
+    transform: scale(0.97);
+    box-shadow: var(--glass-bevel-pressed);
+  }
+}
+
+@utility overline {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+}
+
+@utility aether-meta {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+}
+
+.overline {
+  text-decoration: none !important;
+  text-decoration-line: none !important;
+  font-family: var(--font-sans) !important;
+}
+
+/* Frosted Glass Stats Widget (Bening Glass + Aether Inset) */
+.neu-stat-card {
+  padding: 0.85rem 0.95rem;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-radius: 20px;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 3px 3px 8px rgba(165, 175, 190, 0.35),
+    inset -3px -3px 8px #ffffff,
+    0 12px 28px -8px rgba(15, 23, 42, 0.06);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-med) var(--ease-out);
+}
+
+@media (min-width: 640px) {
+  .neu-stat-card {
+    padding: 1.15rem 1.25rem;
+  }
+}
+
+.neu-stat-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 2px 2px 5px rgba(165, 175, 190, 0.25),
+    inset -2px -2px 5px #ffffff,
+    0 18px 36px -8px rgba(10, 132, 255, 0.1);
+}
+
+.neu-stat-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1c8eff 0%, #0a84ff 60%, #0070e6 100%);
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.45),
+    inset -2px -2px 4px rgba(0, 50, 130, 0.35),
+    0 2px 6px rgba(10, 132, 255, 0.25);
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 9999px;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.neu-step-circle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1c8eff 0%, #0a84ff 60%, #0070e6 100%);
+  box-shadow:
+    inset 2.5px 2.5px 5px rgba(255, 255, 255, 0.5),
+    inset -2.5px -2.5px 5px rgba(0, 50, 130, 0.4),
+    0 4px 12px rgba(10, 132, 255, 0.35);
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  color: #ffffff;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  font-family: var(--font-sans);
+}
+
+.neu-stat-range {
+  position: relative;
+  background: rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 2px 2px 4px rgba(165, 175, 190, 0.35),
+    inset -2px -2px 4px #ffffff;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  overflow: hidden;
+  border: 0.5px solid rgba(255, 255, 255, 0.8);
+}
+
+.neu-stat-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: linear-gradient(90deg, #0a84ff 0%, #00b4d8 100%);
+  height: 100%;
+  border-radius: 0.25rem;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tactile Glass Badges & Capsules */
+.neu-badge-accent {
+  background: rgba(10, 132, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(10, 132, 255, 0.35);
+  box-shadow:
+    inset 2px 2px 4px rgba(10, 132, 255, 0.15),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+  color: #0a84ff !important;
+}
+
+.neu-badge-glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 2px 2px 4px rgba(165, 175, 190, 0.3),
+    inset -2px -2px 4px #ffffff;
+}
+
+.neu-badge-success {
+  background: rgba(16, 185, 129, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(16, 185, 129, 0.35);
+  box-shadow:
+    inset 2px 2px 4px rgba(16, 185, 129, 0.15),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+  color: #059669 !important;
+}
+
+.neu-badge-warning {
+  background: rgba(245, 158, 11, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  box-shadow:
+    inset 2px 2px 4px rgba(245, 158, 11, 0.15),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.8);
+  color: #d97706 !important;
+}
+
+/* Tactile Capsule Segmented Switch (iOS Glider Switch) */
+.neu-capsule-track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 9999px;
+  box-shadow:
+    inset 2px 2px 5px rgba(165, 175, 190, 0.35),
+    inset -2px -2px 5px #ffffff,
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  user-select: none;
+  overflow: hidden;
+}
+
+.neu-capsule-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #1c8eff 0%, #0a84ff 60%, #0070e6 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.45),
+    inset -2px -2px 4px rgba(0, 50, 130, 0.4),
+    0 3px 10px rgba(10, 132, 255, 0.35);
+  transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease;
+  will-change: transform, left;
+  pointer-events: none;
+}
+
+/* Tactile Glass Links & Arrow Chips */
+.neu-link-glass {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 2px 2px 5px rgba(165, 175, 190, 0.3),
+    inset -2px -2px 5px #ffffff,
+    0 2px 6px rgba(0, 0, 0, 0.03);
+  font-size: 13px;
+  font-weight: 600;
+  color: #0a84ff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-link-glass:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #0070e0;
+  box-shadow:
+    inset 1.5px 1.5px 3px rgba(165, 175, 190, 0.25),
+    inset -1.5px -1.5px 3px #ffffff,
+    0 4px 12px rgba(10, 132, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+/* Danger Tactile Glass Button (e.g. Reset Filter) */
+.neu-btn-danger-glass {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(255, 242, 242, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  box-shadow:
+    inset 2px 2px 4px rgba(239, 68, 68, 0.15),
+    inset -2px -2px 4px #ffffff,
+    0 2px 6px rgba(239, 68, 68, 0.08);
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neu-btn-danger-glass:hover {
+  background: rgba(254, 226, 226, 0.9);
+  color: #dc2626;
+  box-shadow:
+    inset 1.5px 1.5px 3px rgba(239, 68, 68, 0.2),
+    inset -1.5px -1.5px 3px #ffffff,
+    0 4px 10px rgba(239, 68, 68, 0.15);
+  transform: translateY(-1px);
+}
+
+.neu-btn-danger-glass:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow:
+    inset 3px 3px 6px rgba(239, 68, 68, 0.25),
+    inset -1.5px -1.5px 3px #ffffff;
+}
+
+/* Neumorphic Inset Tactile Buttons (user requested style) */
+.neu-btn-blue {
+  background: linear-gradient(135deg, #1c8eff 0%, #0a84ff 60%, #0070e6 100%);
+  border-radius: 9999px;
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 50, 130, 0.45),
+    inset -3px -3px 8px rgba(130, 205, 255, 0.5),
+    0 4px 14px rgba(10, 132, 255, 0.35);
+  color: #ffffff !important;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+}
+
+.neu-btn-blue:hover,
+.neu-btn-blue:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 50, 130, 0.45),
+    inset -2px -2px 5px rgba(130, 205, 255, 0.55),
+    2px 2px 8px rgba(0, 50, 130, 0.25),
+    -2px -2px 8px rgba(255, 255, 255, 0.7),
+    0 6px 20px rgba(10, 132, 255, 0.45);
+  transform: translateY(-1px);
+}
+
+.neu-btn-blue:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 40, 100, 0.6),
+    inset -2px -2px 6px rgba(130, 205, 255, 0.3);
+}
+
+.neu-btn-glass {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 9999px;
+  box-shadow:
+    inset 3px 3px 8px rgba(165, 175, 190, 0.45),
+    inset -3px -3px 8px #ffffff,
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  color: #1d1d1f;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+}
+
+.neu-btn-glass:hover,
+.neu-btn-glass:focus-visible {
+  outline: none;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow:
+    inset 2px 2px 5px rgba(165, 175, 190, 0.35),
+    inset -2px -2px 5px #ffffff,
+    2px 2px 6px rgba(165, 175, 190, 0.35),
+    -2px -2px 6px #ffffff;
+  color: #0a84ff;
+  transform: translateY(-1px);
+}
+
+.neu-btn-glass:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow:
+    inset 4px 4px 10px rgba(165, 175, 190, 0.65),
+    inset -2px -2px 5px #ffffff;
+}
+
+/* Pure Frosted Glass Card (Kaca Bening Berembun - Tanpa Warna & Tanpa Animasi) */
+.frosted-glass-card,
+.crystal-card {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-radius: 24px;
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 16px 36px -10px rgba(15, 23, 42, 0.08),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.02);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-med) var(--ease-out);
+}
+
+.frosted-glass-card:hover,
+.crystal-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.75);
+  box-shadow:
+    0 24px 44px -10px rgba(15, 23, 42, 0.12),
+    inset 0 1px 2px 0 rgba(255, 255, 255, 1);
+}
+
+.crystal-card-glow {
+  display: none !important;
+}
+
+.crystal-card-inner {
+  position: relative;
+  border-radius: 22px;
+  background: transparent;
+}
+
+@layer base {
+  * {
+    border-color: var(--hairline);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.002em;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.012em;
+    font-family: var(--font-sans);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  input,
+  input:focus,
+  input:focus-visible,
+  textarea,
+  textarea:focus,
+  textarea:focus-visible {
+    outline: none !important;
+    outline-color: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+@keyframes aether-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes aether-pop {
+  from {
+    transform: scale(0.94);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Solid White Navbar with Drop Shadow */
+.nav-solid-white {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 10px 30px -5px rgba(15, 23, 42, 0.08),
+    0 2px 6px -1px rgba(15, 23, 42, 0.04);
+}
+
+.dropdown-solid-white {
+  background: #ffffff !important;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow:
+    0 20px 48px -10px rgba(15, 23, 42, 0.15),
+    0 4px 14px -2px rgba(15, 23, 42, 0.06);
+}
+
+/* Tactile 3D Blue Sphere Icon (like step circle in reference images 2 & 3) */
+.neu-icon-sphere {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1c8eff 0%, #0a84ff 60%, #0070e6 100%);
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.6),
+    inset -2px -2px 4px rgba(0, 50, 130, 0.4),
+    0 4px 12px rgba(10, 132, 255, 0.35);
+  border-radius: 9999px;
+  color: #ffffff !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.65);
+  flex-shrink: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.neu-icon-sphere:hover {
+  transform: scale(1.05);
+  box-shadow:
+    inset 2px 2px 4px rgba(255, 255, 255, 0.7),
+    inset -2px -2px 4px rgba(0, 50, 130, 0.45),
+    0 6px 16px rgba(10, 132, 255, 0.45);
+}
+
+/* Clay Puff Typography & 3D Tactile Effect */
+.font-clay-puff {
+  font-family: "Fredoka", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.015em;
+}
+
+.clay-puff-heading {
+  font-family: "Fredoka", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #090d16; /* Base Black */
+  letter-spacing: -0.015em;
+  font-weight: 700;
+  text-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.9),
+    0 3px 6px rgba(15, 23, 42, 0.12),
+    0 10px 24px rgba(15, 23, 42, 0.08);
+}
+
+.clay-puff-blue {
+  color: #0a84ff !important;
+  text-shadow:
+    0 1px 1px rgba(255, 255, 255, 0.95),
+    0 4px 10px rgba(10, 132, 255, 0.38),
+    0 8px 24px rgba(10, 132, 255, 0.22);
+}
+
+
+

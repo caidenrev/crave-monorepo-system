@@ -5,11 +5,13 @@
     "apps/*"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev:landing\" \"npm run dev:pos\"",
+    "dev": "concurrently \"npm run dev:landing\" \"npm run dev:pos\" \"npm run dev:event\"",
     "dev:landing": "npm run dev --workspace=landing",
     "dev:pos": "npm run dev --workspace=pos-system",
+    "dev:event": "npm run dev --workspace=crave-event",
     "build:landing": "npm run build --workspace=landing",
     "build:pos": "npm run build --workspace=pos-system",
+    "build:event": "npm run build --workspace=crave-event",
     "lint": "npm run lint --workspaces",
     "format": "npm run format --workspaces"
   },
