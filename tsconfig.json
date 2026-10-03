@@ -6,6 +6,9 @@
     },
     {
       "path": "./apps/pos-system"
+    },
+    {
+      "path": "./apps/promo-video"
     }
   ]
 }
