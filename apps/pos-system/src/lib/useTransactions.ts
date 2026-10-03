@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "./supabase";
+import { useAuth } from "./useAuth";
 import type { CartLine } from "./pos-data";
 import { toast } from "sonner";
 
@@ -11,15 +12,19 @@ type CheckoutPayload = {
 
 export function useTransactions() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const checkoutMutation = useMutation({
     mutationFn: async ({ cart, method, cashierName }: CheckoutPayload) => {
+      if (!user) throw new Error("Pengguna belum terautentikasi");
+
       const totalAmount = cart.reduce((acc, item) => acc + item.product.price * item.qty, 0);
       const totalItems = cart.reduce((acc, item) => acc + item.qty, 0);
 
       const { data: trxData, error: trxError } = await supabase
         .from("transactions")
         .insert({
+          user_id: user.id,
           payment_method: method,
           total_amount: totalAmount,
           total_items: totalItems,
@@ -32,6 +37,7 @@ export function useTransactions() {
 
       for (const line of cart) {
         const { error: itemError } = await supabase.from("transaction_items").insert({
+          user_id: user.id,
           transaction_id: trxData.id,
           product_id: line.product.id,
           qty: line.qty,
@@ -43,16 +49,19 @@ export function useTransactions() {
           .from("products")
           .select("stock")
           .eq("id", line.product.id)
+          .eq("user_id", user.id)
           .single();
 
         if (pData) {
           await supabase
             .from("products")
             .update({ stock: pData.stock - line.qty })
-            .eq("id", line.product.id);
+            .eq("id", line.product.id)
+            .eq("user_id", user.id);
 
           await supabase.from("stock_movements").insert([
             {
+              user_id: user.id,
               product_id: line.product.id,
               type: "OUT",
               qty: line.qty,

@@ -27,7 +27,7 @@ import {
   Lightbulb,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,6 +42,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/lib/useNotifications";
 import { useAuth } from "@/lib/useAuth";
+import profileLogo from "@/assets/profile-logo.jpeg";
 
 type Item = {
   to: string;
@@ -358,13 +359,13 @@ export function SideNav({
                     "justify-center border-0 bg-transparent p-0 shadow-none hover:bg-transparent",
                 )}
               >
-                <Avatar className="size-8">
-                  <AvatarFallback className="bg-primary text-[11px] text-primary-foreground">
-                    {user?.user_metadata?.["name"]
-                      ? user.user_metadata["name"].substring(0, 2).toUpperCase()
-                      : user?.email?.substring(0, 2).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="size-8 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
+                  <img
+                    src={profileLogo}
+                    alt="Profile"
+                    className="size-full object-cover"
+                  />
+                </div>
                 {!isCollapsed && (
                   <>
                     <div className="min-w-0 flex-1 leading-tight text-left">

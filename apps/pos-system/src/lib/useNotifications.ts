@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
-import { isToday, isPast, parseISO } from "date-fns";
+import { useAuth } from "./useAuth";
 
 export type AppNotification = {
   id: string;
@@ -12,12 +12,19 @@ export type AppNotification = {
 };
 
 export function useNotifications() {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", user?.id],
     queryFn: async () => {
+      if (!user) return [];
       const notifs: AppNotification[] = [];
 
-      const { data: products } = await supabase.from("products").select("*");
+      const { data: products } = await supabase
+        .from("products")
+        .select("*")
+        .eq("user_id", user.id);
+
       if (products) {
         products.forEach((p) => {
           if (p.stock <= p.min_stock) {
@@ -38,6 +45,7 @@ export function useNotifications() {
       const { data: txs } = await supabase
         .from("transactions")
         .select("*")
+        .eq("user_id", user.id)
         .gte("created_at", startOfToday.toISOString())
         .order("created_at", { ascending: false })
         .limit(10);
@@ -59,6 +67,7 @@ export function useNotifications() {
 
       return notifs;
     },
+    enabled: !!user,
     refetchInterval: 15000,
   });
 }

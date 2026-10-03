@@ -1,14 +1,30 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { supabase } from "./supabase";
+import { useAuth } from "./useAuth";
 import { format, subDays, startOfDay, isSameDay } from "date-fns";
 
 export function useDashboard() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const query = useQuery({
-    queryKey: ["dashboard-stats"],
+    queryKey: ["dashboard-stats", user?.id],
     queryFn: async () => {
+      if (!user) {
+        return {
+          pendapatanHariIni: 0,
+          totalTransaksi: 0,
+          rataRataBelanja: 0,
+          categoryShare: [{ name: "Belum ada", value: 100 }],
+          salesByHour: [],
+          salesByDay: [],
+          salesByWeek: [],
+          weeklySales: [],
+          recentTransactions: [],
+        };
+      }
+
       const today = new Date();
       const twentyEightDaysAgo = startOfDay(subDays(today, 27)).toISOString();
 
@@ -31,12 +47,13 @@ export function useDashboard() {
           )
         `,
         )
+        .eq("user_id", user.id)
         .gte("created_at", twentyEightDaysAgo)
         .order("created_at", { ascending: false });
 
       if (txError) throw new Error(txError.message);
 
-      const todayTxs = txs.filter((t) => isSameDay(new Date(t.created_at), today));
+      const todayTxs = (txs || []).filter((t) => isSameDay(new Date(t.created_at), today));
 
       const pendapatanHariIni = todayTxs.reduce((sum, t) => sum + Number(t.total_amount), 0);
       const totalTransaksi = todayTxs.length;
@@ -51,7 +68,7 @@ export function useDashboard() {
       };
 
       todayTxs.forEach((t) => {
-        t.transaction_items.forEach((item: any) => {
+        (t.transaction_items || []).forEach((item: any) => {
           const cat = item.products?.category || "Lainnya";
           categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(item.qty) * Number(item.price);
         });
@@ -80,7 +97,7 @@ export function useDashboard() {
       const salesByDay = [];
       for (let i = 6; i >= 0; i--) {
         const d = subDays(today, i);
-        const dayTxs = txs.filter((t) => isSameDay(new Date(t.created_at), d));
+        const dayTxs = (txs || []).filter((t) => isSameDay(new Date(t.created_at), d));
         const sum = dayTxs.reduce((acc, t) => acc + Number(t.total_amount), 0);
         salesByDay.push({ label: format(d, "EEE"), penjualan: sum });
       }
@@ -89,7 +106,7 @@ export function useDashboard() {
       for (let i = 3; i >= 0; i--) {
         const endD = subDays(today, i * 7);
         const startD = subDays(endD, 6);
-        const weekTxs = txs.filter((t) => {
+        const weekTxs = (txs || []).filter((t) => {
           const tDate = new Date(t.created_at);
           return tDate >= startOfDay(startD) && tDate <= endD;
         });
@@ -101,11 +118,11 @@ export function useDashboard() {
       for (let i = 6; i >= 0; i--) {
         const d = subDays(today, i);
         const dStr = format(d, "EEE");
-        const dayTxs = txs.filter((t) => isSameDay(new Date(t.created_at), d));
+        const dayTxs = (txs || []).filter((t) => isSameDay(new Date(t.created_at), d));
 
         const dayCats: Record<string, number> = { Minuman: 0, Makanan: 0, Snack: 0, Lainnya: 0 };
         dayTxs.forEach((t) => {
-          t.transaction_items.forEach((item: any) => {
+          (t.transaction_items || []).forEach((item: any) => {
             const cat = item.products?.category || "Lainnya";
             dayCats[cat] = (dayCats[cat] || 0) + Number(item.qty) * Number(item.price);
           });
@@ -117,7 +134,7 @@ export function useDashboard() {
         });
       }
 
-      const recentTransactions = txs.slice(0, 10).map((t) => ({
+      const recentTransactions = (txs || []).slice(0, 10).map((t) => ({
         id: t.id.substring(0, 8).toUpperCase(),
         time: format(new Date(t.created_at), "HH:mm"),
         cashier: t.cashier_name || "Kasir",
@@ -138,17 +155,18 @@ export function useDashboard() {
         recentTransactions,
       };
     },
+    enabled: !!user,
   });
 
   useEffect(() => {
-    const channelId = `realtime_dashboard_${Math.random()}`;
+    if (!user) return;
+    const channelId = `realtime_dashboard_${user.id}_${Math.random()}`;
     const channel = supabase
       .channel(channelId)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "transactions" },
-        (payload) => {
-          console.log("Realtime transactions update:", payload);
+        { event: "*", schema: "public", table: "transactions", filter: `user_id=eq.${user.id}` },
+        () => {
           queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
           queryClient.invalidateQueries({ queryKey: ["reports"] });
         },
@@ -158,7 +176,7 @@ export function useDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, user]);
 
   return query;
 }

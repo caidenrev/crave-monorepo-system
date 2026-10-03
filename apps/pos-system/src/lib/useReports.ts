@@ -1,9 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "./supabase";
+import { useAuth } from "./useAuth";
 import { startOfDay, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 
 export type ReportTransaction = {
   id: string;
+  user_id?: string;
   created_at: string;
   cashier_name: string;
   payment_method: string;
@@ -13,6 +15,7 @@ export type ReportTransaction = {
 
 export type StockMovement = {
   id: string;
+  user_id?: string;
   product_id: string;
   type: "IN" | "OUT";
   qty: number;
@@ -33,9 +36,15 @@ export type ReportFilters = {
 };
 
 export function useReports(filters: ReportFilters = { period: "bulan", cashier: "semua" }) {
+  const { user } = useAuth();
+
   return useQuery({
-    queryKey: ["reports", filters.period, filters.cashier],
+    queryKey: ["reports", user?.id, filters.period, filters.cashier],
     queryFn: async () => {
+      if (!user) {
+        return { transactions: [], stockMovements: [] };
+      }
+
       let startDate: Date | null = null;
       const now = new Date();
       if (filters.period === "hari") startDate = startOfDay(now);
@@ -46,7 +55,9 @@ export function useReports(filters: ReportFilters = { period: "bulan", cashier: 
       let txQuery = supabase
         .from("transactions")
         .select("*")
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+
       if (startDate) txQuery = txQuery.gte("created_at", startDate.toISOString());
       if (filters.cashier !== "semua")
         txQuery = txQuery.ilike("cashier_name", `%${filters.cashier}%`);
@@ -68,6 +79,7 @@ export function useReports(filters: ReportFilters = { period: "bulan", cashier: 
         )
       `,
         )
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
       if (startDate) movQuery = movQuery.gte("created_at", startDate.toISOString());
@@ -83,5 +95,6 @@ export function useReports(filters: ReportFilters = { period: "bulan", cashier: 
         stockMovements: (movements as StockMovement[]) || [],
       };
     },
+    enabled: !!user,
   });
 }
