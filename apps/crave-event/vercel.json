@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/crave-event/assets/:path*",
+      "destination": "/assets/:path*"
+    }
+  ]
+}
