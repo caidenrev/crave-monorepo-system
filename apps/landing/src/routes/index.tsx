@@ -12,6 +12,7 @@ import { PricingSectionLayout } from "@/components/landing/layout/PricingSection
 import { TestimonialsSection } from "@/components/landing/layout/TestimonialsSection";
 import { FaqSection } from "@/components/landing/layout/FaqSection";
 import { CtaSection } from "@/components/landing/layout/CtaSection";
+import { EventCtaSection } from "@/components/landing/layout/EventCtaSection";
 import { Footer } from "@/components/ui/Footer";
 
 export const Route = createFileRoute("/")({
@@ -51,6 +52,7 @@ function Landing() {
       <TestimonialsSection />
       <FaqSection />
       <CtaSection />
+      <EventCtaSection />
       <Footer />
     </div>
   );
