@@ -1,13 +1,20 @@
 {
-  "trailingSlash": true,
   "rewrites": [
     {
       "source": "/crave-event/assets/:path*",
       "destination": "/assets/:path*"
     },
     {
+      "source": "/crave-event/font/:path*",
+      "destination": "/font/:path*"
+    },
+    {
       "source": "/crave-event/logo.png",
       "destination": "/logo.png"
+    },
+    {
+      "source": "/crave-event/robots.txt",
+      "destination": "/robots.txt"
     }
   ]
 }
