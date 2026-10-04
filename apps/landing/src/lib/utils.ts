@@ -6,4 +6,5 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const POS_URL = "/pos-system";
+export const EVENT_URL = "/crave-event";
 
