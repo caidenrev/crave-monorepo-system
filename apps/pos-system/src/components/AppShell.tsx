@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SideNav } from "@/components/SideNav";
+import GlassNav from "@/components/ui/GlassNav";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
@@ -38,11 +39,11 @@ import { useAuth } from "@/lib/useAuth";
 import profileLogo from "@/assets/profile-logo.jpeg";
 
 const nav = [
-  { to: "/", label: "Kasir", icon: ScanBarcode },
-  { to: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
-  { to: "/stok", label: "Stok", icon: Boxes },
-  { to: "/pengeluaran", label: "Pengeluaran", icon: Wallet },
-  { to: "#menu", label: "Lainnya", icon: Menu },
+  { id: "kasir", to: "/", label: "Kasir", icon: ScanBarcode },
+  { id: "dashboard", to: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
+  { id: "stok", to: "/stok", label: "Stok", icon: Boxes },
+  { id: "pengeluaran", to: "/pengeluaran", label: "Pengeluaran", icon: Wallet },
+  { id: "menu", to: "#menu", label: "Lainnya", icon: Menu },
 ];
 
 export function AppShell({
@@ -207,84 +208,33 @@ export function AppShell({
         <main className="mx-auto max-w-[1400px] px-4 pb-28 pt-4 sm:px-6 lg:pb-10">{children}</main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-6 z-30 mx-6 lg:hidden">
-        <div className="relative grid grid-cols-5 items-center rounded-2xl bg-slate-200 dark:bg-slate-800 p-1.5 shadow-lg">
-          {nav.map((item) => {
-            if (item.to === "#menu") {
-              const isMainRoute = nav.some(
-                (navItem) => navItem.to !== "#menu" && navItem.to === path,
-              );
-              const active = mobileOpen || !isMainRoute;
-              return (
-                <Sheet key={item.to} open={mobileOpen} onOpenChange={setMobileOpen}>
-                  <SheetTrigger asChild>
-                    <button
-                      className={cn(
-                        "relative flex flex-col items-center justify-center py-2.5 transition-colors rounded-xl",
-                        active
-                          ? "text-foreground font-bold"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      {active && (
-                        <motion.div
-                          layoutId="nav-active-bg"
-                          className="absolute inset-1 rounded-xl bg-background shadow-md border border-black/5 dark:border-white/10"
-                          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                        />
-                      )}
-                      <item.icon
-                        className={cn(
-                          "relative z-10 size-6",
-                          active && "scale-110 transition-transform",
-                        )}
-                        strokeWidth={active ? 2.5 : 2}
-                      />
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent
-                    side="bottom"
-                    hideClose
-                    className="h-[80vh] flex flex-col p-0 rounded-t-3xl bg-background"
-                  >
-                    <SideNav
-                      collapsed={false}
-                      forceExpanded
-                      onNavigate={() => setMobileOpen(false)}
-                    />
-                  </SheetContent>
-                </Sheet>
-              );
+      <div className="lg:hidden">
+        <GlassNav
+          tabs={nav}
+          value={mobileOpen ? "menu" : nav.find(n => n.to === path)?.id || "kasir"}
+          onChange={(id) => {
+            if (id === "menu") {
+              setMobileOpen(true);
+            } else {
+              setMobileOpen(false);
             }
+          }}
+        />
+      </div>
 
-            const active = path === item.to && !mobileOpen;
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                className={cn(
-                  "relative flex flex-col items-center justify-center py-2.5 transition-colors rounded-xl",
-                  active
-                    ? "text-foreground font-bold"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {active && (
-                  <motion.div
-                    layoutId="nav-active-bg"
-                    className="absolute inset-1 rounded-xl bg-background shadow-md border border-black/5 dark:border-white/10"
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                  />
-                )}
-                <item.icon
-                  className={cn("relative z-10 size-6", active && "scale-110 transition-transform")}
-                  strokeWidth={active ? 2.5 : 2}
-                />
-              </Link>
-            );
-          })}
-        </div>
-      </nav>
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent
+          side="bottom"
+          hideClose
+          className="h-[80vh] flex flex-col p-0 rounded-t-3xl bg-background lg:hidden"
+        >
+          <SideNav
+            collapsed={false}
+            forceExpanded
+            onNavigate={() => setMobileOpen(false)}
+          />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
