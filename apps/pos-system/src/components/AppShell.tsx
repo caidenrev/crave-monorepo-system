@@ -1,9 +1,8 @@
-import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   ScanBarcode,
   Boxes,
-  HandCoins,
   Menu,
   AlertTriangle,
   Receipt,
@@ -13,14 +12,13 @@ import {
   Wallet,
   User as UserIcon,
 } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState, type ReactNode } from "react";
+import GlassNav from "@/components/GlassNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { SideNav } from "@/components/SideNav";
-import GlassNav from "@/components/ui/GlassNav";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
@@ -31,47 +29,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { useNotifications } from "@/lib/useNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { useAuth } from "@/lib/useAuth";
 import profileLogo from "@/assets/profile-logo.jpeg";
 
-const nav = [
+const bottomTabs = [
   { id: "kasir", to: "/", label: "Kasir", icon: ScanBarcode },
-  { id: "dashboard", to: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
+  { id: "dasbor", to: "/dashboard", label: "Dasbor", icon: LayoutDashboard },
   { id: "stok", to: "/stok", label: "Stok", icon: Boxes },
   { id: "pengeluaran", to: "/pengeluaran", label: "Pengeluaran", icon: Wallet },
-  { id: "menu", to: "#menu", label: "Lainnya", icon: Menu },
-];
+  { id: "lainnya", to: "#menu", label: "Lainnya", icon: Menu, noFill: true },
+] as const;
 
-function GlassNavWrapper({ tabs, currentPath, mobileOpen, onMenuOpen }: {
-  tabs: typeof nav;
-  currentPath: string;
-  mobileOpen: boolean;
-  onMenuOpen: () => void;
-}) {
-  const navigate = useNavigate();
-  
-  const currentTab = mobileOpen ? "menu" : tabs.find(n => n.to === currentPath)?.id || "kasir";
-  
-  return (
-    <GlassNav
-      tabs={tabs}
-      value={currentTab}
-      onChange={(id) => {
-        if (id === "menu") {
-          onMenuOpen();
-        } else {
-          const tab = tabs.find(t => t.id === id);
-          if (tab && tab.to !== "#menu") {
-            navigate({ to: tab.to });
-          }
-        }
-      }}
-    />
-  );
+function useHtmlDark() {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const el = document.documentElement;
+    const sync = () => setDark(el.classList.contains("dark"));
+    sync();
+    const obs = new MutationObserver(sync);
+    obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+    return () => obs.disconnect();
+  }, []);
+  return dark;
 }
 
 export function AppShell({
@@ -86,8 +68,15 @@ export function AppShell({
   children: ReactNode;
 }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
+  const dark = useHtmlDark();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isMainRoute = bottomTabs.some((item) => item.to !== "#menu" && item.to === path);
+  const activeTab =
+    mobileOpen || !isMainRoute
+      ? "lainnya"
+      : (bottomTabs.find((item) => item.to === path)?.id ?? "kasir");
 
   const { data: notifications = [] } = useNotifications();
   const { user, signOut } = useAuth();
@@ -190,11 +179,7 @@ export function AppShell({
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 rounded-xl border bg-card px-2 py-1.5 shadow-soft hover:bg-accent outline-none transition-colors">
                     <div className="size-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
-                      <img
-                        src={profileLogo}
-                        alt="Profile"
-                        className="size-full object-cover"
-                      />
+                      <img src={profileLogo} alt="Profile" className="size-full object-cover" />
                     </div>
                     <div className="hidden leading-tight text-left sm:block">
                       <p className="text-xs font-bold">
@@ -233,29 +218,46 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1400px] px-4 pb-28 pt-4 sm:px-6 lg:pb-10">{children}</main>
+        <main className="mx-auto max-w-[1400px] px-4 pb-24 pt-4 sm:px-6 lg:pb-10">
+          {children}
+        </main>
       </div>
 
-      <div className="lg:hidden">
-        <GlassNavWrapper
-          tabs={nav}
-          currentPath={path}
-          mobileOpen={mobileOpen}
-          onMenuOpen={() => setMobileOpen(true)}
+      <div
+        className="lg:hidden fixed bottom-5 left-3 right-3 z-[9999] mx-auto"
+        style={{
+          maxWidth: 480,
+        }}
+      >
+        <GlassNav
+          tabs={[
+            { id: "kasir", label: "Kasir", icon: ScanBarcode },
+            { id: "dasbor", label: "Dasbor", icon: LayoutDashboard },
+            { id: "stok", label: "Stok", icon: Boxes },
+            { id: "pengeluaran", label: "Pengeluaran", icon: Wallet },
+            { id: "lainnya", label: "Lainnya", icon: Menu, noFill: true },
+          ]}
+          value={activeTab}
+          theme={dark ? "dark" : "light"}
+          onChange={(id) => {
+            if (id === "lainnya") {
+              setMobileOpen(true);
+              return;
+            }
+            const tab = bottomTabs.find((item) => item.id === id);
+            if (!tab || tab.to === "#menu") return;
+            setMobileOpen(false);
+            void navigate({ to: tab.to });
+          }}
         />
       </div>
-
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
         <SheetContent
           side="bottom"
           hideClose
-          className="h-[80vh] flex flex-col p-0 rounded-t-3xl bg-background lg:hidden"
+          className="h-[80vh] flex flex-col p-0 rounded-t-3xl bg-background"
         >
-          <SideNav
-            collapsed={false}
-            forceExpanded
-            onNavigate={() => setMobileOpen(false)}
-          />
+          <SideNav collapsed={false} forceExpanded onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
     </div>

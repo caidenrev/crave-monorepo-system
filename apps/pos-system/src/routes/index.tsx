@@ -698,7 +698,7 @@ function KasirPage() {
       </div>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-[88px] left-0 right-0 z-40 mx-auto w-[calc(100%-32px)] max-w-[480px] sm:w-[calc(100%-48px)] lg:bottom-10 lg:left-[256px]">
+        <div className="fixed bottom-[calc(96px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 mx-auto w-[calc(100%-32px)] max-w-[480px] sm:w-[calc(100%-48px)] lg:bottom-10 lg:left-[256px]">
           <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
             <SheetTrigger asChild>
               <button className="flex h-16 w-full items-center justify-between rounded-full bg-primary p-2 pl-3 shadow-xl shadow-primary/25 transition-transform active:scale-[0.98]">

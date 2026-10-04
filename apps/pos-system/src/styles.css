@@ -146,6 +146,8 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    overscroll-behavior-y: none;
+    overflow-x: hidden;
   }
 }
 
