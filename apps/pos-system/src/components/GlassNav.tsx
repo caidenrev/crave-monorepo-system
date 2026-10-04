@@ -182,8 +182,8 @@ export default function GlassNav({
   const canFx = useMemo(
     () =>
       typeof navigator !== "undefined" &&
-      /Chrome|Chromium/.test(navigator.userAgent) &&
-      !/CriOS|FxiOS/.test(navigator.userAgent),
+      /Chrome|Chromium|CriOS|Safari/.test(navigator.userAgent) &&
+      !/FxiOS/.test(navigator.userAgent),
     [],
   );
 

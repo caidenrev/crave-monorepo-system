@@ -37,11 +37,15 @@ export function PersistentNav() {
   const dark = useHtmlDark();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isAuthRoute = path === "/login" || path === "/pin";
+
   const isMainRoute = bottomTabs.some((item) => item.to !== "#menu" && item.to === path);
   const activeTab =
     mobileOpen || !isMainRoute
       ? "lainnya"
       : (bottomTabs.find((item) => item.to === path)?.id ?? "kasir");
+
+  if (isAuthRoute) return null;
 
   return (
     <>
