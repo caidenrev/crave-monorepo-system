@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   ScanBarcode,
@@ -45,6 +45,34 @@ const nav = [
   { id: "pengeluaran", to: "/pengeluaran", label: "Pengeluaran", icon: Wallet },
   { id: "menu", to: "#menu", label: "Lainnya", icon: Menu },
 ];
+
+function GlassNavWrapper({ tabs, currentPath, mobileOpen, onMenuOpen }: {
+  tabs: typeof nav;
+  currentPath: string;
+  mobileOpen: boolean;
+  onMenuOpen: () => void;
+}) {
+  const navigate = useNavigate();
+  
+  const currentTab = mobileOpen ? "menu" : tabs.find(n => n.to === currentPath)?.id || "kasir";
+  
+  return (
+    <GlassNav
+      tabs={tabs}
+      value={currentTab}
+      onChange={(id) => {
+        if (id === "menu") {
+          onMenuOpen();
+        } else {
+          const tab = tabs.find(t => t.id === id);
+          if (tab && tab.to !== "#menu") {
+            navigate({ to: tab.to });
+          }
+        }
+      }}
+    />
+  );
+}
 
 export function AppShell({
   title,
@@ -209,16 +237,11 @@ export function AppShell({
       </div>
 
       <div className="lg:hidden">
-        <GlassNav
+        <GlassNavWrapper
           tabs={nav}
-          value={mobileOpen ? "menu" : nav.find(n => n.to === path)?.id || "kasir"}
-          onChange={(id) => {
-            if (id === "menu") {
-              setMobileOpen(true);
-            } else {
-              setMobileOpen(false);
-            }
-          }}
+          currentPath={path}
+          mobileOpen={mobileOpen}
+          onMenuOpen={() => setMobileOpen(true)}
         />
       </div>
 
