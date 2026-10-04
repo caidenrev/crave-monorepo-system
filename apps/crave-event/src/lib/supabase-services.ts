@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured, type DatabaseCertificate } from "./supabase";
 import type { EventItem, MyEvent, Playlist, BlogPost, Attendee } from "./mock-data";
+import { assetUrl } from "./utils";
 
 /**
  * ============================================================================
@@ -31,7 +32,7 @@ export function mapDatabaseEventToApp(record: any): EventItem {
     quota: record.quota || 100,
     registered: record.registered_count || 0,
     attended: 0,
-    thumbnail: record.banner_url || "/logo.png",
+    thumbnail: record.banner_url || assetUrl("/logo.png"),
     status: record.status === "ongoing" ? "live" : (record.status as "upcoming" | "live" | "past") || "upcoming",
     speaker: record.speaker_name || "Eka Revandi",
     attendanceCode: record.attendance_code || "CRV-" + record.id.slice(-4).toUpperCase(),
@@ -65,7 +66,7 @@ export function mapDatabaseBlogToApp(record: any): BlogPost {
     publishedAt: record.published_at
       ? record.published_at.split("T")[0]
       : new Date().toISOString().split("T")[0]!,
-    cover: record.cover_image || "/logo.png",
+    cover: record.cover_image || assetUrl("/logo.png"),
     status: record.is_published ? "published" : "draft",
   };
 }
@@ -371,7 +372,7 @@ export const blogsApi = {
       slug: post.slug || `post-${Date.now()}`,
       excerpt: post.excerpt || (bodyText.slice(0, 150) + "..."),
       content: fullContent,
-      cover_image: post.cover || "/logo.png",
+      cover_image: post.cover || assetUrl("/logo.png"),
       author_name: "Eka Revandi",
       reading_time: `${post.readMinutes || 5} min read`,
       is_published: post.status === "published",

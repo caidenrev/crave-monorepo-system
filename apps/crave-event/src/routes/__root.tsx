@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { AppProvider } from "../lib/store";
 import { Toaster } from "../components/ui/sonner";
+import { assetUrl } from "../lib/utils";
 
 function NotFoundComponent() {
   return (
@@ -95,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/logo.png", type: "image/png" },
+      { rel: "icon", href: assetUrl("/logo.png"), type: "image/png" },
     ],
   }),
   shellComponent: RootShell,

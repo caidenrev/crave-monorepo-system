@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState, useRef, useEffect, useCallback, type ReactNode } from "react";
 import { useApp } from "../../lib/store";
+import { assetUrl } from "../../lib/utils";
 
 type NavItem = {
   to: string;
@@ -69,7 +70,7 @@ export function DashboardShell({
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-hairline/80 bg-white/85 px-4 py-2.5 backdrop-blur-xl lg:hidden">
         <Link to="/" className="flex items-center gap-2 select-none group">
           <img
-            src="/logo.png"
+            src={assetUrl("/logo.png")}
             alt="Crave Event Logo"
             className="size-7 object-contain transition-transform duration-200 group-hover:scale-105"
           />
@@ -102,7 +103,7 @@ export function DashboardShell({
           <div className="flex items-center justify-between px-2 py-1">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src="/logo.png"
+                src={assetUrl("/logo.png")}
                 alt="Crave Event Logo"
                 className="size-7.5 object-contain transition-transform duration-200 group-hover:scale-105"
               />

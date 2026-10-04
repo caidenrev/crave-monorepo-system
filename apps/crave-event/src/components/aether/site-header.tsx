@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useApp } from "../../lib/store";
+import { assetUrl } from "../../lib/utils";
 import {
   ChevronDown,
   ChevronRight,
@@ -359,7 +360,7 @@ export function SiteHeader() {
               className="flex items-center gap-2.5 px-1 py-1 select-none group"
             >
               <img
-                src="/logo.png"
+                src={assetUrl("/logo.png")}
                 alt="Crave Event Logo"
                 className="size-8 object-contain transition-transform duration-200 group-hover:scale-105"
               />
@@ -632,7 +633,7 @@ export function SiteFooter() {
           <div className="lg:col-span-2 space-y-4">
             <Link to="/" className="inline-flex items-center gap-2.5 group select-none">
               <img
-                src="/logo.png"
+                src={assetUrl("/logo.png")}
                 alt="Crave Event Logo"
                 className="size-8.5 object-contain transition-transform duration-200 group-hover:scale-105"
               />
@@ -788,7 +789,7 @@ export function SiteFooter() {
         {/* Bottom Sub-Footer Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[12.5px] text-ink-tertiary">
           <div className="flex items-center gap-2">
-            <img src="/logo.png" alt="Crave Event" className="size-5 object-contain" />
+            <img src={assetUrl("/logo.png")} alt="Crave Event" className="size-5 object-contain" />
             <p>© 2026 Crave Event. Seluruh hak cipta dilindungi.</p>
           </div>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 font-medium">

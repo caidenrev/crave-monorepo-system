@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useApp, getRegisteredUsers, saveRegisteredUser } from "../lib/store";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { authApi } from "../lib/supabase-services";
+import { assetUrl } from "../lib/utils";
 
 type AuthSearch = {
   mode?: "login" | "register" | undefined;
@@ -326,7 +327,7 @@ function AuthPage() {
         <div className="mb-8 text-center">
           <Link to="/" className="inline-flex items-center gap-3 group">
             <img
-              src="/logo.png"
+              src={assetUrl("/logo.png")}
               alt="Crave Event Logo"
               className="size-11 object-contain transition-transform duration-200 group-hover:scale-105 drop-shadow-[0_8px_16px_rgba(10,132,255,0.25)]"
             />

@@ -44,3 +44,6 @@ paymentgt/*.exe
 paymentgt/
 crave-pos/
 paymentgt/
+
+.vercel
+.env*

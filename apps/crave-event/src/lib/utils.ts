@@ -6,6 +6,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
+ * Prefiks path statis dengan base path Vite (BASE_URL) agar aset seperti
+ * `/logo.png` dapat di-serve dengan benar saat app berjalan di sub-path
+ * (mis. /crave-event/). Tanpa ini, path `/logo.png` akan resolve ke domain
+ * root (landing) saat diakses via rewrite, bukan ke deployment crave-event.
+ */
+export function assetUrl(path: string): string {
+  const base = import.meta.env.BASE_URL || "/";
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${base.replace(/\/$/, "")}${cleanPath}`;
+}
+
+/**
  * Menghasilkan base domain publik yang bersih untuk di-share.
  * Memastikan domain yang dihasilkan adalah domain produksi resmi: https://crave-event.vercel.app
  * tanpa terpotong atau mengarah ke domain preview Vercel / domain lain.
