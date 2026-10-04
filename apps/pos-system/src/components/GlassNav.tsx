@@ -66,17 +66,17 @@ const CONFIG = {
 const THEMES = {
   light: {
     bar: "rgba(255,255,255,.5)",
-    barRing: "rgba(60,70,90,.16)",
-    barShadow: "0 8px 22px -6px rgba(20,30,50,.14), 0 1px 3px rgba(20,30,50,.06)",
+    barRing: "rgba(0,0,0,.14)",
+    barShadow: "0 6px 24px rgba(0,0,0,.10)",
     tab: "#2c2c2e",
     tabOn: "#000",
     idle: "rgba(0,0,0,.08)",
-    lens: "linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.02) 45%,rgba(30,40,70,.03))",
-    ring: "rgba(60,70,90,.22)",
+    lens: "rgba(255,255,255,.3)",
+    ring: "rgba(0,0,0,.14)",
     hi: "rgba(255,255,255,.95)",
     shade: "rgba(40,50,80,.16)",
-    lensShadow: "0 10px 24px -4px rgba(20,30,50,.18), 0 2px 6px rgba(20,30,50,.10)",
-    bright: 1,
+    lensShadow: "0 10px 26px rgba(0,0,0,.18)",
+    bright: 1.04,
   },
   dark: {
     bar: "rgba(255,255,255,.07)",
@@ -85,34 +85,19 @@ const THEMES = {
     tab: "#d4d4da",
     tabOn: "#fff",
     idle: "rgba(255,255,255,.12)",
-    lens: "linear-gradient(180deg,rgba(255,255,255,.13),rgba(255,255,255,.03) 50%,rgba(255,255,255,.09))",
-    ring: "rgba(255,255,255,.34)",
-    hi: "rgba(255,255,255,.55)",
+    lens: "rgba(255,255,255,.05)",
+    ring: "rgba(255,255,255,.38)",
+    hi: "rgba(255,255,255,.7)",
     shade: "rgba(0,0,0,.35)",
-    lensShadow: "0 10px 26px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.35)",
-    bright: 1.06,
+    lensShadow: "0 12px 28px rgba(0,0,0,.4)",
+    bright: 1.15,
   },
 };
-
-function prefersReducedMotion() {
-  return (
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
-function motionParams() {
-  const reduced = prefersReducedMotion();
-  return {
-    damping: reduced ? 80 : CONFIG.damping,
-    liftDelay: reduced ? 0 : CONFIG.liftDelay,
-  };
-}
 
 // Getaran: Android/Chrome pakai navigator.vibrate; iOS Safari 17.4+ pakai trik <input switch>
 let hapticLabel: HTMLLabelElement | undefined;
 function haptic(ms: number) {
   if (!CONFIG.haptic || !ms || typeof document === "undefined") return;
-  if (prefersReducedMotion()) return;
   if (typeof navigator !== "undefined" && navigator.vibrate) {
     navigator.vibrate(ms);
     return;
@@ -162,7 +147,7 @@ function makeMap(W: number, H: number) {
         dy = py - H / 2;
       const d = Math.hypot(dx, dy);
       const t = (r - d) / bz;
-      const m = d <= r && t < 1 ? Math.pow(1 - Math.max(0, t), 2.2) : 0;
+      const m = d <= r && t < 1 ? Math.pow(1 - Math.max(0, t), 1.6) : 0;
       const nx = d ? dx / d : 0,
         ny = d ? dy / d : 0;
       const i = (y * FW + x) * 4;
@@ -229,11 +214,10 @@ export default function GlassNav({
     const s = sim.current;
     if (s.raf) return;
     s.last = performance.now();
-    const damping = motionParams().damping;
     const step = (t: number) => {
       const dt = Math.min(0.032, (t - s.last) / 1000 || 0.016);
       s.last = t;
-      s.v += (-CONFIG.stiffness * (s.x - s.tx) - damping * s.v) * dt;
+      s.v += (-CONFIG.stiffness * (s.x - s.tx) - CONFIG.damping * s.v) * dt;
       s.x += s.v * dt;
       s.vl += (-320 * (s.l - s.tl) - 21 * s.vl) * dt;
       s.l += s.vl * dt;
@@ -311,7 +295,7 @@ export default function GlassNav({
         s.tx = P.p;
         kick();
       }
-    }, motionParams().liftDelay);
+    }, CONFIG.liftDelay);
   };
   const move = (e: ReactPointerEvent<HTMLDivElement>) => {
     const P = ptr.current;
@@ -386,7 +370,7 @@ export default function GlassNav({
   const current = Math.min(n - 1, Math.max(0, Math.round(x)));
   const useSvg = lifted && canFx && mapUrl;
   const bf = lifted
-    ? `${useSvg ? `url(#${fid}) ` : ""}blur(${CONFIG.lensBlur}px) saturate(1.15) brightness(${th.bright})`
+    ? `${useSvg ? `url(#${fid}) ` : ""}blur(${CONFIG.lensBlur}px) saturate(1.4) brightness(${th.bright})`
     : "none";
   // tab asli dilubangi sebesar kapsul; di lubang itu tampil baris ikon "terisi" (lensMode)
   const rr = curH / 2,
@@ -408,7 +392,7 @@ export default function GlassNav({
     background: th.lens,
     backdropFilter: bf,
     WebkitBackdropFilter: bf,
-    boxShadow: `inset 0 0 0 1px ${th.ring}, inset 0 1.5px 1px ${th.hi}, inset 0 -1px 1px ${th.hi}, inset 0 -12px 14px -12px ${th.shade}, inset 0 12px 14px -12px ${th.hi}, ${th.lensShadow}`,
+    boxShadow: `inset 0 0 0 1.5px ${th.ring}, inset 0 3px 3px -1px ${th.hi}, inset 0 -3px 4px -1px ${th.hi}, ${th.lensShadow}`,
   };
 
   const S = CONFIG.refraction,
