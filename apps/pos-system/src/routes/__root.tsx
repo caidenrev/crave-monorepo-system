@@ -136,6 +136,7 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 import { AuthWrapper } from "@/components/AuthWrapper";
+import { PersistentNav } from "@/components/PersistentNav";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -144,6 +145,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthWrapper>
         <Outlet />
+        <PersistentNav />
       </AuthWrapper>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
