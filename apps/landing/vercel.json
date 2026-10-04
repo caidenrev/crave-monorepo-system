@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/pos-system",
-      "destination": "https://crave-pos-system.vercel.app/pos-system"
+      "destination": "https://crave-pos-system.vercel.app/pos-system/"
     },
     {
       "source": "/pos-system/:path*",
@@ -10,7 +10,7 @@
     },
     {
       "source": "/crave-event",
-      "destination": "https://crave-event.vercel.app/crave-event"
+      "destination": "https://crave-event.vercel.app/crave-event/"
     },
     {
       "source": "/crave-event/:path*",
