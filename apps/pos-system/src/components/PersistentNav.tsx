@@ -51,7 +51,7 @@ export function PersistentNav() {
     <>
       <div
         className="lg:hidden fixed bottom-5 left-3 right-3 z-[9999] mx-auto"
-        style={{ maxWidth: 480 }}
+        style={{ maxWidth: 480, transform: "translateZ(0)", willChange: "transform" }}
       >
         <GlassNav
           tabs={[

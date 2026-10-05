@@ -102,6 +102,7 @@ function haptic(ms: number) {
     navigator.vibrate(ms);
     return;
   }
+  // iOS Safari 17.4+: trik <input switch> untuk memicu haptic engine
   try {
     if (!hapticLabel) {
       hapticLabel = document.createElement("label");
