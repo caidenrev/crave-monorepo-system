@@ -209,6 +209,15 @@ export async function checkShopeeMerchantInfo(sessionJson: string | object): Pro
   merchant?: ShopeeMerchantSummary | undefined;
   storeId?: string | undefined;
   stores?: ShopeeStore[] | undefined;
+  /**
+   * Session hasil silent renewal dari gateway (cookie Shopee dirotasi).
+   * Wajib disimpan balik ke DB — session lama bisa ditolak Shopee setelah renewal.
+   */
+  renewedSession?: string | undefined;
+  /** Kode error gateway, mis. "AUTH_REQUIRED" → wajib login OTP ulang. */
+  errorCode?: string | undefined;
+  /** true jika gateway tidak bisa dihubungi — status session tidak diketahui. */
+  networkError?: boolean | undefined;
   error?: string | undefined;
 }> {
   try {
@@ -220,17 +229,37 @@ export async function checkShopeeMerchantInfo(sessionJson: string | object): Pro
     });
 
     const data = await res.json();
-    if (res.ok && data.success && data.active) {
+    // Gateway tetap mengirim `active: true` walau session ditolak Shopee; error
+    // sebenarnya ada di field `err` (mis. AUTH_REQUIRED) dan merchant.id kosong.
+    const gatewayErr = data.err as { Code?: string; Message?: string } | null | undefined;
+    if (res.ok && data.success && data.active && !gatewayErr && data.merchant?.id) {
+      let renewedSession: string | undefined;
+      if (data.session?.cookies && data.session?.accountId) {
+        let oldCookies: unknown = null;
+        try {
+          oldCookies = JSON.parse(raw)?.cookies ?? null;
+        } catch {
+          // session lama tidak valid JSON → anggap berubah
+        }
+        if (JSON.stringify(oldCookies) !== JSON.stringify(data.session.cookies)) {
+          renewedSession = JSON.stringify(data.session);
+        }
+      }
       return {
         active: true,
         merchant: data.merchant,
         storeId: data.store_id,
         stores: data.stores || [],
+        renewedSession,
       };
     }
-    return { active: false, error: data.error || "Sesi tidak aktif" };
+    return {
+      active: false,
+      errorCode: gatewayErr?.Code,
+      error: gatewayErr?.Message || data.error || "Sesi tidak aktif",
+    };
   } catch (err: any) {
-    return { active: false, error: err.message };
+    return { active: false, networkError: true, error: err.message };
   }
 }
 

@@ -62,7 +62,6 @@ import {
   requestShopeeOtp,
   verifyShopeeOtp,
   completeShopeeLogin,
-  checkShopeeMerchantInfo,
   type ShopeeOtpChallenge,
   type ShopeeMerchantSummary,
 } from "@/lib/paymentgt-service";
@@ -89,6 +88,8 @@ function PengaturanPage() {
     isSaving,
     disconnect,
     isDisconnecting,
+    sessionValid,
+    recheckSession,
   } = useMerchantSettings();
 
   // User Profile states
@@ -122,7 +123,6 @@ function PengaturanPage() {
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(false);
-  const [sessionActive, setSessionActive] = useState<boolean | null>(null);
 
   const otpInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -148,11 +148,6 @@ function PengaturanPage() {
     if (settings) {
       if (settings.static_qris) setStaticQris(settings.static_qris);
       if (settings.phone) setPhone(settings.phone);
-      if (settings.session_json) {
-        setSessionActive(true);
-      } else {
-        setSessionActive(false);
-      }
     }
   }, [settings]);
 
@@ -290,7 +285,6 @@ function PengaturanPage() {
         setOtpStep("idle");
         setChallenge(null);
         setOtp("");
-        setSessionActive(true);
         toast.success("Akun ShopeePay Merchant Berhasil Terhubung!");
       }
     } catch (err: any) {
@@ -328,7 +322,6 @@ function PengaturanPage() {
         setChallenge(null);
         setVerificationData(null);
         setOtp("");
-        setSessionActive(true);
         toast.success("Merchant ShopeePay Berhasil Dihubungkan!");
       }
     } catch (err: any) {
@@ -349,17 +342,18 @@ function PengaturanPage() {
 
     setIsCheckingSession(true);
     try {
-      const res = await checkShopeeMerchantInfo(settings.session_json);
-      if (res.active) {
-        setSessionActive(true);
+      // Lewat hook agar session hasil silent renewal ikut tersimpan ke DB.
+      const { data: valid } = await recheckSession();
+      if (valid === true) {
         toast.success("Sesi Shopee Merchant Aktif & Valid!", {
-          description: `Merchant: ${res.merchant?.name || settings.merchant_name} (ID: ${res.merchant?.id || settings.merchant_id})`,
+          description: `Merchant: ${settings.merchant_name} (ID: ${settings.merchant_id})`,
         });
-      } else {
-        setSessionActive(false);
+      } else if (valid === false) {
         toast.error("Sesi Kedaluwarsa", {
           description: "Silakan hubungkan ulang akun Shopee Merchant Anda.",
         });
+      } else {
+        toast.error("Gateway tidak dapat dihubungi, coba lagi nanti.");
       }
     } catch (err: any) {
       toast.error("Gagal mengecek sesi: " + err.message);
@@ -583,9 +577,21 @@ function PengaturanPage() {
                         Status Verifikasi Sesi
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                        <span className="text-xs font-bold text-emerald-600">
-                          {sessionActive ? "Aktif & Siap Menerima Pembayaran" : "Memeriksa..."}
+                        <span
+                          className={`size-2 rounded-full ${
+                            sessionValid === false ? "bg-rose-500" : "bg-emerald-500 animate-pulse"
+                          }`}
+                        />
+                        <span
+                          className={`text-xs font-bold ${
+                            sessionValid === false ? "text-rose-600" : "text-emerald-600"
+                          }`}
+                        >
+                          {sessionValid === true
+                            ? "Aktif & Siap Menerima Pembayaran"
+                            : sessionValid === false
+                              ? "Kedaluwarsa — sambungkan ulang akun"
+                              : "Memeriksa..."}
                         </span>
                       </div>
                     </div>

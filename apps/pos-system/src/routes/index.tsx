@@ -87,7 +87,7 @@ function KasirPage() {
   const { data: products = [], isLoading: isLoadingProducts, error: productsError } = useProducts();
   const { data: catData = [] } = useCategories();
   const { checkoutMutation } = useTransactions();
-  const { settings: merchantSettings } = useMerchantSettings();
+  const { settings: merchantSettings, sessionValid } = useMerchantSettings();
 
   const productCats = useMemo(() => {
     return ["Semua", ...catData.filter((c) => c.type === "product" || c.type === "all").map((c) => c.name)];
@@ -182,6 +182,21 @@ function KasirPage() {
       return;
     }
 
+    // Validasi session merchant: gateway harus konfirmasi session ShopeePay
+    // masih aktif sebelum membuat invoice. Jika invalid, blok dan arahkan
+    // user re-login OTP. Tanpa ini, invoice dibuat tapi gateway tidak bisa
+    // cek mutasi → status tidak akan pernah PAID (bug saat pindah device).
+    if (!merchantSettings.session_json) {
+      setQrisError("Sesi ShopeePay Merchant belum disambungkan. Buka Pengaturan > QRIS Merchant untuk login OTP.");
+      setQrisLoading(false);
+      return;
+    }
+    if (sessionValid === false) {
+      setQrisError("Sesi ShopeePay Merchant kedaluwarsa (mungkin karena pindah device). Buka Pengaturan > QRIS Merchant, lalu sambungkan ulang akun Anda.");
+      setQrisLoading(false);
+      return;
+    }
+
     try {
       const invoice = await createPaymentGTInvoice({
         orderId,
@@ -215,6 +230,9 @@ function KasirPage() {
 
       // Start real-time settlement polling
       if (pollingRef.current) clearInterval(pollingRef.current);
+      // Counter untuk error polling berturut-turut — kalau terlalu banyak error,
+      // kemungkinan session expired (bukan network transient) → kasih tahu user.
+      let consecutivePollErrors = 0;
       pollingRef.current = setInterval(async () => {
         if (isSettlingRef.current) return;
         try {
@@ -224,11 +242,26 @@ function KasirPage() {
             merchantSettings?.session_json || undefined,
           );
           const status = (res.status || "").toUpperCase();
+          consecutivePollErrors = 0; // reset counter saat sukses
           if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
             handleQrisSuccess();
           }
-        } catch {
-          // ignore transient poll errors
+        } catch (err: any) {
+          consecutivePollErrors += 1;
+          // Setelah 5x error berturut-turut (10 detik polling), hentikan polling
+          // dan arahkan user re-login merchant. Silent ignore selama ini
+          // menyembunyikan masalah session expired → user stuck menunggu PAID.
+          if (consecutivePollErrors >= 5) {
+            if (pollingRef.current) {
+              clearInterval(pollingRef.current);
+              pollingRef.current = null;
+            }
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            setQrisError("Gateway tidak dapat memverifikasi pembayaran. Sesi merchant mungkin kedaluwarsa — buka Pengaturan > QRIS Merchant untuk sambungkan ulang.");
+          }
         }
       }, 2000);
     } catch (err: any) {
