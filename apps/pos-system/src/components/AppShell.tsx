@@ -57,18 +57,18 @@ export function AppShell({
 
       <div className={cn("transition-[padding] duration-300", collapsed ? "lg:pl-20" : "lg:pl-72")}>
         <header className="sticky top-0 z-20 border-b bg-background/85 backdrop-blur">
-          <div className="mx-auto grid max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="mx-auto grid max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <div className="min-w-0">
-                <h1 className="truncate text-lg font-extrabold tracking-tight sm:text-xl">
+                <h1 className="truncate text-base font-extrabold tracking-tight sm:text-xl">
                   {title}
                 </h1>
                 {subtitle ? (
-                  <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
+                  <p className="truncate text-[11px] text-muted-foreground sm:text-xs">{subtitle}</p>
                 ) : null}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <div className="relative hidden md:block">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                 <Input placeholder="Cari transaksi atau produk" className="w-64 rounded-xl pl-9" />
@@ -77,7 +77,7 @@ export function AppShell({
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="icon" className="relative rounded-xl">
-                    <Bell className="size-4.5" />
+                    <Bell className="size-4" />
                     {notifications.length > 0 && (
                       <Badge className="absolute -right-1 -top-1 size-4 justify-center rounded-full p-0 text-[10px]">
                         {notifications.length}
@@ -140,8 +140,8 @@ export function AppShell({
               </Popover>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-2 rounded-xl border bg-card px-2 py-1.5 shadow-soft hover:bg-accent outline-none transition-colors">
-                    <div className="size-7 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs">
+                  <button className="flex items-center gap-2 rounded-xl border bg-card px-1.5 py-1 shadow-soft hover:bg-accent outline-none transition-colors sm:px-2 sm:py-1.5">
+                    <div className="size-6 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 shadow-2xs sm:size-7">
                       <img src={profileLogo} alt="Profile" className="size-full object-cover" />
                     </div>
                     <div className="hidden leading-tight text-left sm:block">
@@ -181,7 +181,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-[1400px] px-4 pb-24 pt-4 sm:px-6 lg:pb-10">
+        <main className="mx-auto max-w-[1400px] px-3 pb-24 pt-3 sm:px-6 sm:pt-4 lg:pb-10">
           {children}
         </main>
       </div>

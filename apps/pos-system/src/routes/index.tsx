@@ -353,7 +353,7 @@ function KasirPage() {
             <Separator className="my-3" />
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 max-h-[35vh] sm:max-h-[40vh] xl:max-h-none">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 max-h-[32vh] sm:max-h-[40vh] xl:max-h-none">
             {cart.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 Pilih produk atau pindai barcode untuk mulai transaksi.
@@ -418,13 +418,13 @@ function KasirPage() {
                   key={p.key}
                   onClick={() => setMethod(p.key)}
                   className={
-                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-3 px-2 text-xs font-bold transition-all " +
+                    "flex flex-col items-center justify-center gap-1.5 rounded-2xl border py-2.5 px-1.5 text-xs font-bold transition-all sm:py-3 sm:px-2 " +
                     (method === p.key
                       ? "border-blue-600 bg-blue-600 text-white shadow-md shadow-blue-500/20"
                       : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50")
                   }
                 >
-                  <p.icon className="size-4.5" />
+                  <p.icon className="size-4 sm:size-4.5" />
                   {p.key}
                 </button>
               ))}
@@ -432,7 +432,7 @@ function KasirPage() {
 
             {method === "QRIS" ? (
               <Button
-                className="mt-4 h-13 w-full rounded-2xl text-[15px] font-bold shadow-lg shadow-emerald-600/20 bg-emerald-600 hover:bg-emerald-700 text-white transition-all active:scale-[0.99]"
+                className="mt-3 h-12 w-full rounded-2xl text-sm font-bold shadow-lg shadow-emerald-600/20 bg-emerald-600 hover:bg-emerald-700 text-white transition-all active:scale-[0.99] sm:mt-4 sm:h-13 sm:text-[15px]"
                 disabled={cart.length === 0}
                 onClick={startQrisPaymentFlow}
               >
@@ -443,7 +443,7 @@ function KasirPage() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
-                    className="mt-4 h-13 w-full rounded-2xl text-[15px] font-bold shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700 text-white transition-all"
+                    className="mt-3 h-12 w-full rounded-2xl text-sm font-bold shadow-lg shadow-blue-600/20 bg-blue-600 hover:bg-blue-700 text-white transition-all sm:mt-4 sm:h-13 sm:text-[15px]"
                     disabled={cart.length === 0}
                   >
                     Bayar {cart.length > 0 ? rupiah(total) : ""}
@@ -552,11 +552,11 @@ function KasirPage() {
                 </div>
 
                 {qrisData?.qris_image_base64 && (
-                  <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="p-2.5 bg-white rounded-2xl border border-slate-200 shadow-sm sm:p-3">
                     <img
                       src={qrisData.qris_image_base64}
                       alt="QRIS"
-                      className="size-48 sm:size-52 object-contain rounded-lg"
+                      className="size-40 sm:size-52 object-contain rounded-lg"
                     />
                   </div>
                 )}
@@ -623,12 +623,12 @@ function KasirPage() {
       <div className="grid gap-4">
         <section className="space-y-4 min-w-0">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:size-4.5" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Cari produk atau ketik kode barcode"
-              className="h-12 rounded-2xl border-none bg-card pl-11 shadow-soft"
+              className="h-11 rounded-2xl border-none bg-card pl-11 shadow-soft sm:h-12"
             />
           </div>
 
@@ -648,7 +648,7 @@ function KasirPage() {
             </div>
           </ScrollArea>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 xl:grid-cols-4 2xl:grid-cols-5">
             {isLoadingProducts ? (
               <div className="col-span-full py-12 flex justify-center items-center">
                 <Loader2 className="size-8 animate-spin text-primary" />
@@ -664,29 +664,30 @@ function KasirPage() {
                   <button
                     key={p.id}
                     onClick={() => add(p)}
-                    className="card-soft group flex flex-col gap-2 p-3 text-left transition-transform hover:-translate-y-0.5 hover:shadow-soft-lg"
+                    className="card-soft group flex flex-col gap-1.5 p-2.5 text-left transition-transform hover:-translate-y-0.5 hover:shadow-soft-lg sm:gap-2 sm:p-3"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <Badge variant="secondary" className="rounded-full text-[10px]">
+                    <div className="flex items-start justify-between gap-1.5">
+                      <Badge variant="secondary" className="rounded-full text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5">
                         {p.category}
                       </Badge>
                       <span
                         className={
-                          low
-                            ? "rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground shadow-sm"
-                            : "rounded-full bg-success px-2 py-0.5 text-[10px] font-bold text-success-foreground shadow-sm"
+                          "shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold shadow-sm sm:text-[10px] sm:px-2 " +
+                          (low
+                            ? "bg-destructive text-destructive-foreground"
+                            : "bg-success text-success-foreground")
                         }
                       >
                         {p.stock} pcs
                       </span>
                     </div>
-                    <p className="line-clamp-2 min-h-10 text-sm font-bold leading-tight">
+                    <p className="line-clamp-2 min-h-8 text-xs font-bold leading-tight sm:min-h-10 sm:text-sm">
                       {p.name}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-extrabold text-primary">{rupiah(p.price)}</span>
-                      <div className="grid size-7 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-110">
-                        <Plus className="size-4" />
+                    <div className="mt-auto flex items-center justify-between pt-1">
+                      <span className="text-xs font-extrabold text-primary sm:text-sm">{rupiah(p.price)}</span>
+                      <div className="grid size-6 place-items-center rounded-full bg-primary text-primary-foreground shadow-sm transition-transform group-hover:scale-110 sm:size-7">
+                        <Plus className="size-3.5" />
                       </div>
                     </div>
                   </button>
@@ -698,23 +699,23 @@ function KasirPage() {
       </div>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-[calc(96px+env(safe-area-inset-bottom,0px))] left-0 right-0 z-40 mx-auto w-[calc(100%-32px)] max-w-[480px] sm:w-[calc(100%-48px)] lg:bottom-10 lg:left-[256px]">
+        <div className="fixed bottom-[calc(88px+env(safe-area-inset-bottom,0px))] left-3 right-3 z-40 mx-auto w-[calc(100%-24px)] max-w-[480px] sm:w-[calc(100%-48px)] lg:bottom-10 lg:left-[256px]">
           <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
             <SheetTrigger asChild>
-              <button className="flex h-16 w-full items-center justify-between rounded-full bg-primary p-2 pl-3 shadow-xl shadow-primary/25 transition-transform active:scale-[0.98]">
-                <div className="flex items-center gap-3 text-primary-foreground">
-                  <div className="grid size-11 place-items-center rounded-2xl bg-white/20">
-                    <ShoppingCart className="size-5" />
+              <button className="flex h-14 w-full items-center justify-between rounded-full bg-primary p-2 pl-3 transition-transform active:scale-[0.98] sm:h-16">
+                <div className="flex items-center gap-2 text-primary-foreground sm:gap-3">
+                  <div className="grid size-9 place-items-center rounded-2xl bg-white/20 sm:size-11">
+                    <ShoppingCart className="size-4 sm:size-5" />
                   </div>
                   <div className="flex flex-col items-start text-left leading-tight">
-                    <span className="text-[11px] font-medium text-primary-foreground/90">
+                    <span className="text-[10px] font-medium text-primary-foreground/90 sm:text-[11px]">
                       {cart.length} Item
                     </span>
-                    <span className="text-[15px] font-bold">{rupiah(total)}</span>
+                    <span className="text-[13px] font-bold sm:text-[15px]">{rupiah(total)}</span>
                   </div>
                 </div>
-                <div className="flex h-full items-center gap-1.5 rounded-full bg-background px-5 text-sm font-extrabold text-primary shadow-sm">
-                  Lanjut Bayar <ArrowRight className="size-4" />
+                <div className="flex h-full items-center gap-1.5 rounded-full bg-background px-3 text-xs font-extrabold text-primary shadow-sm sm:px-5 sm:text-sm">
+                  Lanjut Bayar <ArrowRight className="size-3.5 sm:size-4" />
                 </div>
               </button>
             </SheetTrigger>
@@ -723,7 +724,7 @@ function KasirPage() {
               side={isMobile ? "bottom" : "right"}
               className={
                 isMobile
-                  ? "flex max-h-[92vh] min-h-[520px] flex-col rounded-t-[2.5rem] bg-white p-5 sm:p-6 shadow-2xl border-t"
+                  ? "flex max-h-[92vh] min-h-[480px] flex-col rounded-t-[2rem] bg-white p-4 sm:p-6 shadow-2xl border-t sm:rounded-t-[2.5rem] sm:min-h-[520px]"
                   : "flex h-full w-[400px] sm:max-w-[440px] flex-col bg-white p-6 shadow-2xl border-l"
               }
             >

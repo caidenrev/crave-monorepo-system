@@ -122,7 +122,7 @@ function SupplierPage() {
             <Truck className="size-4.5 text-primary" />
             <p className="text-sm font-extrabold">Daftar Pemasok</p>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {isLoading ? (
               <div className="col-span-full flex justify-center py-10">
                 <Loader2 className="size-8 animate-spin text-primary" />

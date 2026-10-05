@@ -106,12 +106,12 @@ function DashboardPage() {
   return (
     <AppShell title="Dasbor" subtitle="Ringkasan performa penjualan hari ini">
       <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4">
           {stats.map((s, i) => (
             <div
               key={s.label}
               className={
-                "p-4 flex flex-col justify-between rounded-3xl " +
+                "p-3 flex flex-col justify-between rounded-2xl sm:rounded-3xl sm:p-4 " +
                 (i === 0 || i === 3 ? "col-span-2 md:col-span-1 " : "") +
                 (i === 0
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/25 border border-primary"
@@ -120,7 +120,7 @@ function DashboardPage() {
             >
               <div className="flex items-start justify-between gap-2">
                 <span className={i === 0 ? "text-white" : "text-foreground"}>
-                  <s.icon className="size-6" />
+                  <s.icon className="size-5 sm:size-6" />
                 </span>
                 <span
                   className={
@@ -139,7 +139,7 @@ function DashboardPage() {
               <div className="mt-4">
                 <p
                   className={
-                    "text-2xl font-black tracking-tight " +
+                    "text-xl font-black tracking-tight sm:text-2xl " +
                     (i === 0 ? "text-white" : "text-foreground")
                   }
                 >
