@@ -1,16 +1,35 @@
 /**
  * ============================================================================
- * PAYMENTGT CLIENT SERVICE ADAPTER
+ * PAYMENTGT CLIENT SERVICE ADAPTER (MULTI-TENANT)
  * ============================================================================
- * Menghubungkan Crave Event dengan gateway QRIS dinamis & settlement daemon
- * PaymentGT (ShopeePay Partner / Go).
+ * Menghubungkan Crave Event dengan gateway QRIS dinamis & real-time settlement
+ * Crave Payment Services (Vercel Serverless Go backend).
  *
- * Default endpoint daemon: http://localhost:8085 (dapat diatur lewat VITE_PAYMENTGT_URL)
+ * Catatan: Adapter ini SUDANG SEJALAN dengan versi pos-system (multi-tenant)
+ * agar gateway dapat melakukan pengecekan mutasi ShopeePay secara realtime
+ * untuk mendeteksi status PAID. Tanpa static_qris & session_json, gateway
+ * tidak memiliki konteks merchant → status tidak akan pernah PAID → polling
+ * client tidak akan detect pembayaran berhasil.
  */
 
 export const PAYMENTGT_BASE_URL =
   (typeof import.meta !== "undefined" && import.meta.env?.["VITE_PAYMENTGT_URL"]) ||
   "https://crave-payment-services-57oz.vercel.app";
+
+/**
+ * Session JSON merchant Shopee default untuk pembayaran tiket event.
+ * Wajib di-set lewat VITE_PAYMENTGT_SESSION_JSON pada env crave-event.
+ * Tanpa ini gateway tidak bisa mengecek mutasi ShopeePay → status tidak realtime.
+ */
+export const PAYMENTGT_DEFAULT_SESSION_JSON =
+  (typeof import.meta !== "undefined" && import.meta.env?.["VITE_PAYMENTGT_SESSION_JSON"]) || "";
+
+/**
+ * Static QRIS merchant default untuk pembayaran tiket event.
+ * Opsional: hanya dipakai jika gateway butuh QRIS statis fallback.
+ */
+export const PAYMENTGT_DEFAULT_STATIC_QRIS =
+  (typeof import.meta !== "undefined" && import.meta.env?.["VITE_PAYMENTGT_STATIC_QRIS"]) || "";
 
 export type PaymentGTHalthResponse = {
   status: string;
@@ -80,23 +99,38 @@ export async function checkPaymentGTHealth(): Promise<{
 
 
 /**
- * Membuat invoice tagihan QRIS dinamis dengan nominal pas
+ * Membuat invoice tagihan QRIS dinamis dengan nominal pas (Clean Pricing).
+ *
+ * PENTING: staticQris & sessionJson wajib disertakan agar gateway dapat
+ * mengenali merchant Shopee dan melakukan pengecekan mutasi realtime.
+ * Tanpa session_json, gateway tidak tahu merchant mana yang harus di-cek
+ * mutasinya → status tidak akan pernah berubah jadi PAID.
  */
 export async function createPaymentGTInvoice(params: {
   orderId: string;
   amount: number;
   expiresInMinutes?: number;
   callbackUrl?: string;
+  staticQris?: string;
+  sessionJson?: string;
 }): Promise<PaymentGTCreateResponse> {
+  // Resolve static_qris & session_json: prioritaskan parameter eksplisit,
+  // fallback ke env default crave-event.
+  const staticQris = params.staticQris || PAYMENTGT_DEFAULT_STATIC_QRIS;
+  const sessionJson = params.sessionJson || PAYMENTGT_DEFAULT_SESSION_JSON;
+
   const res = await fetch(`${PAYMENTGT_BASE_URL}/api/payments`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      ...(staticQris ? { "X-Static-Qris": staticQris } : {}),
     },
     body: JSON.stringify({
       order_id: params.orderId,
       amount: params.amount,
       expires_in_minutes: params.expiresInMinutes || 10,
+      static_qris: staticQris || "",
+      session_json: sessionJson || "",
       callback_url: params.callbackUrl || "",
     }),
   });
@@ -111,19 +145,47 @@ export async function createPaymentGTInvoice(params: {
 }
 
 /**
- * Mengecek status pembayaran terkini berdasarkan payment_id
+ * Mengecek status pembayaran terkini berdasarkan payment_id.
+ *
+ * PENTING: Jika session_json tersedia, gunakan POST /api/payment/status
+ * (multi-tenant query) supaya gateway mengecek mutasi ShopeePay merchant
+ * terkait secara realtime. Tanpa session_json, gateway hanya mengembalikan
+ * status cache yang mungkin tidak up-to-date → status tidak realtime PAID.
  */
 export async function getPaymentGTStatus(
   paymentId: string,
   amount?: number,
+  sessionJson?: string,
 ): Promise<PaymentGTStatusResponse> {
-  const query = amount ? `?amount=${amount}` : "";
-  const res = await fetch(`${PAYMENTGT_BASE_URL}/api/payments/${paymentId}${query}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
+  // Resolve session_json: prioritaskan parameter eksplisit, fallback env default.
+  const session = sessionJson || PAYMENTGT_DEFAULT_SESSION_JSON;
+
+  let res: Response;
+
+  if (session) {
+    // Gunakan POST multi-tenant jika session json tersedia — ini trigger
+    // pengecekan mutasi ShopeePay realtime di gateway (serverless Go).
+    res = await fetch(`${PAYMENTGT_BASE_URL}/api/payment/status`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        payment_id: paymentId,
+        amount: amount || 0,
+        session_json: session,
+      }),
+    });
+  } else {
+    // Fallback GET status (tanpa multi-tenant) — gunakan cache gateway.
+    const query = amount ? `?amount=${amount}` : "";
+    res = await fetch(`${PAYMENTGT_BASE_URL}/api/payments/${paymentId}${query}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   if (!res.ok) {
     throw new Error(`Gagal mengecek status pembayaran ${paymentId}`);

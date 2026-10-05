@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   RefreshCw,
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { toast } from "sonner";
 import { Button } from "./primitives";
 import { formatPrice, type EventItem } from "@/lib/mock-data";
@@ -18,8 +18,11 @@ import {
   checkPaymentGTHealth,
   createPaymentGTInvoice,
   getPaymentGTStatus,
+  PAYMENTGT_DEFAULT_SESSION_JSON,
+  PAYMENTGT_DEFAULT_STATIC_QRIS,
   type PaymentGTCreateResponse,
 } from "@/lib/paymentgt-service";
+import { useMerchantSettings } from "@/lib/useMerchantSettings";
 
 const methods = [
   { id: "qris", label: "QRIS Dinamis (ShopeePay / All E-Wallet)", hint: "BCA · Mandiri · ShopeePay · GoPay · Dana", icon: Wallet },
@@ -49,6 +52,24 @@ export function PaymentDialog({
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  // Guard anti-duplicate: cegah onPaid() terpanggil dua kali dari polling & manual check
+  const isSettlingRef = useRef(false);
+
+  // Ambil merchant settings dari DB (jika user adalah merchant) untuk dapat
+  // session_json ShopeePay. Jika user peserta biasa (tidak punya merchant settings),
+  // fallback ke env VITE_PAYMENTGT_SESSION_JSON yang di-set admin penyelenggara.
+  const { settings: merchantSettings } = useMerchantSettings();
+
+  // Resolve session_json & static_qris: prioritaskan DB merchant settings milik user,
+  // fallback ke env default crave-event.
+  const sessionJson = useMemo(
+    () => merchantSettings?.session_json || PAYMENTGT_DEFAULT_SESSION_JSON || undefined,
+    [merchantSettings?.session_json],
+  );
+  const staticQris = useMemo(
+    () => merchantSettings?.static_qris || PAYMENTGT_DEFAULT_STATIC_QRIS || undefined,
+    [merchantSettings?.static_qris],
+  );
 
   const totalAmount = event.price;
 
@@ -59,6 +80,8 @@ export function PaymentDialog({
       setQrisData(null);
       setPollingActive(false);
       setTimeLeft(600);
+      // Reset guard anti-duplicate setiap kali dialog dibuka
+      isSettlingRef.current = false;
 
       // Check if PaymentGT daemon is running in background
       checkPaymentGTHealth().then((res) => {
@@ -107,40 +130,71 @@ export function PaymentDialog({
     }
 
     setLoadingQris(true);
+    isSettlingRef.current = false;
     const orderId = `CRV-${event.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8)}-${Date.now().toString().slice(-4)}`;
+
+    // Validasi: session_json wajib ada agar gateway bisa cek mutasi ShopeePay realtime.
+    // Tanpa session_json, status tidak akan pernah realtime PAID (bug krusial).
+    if (!sessionJson) {
+      toast.error("Session Merchant Belum Dikonfigurasi", {
+        description: "Admin belum men-set session merchant ShopeePay. Hubungi penyelenggara atau set VITE_PAYMENTGT_SESSION_JSON.",
+      });
+      setLoadingQris(false);
+      return;
+    }
 
     try {
       const invoice = await createPaymentGTInvoice({
         orderId,
         amount: totalAmount,
         expiresInMinutes: 10,
+        staticQris,
+        sessionJson,
       });
+
+      if (!invoice?.payment_id || !invoice?.qris_image_base64) {
+        throw new Error("Gateway tidak mengembalikan QRIS valid. Pastikan session merchant ShopeePay sudah dikonfigurasi di gateway.");
+      }
 
       setQrisData(invoice);
       setGatewayOnline(true);
       setStep("qris_display");
       startPolling(invoice.payment_id);
     } catch (err: any) {
-      console.warn("[PaymentGT Client] Server offline atau gagal:", err.message);
-      // Fallback: Daemon offline, use simulation mode
+      console.error("[PaymentGT Client] Gagal membuat invoice QRIS:", err.message);
+      // JANGAN fallback ke mode simulasi — tampilkan error jelas ke user.
+      // Mode simulasi silent sebelumnya menyembunyikan kegagalan gateway dan
+      // memalsukan pembayaran, padahal dana belum masuk.
       setGatewayOnline(false);
-      setStep("qris_display");
+      toast.error("Gagal Membuat QRIS", {
+        description: err.message || "Gateway PaymentGT tidak merespons. Coba beberapa saat lagi.",
+      });
     } finally {
       setLoadingQris(false);
     }
   };
 
-  // Start polling status every 2.5 seconds
+  // Start polling status every 2 seconds (menyamakan dengan pos-system).
+  // Guard isSettlingRef mencegah onPaid() dipanggil dua kali saat polling
+  // tick cepat dan manual check terjadi hampir bersamaan.
   const startPolling = (paymentId: string) => {
     setPollingActive(true);
     if (pollingRef.current) clearInterval(pollingRef.current);
 
     pollingRef.current = setInterval(async () => {
+      if (isSettlingRef.current) return;
       try {
-        const res = await getPaymentGTStatus(paymentId, totalAmount);
+        const res = await getPaymentGTStatus(paymentId, totalAmount, sessionJson);
         const statusUpper = (res.status || "").toUpperCase();
         if (statusUpper === "PAID" || statusUpper === "SETTLED" || statusUpper === "SUCCESS") {
-          clearInterval(pollingRef.current!);
+          // Synchronous guard untuk mencegah eksekusi duplikat dari polling tick cepat
+          if (isSettlingRef.current) return;
+          isSettlingRef.current = true;
+
+          if (pollingRef.current) {
+            clearInterval(pollingRef.current);
+            pollingRef.current = null;
+          }
           setPollingActive(false);
           setStep("success");
           toast.success("Pembayaran Berhasil Terverifikasi!", {
@@ -151,9 +205,9 @@ export function PaymentDialog({
           }, 1500);
         }
       } catch {
-        // Ignored during polling
+        // Abaikan error transien saat polling, tetap lanjut
       }
-    }, 2500);
+    }, 2000);
   };
 
   const [checkingStatus, setCheckingStatus] = useState(false);
@@ -161,22 +215,22 @@ export function PaymentDialog({
   // Manual Check Payment Status (Refresh / Re-verify button)
   const handleCheckPaymentStatus = async () => {
     if (!qrisData?.payment_id) {
-      // If gateway was offline or in fallback mode
-      setStep("success");
-      toast.success("Pembayaran Berhasil Terverifikasi!", {
-        description: `Dana ${formatPrice(totalAmount)} telah terverifikasi.`,
+      // Gateway gagal membuat invoice sebelumnya — tidak boleh memalsukan PAID.
+      toast.error("QRIS belum dibuat", {
+        description: "Gateway belum berhasil membuat invoice QRIS. Tutup dan coba lagi.",
       });
-      setTimeout(() => {
-        onPaid();
-      }, 1200);
       return;
     }
 
+    if (isSettlingRef.current) return;
     setCheckingStatus(true);
     try {
-      const res = await getPaymentGTStatus(qrisData.payment_id, totalAmount);
+      const res = await getPaymentGTStatus(qrisData.payment_id, totalAmount, sessionJson);
       const statusUpper = (res.status || "").toUpperCase();
       if (statusUpper === "PAID" || statusUpper === "SETTLED" || statusUpper === "SUCCESS") {
+        if (isSettlingRef.current) return;
+        isSettlingRef.current = true;
+
         if (pollingRef.current) clearInterval(pollingRef.current);
         setPollingActive(false);
         setStep("success");
