@@ -13,7 +13,6 @@ import {
   ArrowRight,
   ChevronLeft,
   RefreshCw,
-  Check,
   AlertCircle,
   Loader2,
 } from "lucide-react";
@@ -56,6 +55,8 @@ import {
   type PaymentGTCreateResponse,
 } from "@/lib/paymentgt-service";
 import { createPaymentGuard, type PaymentVerdict } from "@/lib/payment-guard";
+import { unlockCashierSound } from "@/lib/cashier-sound";
+import { PaymentSuccess } from "@/components/PaymentSuccess";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -170,6 +171,9 @@ function KasirPage() {
   }, [mobileCartOpen]);
 
   const startQrisPaymentFlow = async () => {
+    // Dipanggil dari tap kasir → aktifkan audio sekarang agar suara sukses
+    // (yang dipicu polling, bukan tap) diizinkan browser.
+    unlockCashierSound();
     const orderId = `POS-${Date.now().toString().slice(-6)}`;
     setCurrentOrderId(orderId);
     setCheckoutStep("qris");
@@ -601,23 +605,7 @@ function KasirPage() {
                 </Button>
               </div>
             ) : qrisPaid ? (
-              <div className="flex flex-col items-center justify-center py-8 space-y-4 animate-in fade-in zoom-in-75 duration-300">
-                <div className="relative flex items-center justify-center">
-                  <div className="absolute size-24 rounded-full bg-emerald-100 animate-ping opacity-75" />
-                  <div className="relative size-20 rounded-full bg-emerald-500 flex items-center justify-center shadow-xl shadow-emerald-500/30 text-white animate-in zoom-in duration-300">
-                    <Check className="size-10 stroke-[3.5] text-white animate-in zoom-in-50 duration-500" />
-                  </div>
-                </div>
-                <div className="space-y-1.5 text-center">
-                  <h3 className="text-xl font-black text-slate-900 tracking-tight">
-                    Pembayaran Berhasil!
-                  </h3>
-                  <p className="text-base font-extrabold text-emerald-600">{rupiah(total)}</p>
-                  <p className="text-xs text-slate-500 max-w-[240px] mx-auto">
-                    Transaksi telah terverifikasi dan stok otomatis terpotong.
-                  </p>
-                </div>
-              </div>
+              <PaymentSuccess amount={total} format={rupiah} />
             ) : (
               <div className="flex flex-col items-center w-full max-w-[280px]">
                 <div className="text-center mb-3">
