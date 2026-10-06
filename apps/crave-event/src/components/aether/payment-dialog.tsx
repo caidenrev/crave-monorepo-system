@@ -22,6 +22,7 @@ import {
   PAYMENTGT_DEFAULT_STATIC_QRIS,
   type PaymentGTCreateResponse,
 } from "@/lib/paymentgt-service";
+import { createPaymentGuard, type PaymentVerdict } from "@/lib/payment-guard";
 import { useMerchantSettings } from "@/lib/useMerchantSettings";
 
 const methods = [
@@ -54,6 +55,8 @@ export function PaymentDialog({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   // Guard anti-duplicate: cegah onPaid() terpanggil dua kali dari polling & manual check
   const isSettlingRef = useRef(false);
+  // Guard anti-PAID palsu dari mutasi transaksi sebelumnya (nominal sama)
+  const paymentGuardRef = useRef<ReturnType<typeof createPaymentGuard> | null>(null);
 
   // Ambil merchant settings dari DB (jika user adalah merchant) untuk dapat
   // session_json ShopeePay. Jika user peserta biasa (tidak punya merchant settings),
@@ -159,7 +162,7 @@ export function PaymentDialog({
       setQrisData(invoice);
       setGatewayOnline(true);
       setStep("qris_display");
-      startPolling(invoice.payment_id);
+      void startPolling(invoice);
     } catch (err: any) {
       console.error("[PaymentGT Client] Gagal membuat invoice QRIS:", err.message);
       // JANGAN fallback ke mode simulasi — tampilkan error jelas ke user.
@@ -177,33 +180,66 @@ export function PaymentDialog({
   // Start polling status every 2 seconds (menyamakan dengan pos-system).
   // Guard isSettlingRef mencegah onPaid() dipanggil dua kali saat polling
   // tick cepat dan manual check terjadi hampir bersamaan.
-  const startPolling = (paymentId: string) => {
+  const settlePaid = () => {
+    // Synchronous guard untuk mencegah eksekusi duplikat dari polling tick cepat
+    if (isSettlingRef.current) return;
+    isSettlingRef.current = true;
+
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    setPollingActive(false);
+    setStep("success");
+    toast.success("Pembayaran Berhasil Terverifikasi!", {
+      description: `Dana ${formatPrice(totalAmount)} telah diterima oleh ShopeePay merchant.`,
+    });
+    setTimeout(() => {
+      onPaid();
+    }, 1500);
+  };
+
+  /** Return true jika polling harus berhenti (lunas / tidak bisa diverifikasi). */
+  const handleVerdict = (verdict: PaymentVerdict): boolean => {
+    if (verdict.kind === "paid") {
+      settlePaid();
+      return true;
+    }
+    if (verdict.kind === "ambiguous") {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+      setPollingActive(false);
+      toast.error("Pembayaran Tidak Bisa Diverifikasi Otomatis", {
+        description: "Terdeteksi mutasi lama dengan nominal sama. Hubungi penyelenggara untuk konfirmasi manual.",
+      });
+      return true;
+    }
+    return false;
+  };
+
+  const startPolling = async (invoice: PaymentGTCreateResponse) => {
     setPollingActive(true);
     if (pollingRef.current) clearInterval(pollingRef.current);
+    const amount = invoice.unique_amount || totalAmount;
+
+    // Cek pertama SEBELUM pembeli sempat scan: mutasi PAID yang sudah ada
+    // di titik ini pasti milik transaksi lama → dijadikan baseline.
+    const guard = createPaymentGuard(invoice.created_at);
+    paymentGuardRef.current = guard;
+    try {
+      const first = await getPaymentGTStatus(invoice.payment_id, amount, sessionJson);
+      if (handleVerdict(guard.evaluate(first))) return;
+    } catch {
+      // gagal cek awal — guard paid_at & transaction_id tetap berlaku
+    }
 
     pollingRef.current = setInterval(async () => {
       if (isSettlingRef.current) return;
       try {
-        const res = await getPaymentGTStatus(paymentId, totalAmount, sessionJson);
-        const statusUpper = (res.status || "").toUpperCase();
-        if (statusUpper === "PAID" || statusUpper === "SETTLED" || statusUpper === "SUCCESS") {
-          // Synchronous guard untuk mencegah eksekusi duplikat dari polling tick cepat
-          if (isSettlingRef.current) return;
-          isSettlingRef.current = true;
-
-          if (pollingRef.current) {
-            clearInterval(pollingRef.current);
-            pollingRef.current = null;
-          }
-          setPollingActive(false);
-          setStep("success");
-          toast.success("Pembayaran Berhasil Terverifikasi!", {
-            description: `Dana ${formatPrice(totalAmount)} telah diterima oleh ShopeePay merchant.`,
-          });
-          setTimeout(() => {
-            onPaid();
-          }, 1500);
-        }
+        const res = await getPaymentGTStatus(invoice.payment_id, amount, sessionJson);
+        handleVerdict(guard.evaluate(res));
       } catch {
         // Abaikan error transien saat polling, tetap lanjut
       }
@@ -225,22 +261,14 @@ export function PaymentDialog({
     if (isSettlingRef.current) return;
     setCheckingStatus(true);
     try {
-      const res = await getPaymentGTStatus(qrisData.payment_id, totalAmount, sessionJson);
-      const statusUpper = (res.status || "").toUpperCase();
-      if (statusUpper === "PAID" || statusUpper === "SETTLED" || statusUpper === "SUCCESS") {
-        if (isSettlingRef.current) return;
-        isSettlingRef.current = true;
-
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        setPollingActive(false);
-        setStep("success");
-        toast.success("Pembayaran Berhasil Terverifikasi!", {
-          description: `Dana ${formatPrice(totalAmount)} telah diterima oleh ShopeePay merchant.`,
-        });
-        setTimeout(() => {
-          onPaid();
-        }, 1500);
-      } else {
+      const res = await getPaymentGTStatus(
+        qrisData.payment_id,
+        qrisData.unique_amount || totalAmount,
+        sessionJson,
+      );
+      const guard = paymentGuardRef.current ?? createPaymentGuard(qrisData.created_at);
+      paymentGuardRef.current = guard;
+      if (!handleVerdict(guard.evaluate(res))) {
         toast.info("Pembayaran Masih Menunggu", {
           description: "Mutasi belum masuk ke ShopeePay. Jika sudah transfer di HP, tunggu beberapa detik lalu klik lagi.",
         });

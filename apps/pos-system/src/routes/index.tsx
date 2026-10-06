@@ -55,6 +55,7 @@ import {
   getPaymentGTStatus,
   type PaymentGTCreateResponse,
 } from "@/lib/paymentgt-service";
+import { createPaymentGuard, type PaymentVerdict } from "@/lib/payment-guard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -119,6 +120,8 @@ function KasirPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const isSettlingRef = useRef<boolean>(false);
+  // Guard anti-PAID palsu dari mutasi transaksi sebelumnya (nominal sama)
+  const paymentGuardRef = useRef<ReturnType<typeof createPaymentGuard> | null>(null);
 
   const list = useMemo(
     () =>
@@ -228,6 +231,21 @@ function KasirPage() {
         });
       }, 1000);
 
+      // Cek pertama SEBELUM pembeli sempat scan: mutasi PAID yang sudah ada
+      // di titik ini pasti milik transaksi lama → dijadikan baseline.
+      const guard = createPaymentGuard(invoice.created_at);
+      paymentGuardRef.current = guard;
+      try {
+        const first = await getPaymentGTStatus(
+          invoice.payment_id,
+          invoice.unique_amount || total,
+          merchantSettings.session_json || undefined,
+        );
+        if (handleVerdict(guard.evaluate(first))) return;
+      } catch {
+        // gagal cek awal — guard paid_at & transaction_id tetap berlaku
+      }
+
       // Start real-time settlement polling
       if (pollingRef.current) clearInterval(pollingRef.current);
       // Counter untuk error polling berturut-turut — kalau terlalu banyak error,
@@ -238,14 +256,11 @@ function KasirPage() {
         try {
           const res = await getPaymentGTStatus(
             invoice.payment_id,
-            total,
+            invoice.unique_amount || total,
             merchantSettings?.session_json || undefined,
           );
-          const status = (res.status || "").toUpperCase();
           consecutivePollErrors = 0; // reset counter saat sukses
-          if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
-            handleQrisSuccess();
-          }
+          handleVerdict(guard.evaluate(res));
         } catch (err: any) {
           consecutivePollErrors += 1;
           // Setelah 5x error berturut-turut (10 detik polling), hentikan polling
@@ -268,6 +283,33 @@ function KasirPage() {
       setQrisError(err.message || "Gagal membuat invoice QRIS");
       setQrisLoading(false);
     }
+  };
+
+  const stopQrisTimers = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  /** Return true jika polling harus berhenti (lunas / tidak bisa diverifikasi). */
+  const handleVerdict = (verdict: PaymentVerdict): boolean => {
+    if (verdict.kind === "paid") {
+      handleQrisSuccess();
+      return true;
+    }
+    if (verdict.kind === "ambiguous") {
+      stopQrisTimers();
+      setQrisError(
+        "Terdeteksi mutasi lama dengan nominal yang sama, sehingga pembayaran ini tidak bisa diverifikasi otomatis. Cek mutasi masuk langsung di aplikasi ShopeePay Merchant sebelum menyerahkan pesanan.",
+      );
+      return true;
+    }
+    return false;
   };
 
   const handleQrisSuccess = () => {
@@ -317,13 +359,12 @@ function KasirPage() {
     try {
       const res = await getPaymentGTStatus(
         qrisData.payment_id,
-        total,
+        qrisData.unique_amount || total,
         merchantSettings?.session_json || undefined,
       );
-      const status = (res.status || "").toUpperCase();
-      if (status === "PAID" || status === "SETTLED" || status === "SUCCESS") {
-        handleQrisSuccess();
-      } else {
+      const guard = paymentGuardRef.current ?? createPaymentGuard(qrisData.created_at);
+      paymentGuardRef.current = guard;
+      if (!handleVerdict(guard.evaluate(res))) {
         toast.info("Belum Ada Pembayaran Masuk", {
           description: "Silakan selesaikan scan & transfer di aplikasi bank/e-wallet pembeli.",
         });

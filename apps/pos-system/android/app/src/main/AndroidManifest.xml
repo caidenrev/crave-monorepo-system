@@ -40,4 +40,6 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Wajib agar navigator.vibrate() di WebView (haptic GlassNav) benar-benar bergetar -->
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>
