@@ -47,6 +47,7 @@ import { rupiah, type CartLine, type Product } from "@/lib/pos-data";
 import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useTransactions, newTransactionId } from "@/lib/useTransactions";
+import { useCart } from "@/lib/useCart";
 import { useMerchantSettings } from "@/lib/useMerchantSettings";
 import { useAuth } from "@/lib/useAuth";
 import {
@@ -86,7 +87,12 @@ const payments = [
 
 function KasirPage() {
   const isMobile = useIsMobile();
-  const { data: products = [], isLoading: isLoadingProducts, error: productsError } = useProducts();
+  const {
+    data: products = [],
+    isLoading: isLoadingProducts,
+    isSuccess: productsLoaded,
+    error: productsError,
+  } = useProducts();
   const { data: catData = [] } = useCategories();
   const { checkoutMutation } = useTransactions();
   const { settings: merchantSettings, sessionValid } = useMerchantSettings();
@@ -104,7 +110,8 @@ function KasirPage() {
 
   const [cat, setCat] = useState<string>("Semua");
   const [q, setQ] = useState("");
-  const [cart, setCart] = useState<CartLine[]>([]);
+  // Keranjang bertahan saat pindah menu / refresh, sampai dikosongkan atau transaksi selesai
+  const [cart, setCart] = useCart();
   const [method, setMethod] = useState<"QRIS" | "Kartu" | "Tunai">("QRIS");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
@@ -146,6 +153,30 @@ function KasirPage() {
       ),
     [cat, q, products],
   );
+
+  // Keranjang tersimpan bisa berisi data produk lama: segarkan harga/nama dari data
+  // terbaru dan buang produk yang sudah dihapus. Hanya setelah daftar produk BENAR-BENAR
+  // berhasil dimuat: saat refresh, query produk bisa belum aktif (login belum terbaca) dengan
+  // data kosong & tidak "loading" — kalau dipakai, seluruh keranjang ikut terbuang.
+  useEffect(() => {
+    if (!productsLoaded) return;
+    setCart((current) => {
+      let changed = false;
+      const next = current.flatMap((line) => {
+        const fresh = products.find((p) => p.id === line.product.id);
+        if (!fresh) {
+          changed = true;
+          return [];
+        }
+        if (JSON.stringify(fresh) !== JSON.stringify(line.product)) {
+          changed = true;
+          return [{ ...line, product: fresh }];
+        }
+        return [line];
+      });
+      return changed ? next : current;
+    });
+  }, [products, productsLoaded, setCart]);
 
   const add = (p: Product) => {
     setCart((c) => {
