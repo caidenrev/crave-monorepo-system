@@ -59,9 +59,12 @@ function CountUp({ value, format }: { value: number; format: (n: number) => stri
 export function PaymentSuccess({
   amount,
   format,
+  description = "Transaksi telah terverifikasi dan stok otomatis terpotong.",
 }: {
   amount: number;
   format: (n: number) => string;
+  /** keterangan di bawah nominal */
+  description?: string | undefined;
 }) {
   const reduce = useReducedMotion();
   const particles = useMemo(
@@ -167,9 +170,7 @@ export function PaymentSuccess({
         <p className="text-2xl font-extrabold tabular-nums text-emerald-600">
           <CountUp value={amount} format={format} />
         </p>
-        <p className="mx-auto max-w-[240px] text-xs text-slate-500">
-          Transaksi telah terverifikasi dan stok otomatis terpotong.
-        </p>
+        <p className="mx-auto max-w-[240px] text-xs text-slate-500">{description}</p>
       </motion.div>
     </div>
   );

@@ -46,7 +46,7 @@ import {
 import { rupiah, type CartLine, type Product } from "@/lib/pos-data";
 import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
-import { useTransactions } from "@/lib/useTransactions";
+import { useTransactions, newTransactionId } from "@/lib/useTransactions";
 import { useMerchantSettings } from "@/lib/useMerchantSettings";
 import { useAuth } from "@/lib/useAuth";
 import {
@@ -121,6 +121,19 @@ function KasirPage() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const isSettlingRef = useRef<boolean>(false);
+  // ID transaksi untuk checkout yang sedang berjalan. Tetap sama saat diulang setelah
+  // gagal (tidak tercatat ganda), baru diganti setelah transaksi tersimpan.
+  const checkoutIdRef = useRef<string | null>(null);
+  const getCheckoutId = () => (checkoutIdRef.current ??= newTransactionId());
+  // Checkout QRIS yang sudah DIBAYAR tapi belum tersimpan ke database. Selama terisi,
+  // sheet tidak boleh ditutup (agar kasir tidak membuat QRIS baru untuk pesanan yang sama).
+  const pendingQrisCheckoutRef = useRef<{
+    cart: CartLine[];
+    transactionId: string;
+  } | null>(null);
+  const [qrisSave, setQrisSave] = useState<
+    { status: "idle" | "saving" | "saved" } | { status: "failed"; message: string }
+  >({ status: "idle" });
   // Guard anti-PAID palsu dari mutasi transaksi sebelumnya (nominal sama)
   const paymentGuardRef = useRef<ReturnType<typeof createPaymentGuard> | null>(null);
 
@@ -167,6 +180,7 @@ function KasirPage() {
       setQrisData(null);
       setQrisPaid(false);
       setQrisError(null);
+      setQrisSave({ status: "idle" });
     }
   }, [mobileCartOpen]);
 
@@ -335,12 +349,26 @@ function KasirPage() {
       description: `Dana ${rupiah(total)} telah diterima.`,
     });
 
-    // Capture the cart snapshot for checkout mutation
-    const currentCart = [...cart];
+    // Snapshot keranjang & ID: dipakai lagi persis sama bila perlu "Simpan ulang"
+    pendingQrisCheckoutRef.current = { cart: [...cart], transactionId: getCheckoutId() };
+    saveQrisCheckout();
+  };
+
+  /**
+   * Simpan transaksi QRIS yang sudah dibayar. Aman diulang: ID transaksi sama, jadi
+   * database tidak akan mencatatnya dua kali walau percobaan sebelumnya ternyata berhasil.
+   */
+  const saveQrisCheckout = () => {
+    const pending = pendingQrisCheckoutRef.current;
+    if (!pending) return;
+    setQrisSave({ status: "saving" });
     checkoutMutation.mutate(
-      { cart: currentCart, method: "QRIS", cashierName: userName },
+      { cart: pending.cart, method: "QRIS", cashierName: userName, transactionId: pending.transactionId },
       {
         onSuccess: () => {
+          pendingQrisCheckoutRef.current = null;
+          checkoutIdRef.current = null;
+          setQrisSave({ status: "saved" });
           // Auto close sheet and reset state after displaying success animation
           setTimeout(() => {
             setCart([]);
@@ -350,11 +378,22 @@ function KasirPage() {
             isSettlingRef.current = false;
           }, 2200);
         },
-        onError: () => {
-          isSettlingRef.current = false;
+        onError: (err) => {
+          // isSettlingRef tetap true: pembayaran ini sudah diterima, jangan diproses ulang
+          setQrisSave({ status: "failed", message: err.message || "Gagal menyimpan transaksi" });
         },
       },
     );
+  };
+
+  const handleCartSheetChange = (open: boolean) => {
+    if (!open && pendingQrisCheckoutRef.current) {
+      toast.warning("Transaksi belum tersimpan", {
+        description: "Pembayaran QRIS sudah diterima. Tekan Simpan ulang sebelum menutup.",
+      });
+      return;
+    }
+    setMobileCartOpen(open);
   };
 
   const handleManualCheck = async () => {
@@ -544,9 +583,10 @@ function KasirPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         checkoutMutation.mutate(
-                          { cart, method, cashierName: userName },
+                          { cart, method, cashierName: userName, transactionId: getCheckoutId() },
                           {
                             onSuccess: () => {
+                              checkoutIdRef.current = null;
                               setCart([]);
                               setMobileCartOpen(false);
                             },
@@ -605,7 +645,46 @@ function KasirPage() {
                 </Button>
               </div>
             ) : qrisPaid ? (
-              <PaymentSuccess amount={total} format={rupiah} />
+              <div className="flex w-full flex-col items-center">
+                <PaymentSuccess
+                  amount={total}
+                  format={rupiah}
+                  description={
+                    qrisSave.status === "saved"
+                      ? undefined
+                      : "Pembayaran QRIS diterima. Menyimpan transaksi ke laporan dan stok."
+                  }
+                />
+                {qrisSave.status === "saving" && (
+                  <div className="-mt-3 flex items-center gap-2 text-xs font-semibold text-slate-500">
+                    <Loader2 className="size-3.5 animate-spin" /> Menyimpan transaksi...
+                  </div>
+                )}
+                {qrisSave.status === "failed" && (
+                  <div
+                    role="alert"
+                    className="w-full max-w-[300px] rounded-2xl border border-rose-200 bg-rose-50 p-3.5 text-left"
+                  >
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="mt-0.5 size-4 shrink-0 text-rose-600" />
+                      <div className="min-w-0 space-y-1">
+                        <p className="text-sm font-bold text-rose-700">Transaksi belum tersimpan</p>
+                        <p className="text-xs text-rose-700/90">
+                          Pembayaran sudah diterima, jangan minta pelanggan membayar lagi. Periksa
+                          koneksi lalu simpan ulang.
+                        </p>
+                        <p className="break-words text-[11px] text-rose-600/80">{qrisSave.message}</p>
+                      </div>
+                    </div>
+                    <Button
+                      className="mt-3 h-10 w-full rounded-xl bg-rose-600 text-sm font-bold text-white hover:bg-rose-700"
+                      onClick={saveQrisCheckout}
+                    >
+                      <RefreshCw className="size-4 mr-2" /> Simpan ulang
+                    </Button>
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="flex flex-col items-center w-full max-w-[280px]">
                 <div className="text-center mb-3">
@@ -762,7 +841,7 @@ function KasirPage() {
 
       {cart.length > 0 && (
         <div className="fixed bottom-[calc(88px+env(safe-area-inset-bottom,0px))] left-3 right-3 z-40 mx-auto w-[calc(100%-24px)] max-w-[480px] sm:w-[calc(100%-48px)] lg:bottom-10 lg:left-[256px]">
-          <Sheet open={mobileCartOpen} onOpenChange={setMobileCartOpen}>
+          <Sheet open={mobileCartOpen} onOpenChange={handleCartSheetChange}>
             <SheetTrigger asChild>
               <button className="flex h-14 w-full items-center justify-between rounded-full bg-primary p-2 pl-3 transition-transform active:scale-[0.98] sm:h-16">
                 <div className="flex items-center gap-2 text-primary-foreground sm:gap-3">
