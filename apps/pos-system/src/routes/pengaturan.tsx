@@ -9,17 +9,13 @@ import {
   CheckCircle2,
   AlertCircle,
   QrCode,
-  Smartphone,
   CreditCard,
   RefreshCw,
   LogOut,
   KeyRound,
   ShieldCheck,
-  Building2,
   Loader2,
   Check,
-  MessageCircle,
-  MessageSquare,
   Delete,
   Mail,
   Calendar,
@@ -40,6 +36,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -548,343 +546,281 @@ function PengaturanPage() {
 
                 {hasMerchantSession ? (
                   /* TAMPILAN KETIKA AKUN MERCHANT SUDAH TERHUBUNG */
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-200/80">
-                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Nama Merchant
-                      </p>
-                      <p className="text-sm font-extrabold text-slate-800 mt-0.5 truncate">
-                        {settings?.merchant_name || "Shopee Merchant"}
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Merchant ID
-                      </p>
-                      <p className="text-sm font-mono font-bold text-slate-700 mt-0.5 truncate">
-                        {settings?.merchant_id || "-"}
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Store ID / Cabang
-                      </p>
-                      <p className="text-sm font-mono font-bold text-slate-700 mt-0.5 truncate">
-                        {settings?.store_name || settings?.store_id || "-"}
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        No. Telepon Akun
-                      </p>
-                      <p className="text-sm font-medium text-slate-700 mt-0.5">
-                        {settings?.phone || "-"}
-                      </p>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Status Verifikasi Sesi
-                      </p>
-                      <div className="flex items-center gap-1.5 mt-1">
+                  <dl className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                    {[
+                      { label: "Nama Merchant", value: settings?.merchant_name || "Shopee Merchant" },
+                      { label: "Merchant ID", value: settings?.merchant_id || "-", mono: true },
+                      {
+                        label: "Store ID / Cabang",
+                        value: settings?.store_name || settings?.store_id || "-",
+                        mono: !settings?.store_name,
+                      },
+                      { label: "No. Telepon Akun", value: settings?.phone || "-" },
+                      {
+                        label: "Terakhir Diperbarui",
+                        value: settings?.updated_at
+                          ? new Date(settings.updated_at).toLocaleString("id-ID")
+                          : "-",
+                      },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-xl border bg-muted/30 p-3">
+                        <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          {item.label}
+                        </dt>
+                        <dd
+                          className={cn(
+                            "mt-0.5 truncate text-sm font-bold text-foreground",
+                            item.mono && "font-mono",
+                          )}
+                        >
+                          {item.value}
+                        </dd>
+                      </div>
+                    ))}
+                    <div className="rounded-xl border bg-muted/30 p-3">
+                      <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Status Sesi
+                      </dt>
+                      <dd className="mt-1 flex items-center gap-1.5">
                         <span
-                          className={`size-2 rounded-full ${
-                            sessionValid === false ? "bg-rose-500" : "bg-emerald-500 animate-pulse"
-                          }`}
+                          className={cn(
+                            "size-2 rounded-full",
+                            sessionValid === false
+                              ? "bg-destructive"
+                              : sessionValid === true
+                                ? "bg-success"
+                                : "bg-muted-foreground/40",
+                          )}
                         />
                         <span
-                          className={`text-xs font-bold ${
-                            sessionValid === false ? "text-rose-600" : "text-emerald-600"
-                          }`}
+                          className={cn(
+                            "text-xs font-bold",
+                            sessionValid === false
+                              ? "text-destructive"
+                              : sessionValid === true
+                                ? "text-success"
+                                : "text-muted-foreground",
+                          )}
                         >
                           {sessionValid === true
-                            ? "Aktif & Siap Menerima Pembayaran"
+                            ? "Aktif, siap menerima pembayaran"
                             : sessionValid === false
-                              ? "Kedaluwarsa — sambungkan ulang akun"
+                              ? "Kedaluwarsa, sambungkan ulang akun"
                               : "Memeriksa..."}
                         </span>
-                      </div>
+                      </dd>
                     </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-2xs">
-                      <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                        Terakhir Diperbarui
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {settings?.updated_at
-                          ? new Date(settings.updated_at).toLocaleString("id-ID")
-                          : "-"}
-                      </p>
-                    </div>
-                  </div>
+                  </dl>
                 ) : (
-                  /* WIZARD LOGIN OTP SHOPEE LANGSUNG DI APP */
-                  <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
-                    <div className="max-w-xl space-y-4">
-                      {otpStep === "idle" && (
-                        <>
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-bold text-slate-800">
-                              Hubungkan Akun Shopee Partner / Merchant
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              Masukkan nomor HP yang terdaftar di Shopee Partner untuk menerima
-                              kode verifikasi OTP secara aman.
-                            </p>
-                          </div>
+                  /* LOGIN OTP SHOPEE MERCHANT */
+                  <div className="max-w-xl rounded-2xl border p-5">
+                    {otpStep === "idle" && (
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-foreground">
+                            Hubungkan akun Shopee Partner
+                          </h4>
+                          <p className="text-xs text-muted-foreground">
+                            Masukkan nomor HP yang terdaftar di Shopee Partner. Kode verifikasi akan
+                            dikirim ke nomor tersebut.
+                          </p>
+                        </div>
 
-                          <div className="space-y-3.5">
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-700">
-                                Nomor HP Akun Shopee
-                              </label>
-                              <div className="relative">
-                                <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input
-                                  value={phone}
-                                  onChange={(e) => setPhone(e.target.value)}
-                                  placeholder="08123456789 atau +62812..."
-                                  className="pl-10 h-11 rounded-xl bg-white"
-                                />
-                              </div>
-                            </div>
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="merchant-phone"
+                            className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                          >
+                            Nomor HP akun Shopee
+                          </label>
+                          <Input
+                            id="merchant-phone"
+                            type="tel"
+                            inputMode="tel"
+                            autoComplete="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="08123456789"
+                            className="h-11 rounded-xl bg-background"
+                          />
+                        </div>
 
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-semibold text-slate-700">
-                                Password Akun Shopee (Opsional)
-                              </label>
-                              <div className="relative">
-                                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                                <Input
-                                  type="password"
-                                  value={password}
-                                  onChange={(e) => setPassword(e.target.value)}
-                                  placeholder="Masukkan jika akun memiliki password"
-                                  className="pl-10 h-11 rounded-xl bg-white"
-                                />
-                              </div>
-                            </div>
+                        <div className="space-y-1.5">
+                          <label
+                            htmlFor="merchant-password"
+                            className="text-xs font-semibold text-slate-700 dark:text-slate-300"
+                          >
+                            Password akun Shopee{" "}
+                            <span className="font-normal text-muted-foreground">(opsional)</span>
+                          </label>
+                          <Input
+                            id="merchant-password"
+                            type="password"
+                            autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Isi jika akun memakai password"
+                            className="h-11 rounded-xl bg-background"
+                          />
+                        </div>
 
-                            {/* PILIHAN METODE PENGIRIMAN OTP (WHATSAPP vs SMS) */}
-                            <div className="space-y-1.5 pt-0.5">
-                              <label className="text-xs font-semibold text-slate-700">
-                                Metode Pengiriman Kode OTP
-                              </label>
-                              <div className="grid grid-cols-2 gap-2.5">
-                                <button
-                                  type="button"
-                                  onClick={() => setOtpChannel(3)}
-                                  className={cn(
-                                    "flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all",
-                                    otpChannel === 3
-                                      ? "border-emerald-500 bg-emerald-50/80 text-emerald-800 shadow-sm ring-1 ring-emerald-500/20"
-                                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
-                                  )}
-                                >
-                                  <MessageCircle className="size-4 text-emerald-600 shrink-0" />
-                                  <span>WhatsApp</span>
-                                  {otpChannel === 3 && (
-                                    <Check className="size-3.5 stroke-[3] text-emerald-600 ml-auto" />
-                                  )}
-                                </button>
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            Kirim kode lewat
+                          </p>
+                          <Tabs
+                            value={String(otpChannel)}
+                            onValueChange={(v) => setOtpChannel(v === "1" ? 1 : 3)}
+                          >
+                            <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl">
+                              <TabsTrigger value="3" className="h-9 rounded-lg font-semibold">
+                                WhatsApp
+                              </TabsTrigger>
+                              <TabsTrigger value="1" className="h-9 rounded-lg font-semibold">
+                                SMS
+                              </TabsTrigger>
+                            </TabsList>
+                          </Tabs>
+                        </div>
 
-                                <button
-                                  type="button"
-                                  onClick={() => setOtpChannel(1)}
-                                  className={cn(
-                                    "flex items-center justify-center gap-2 p-3 rounded-xl border text-xs font-bold transition-all",
-                                    otpChannel === 1
-                                      ? "border-blue-500 bg-blue-50/80 text-blue-800 shadow-sm ring-1 ring-blue-500/20"
-                                      : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
-                                  )}
-                                >
-                                  <MessageSquare className="size-4 text-blue-600 shrink-0" />
-                                  <span>SMS</span>
-                                  {otpChannel === 1 && (
-                                    <Check className="size-3.5 stroke-[3] text-blue-600 ml-auto" />
-                                  )}
-                                </button>
-                              </div>
-                            </div>
+                        <Button
+                          className="h-11 w-full rounded-xl font-bold sm:w-auto"
+                          onClick={handleRequestOtp}
+                          disabled={isRequestingOtp || !phone.trim()}
+                        >
+                          {isRequestingOtp ? (
+                            <>
+                              <Loader2 className="size-4 animate-spin mr-2" /> Mengirim kode...
+                            </>
+                          ) : (
+                            "Kirim kode OTP"
+                          )}
+                        </Button>
+                      </div>
+                    )}
 
-                            <Button
-                              className="h-11 w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-white shadow-md shadow-blue-500/20"
-                              onClick={handleRequestOtp}
-                              disabled={isRequestingOtp || !phone.trim()}
-                            >
-                              {isRequestingOtp ? (
-                                <>
-                                  <Loader2 className="size-4 animate-spin mr-2" /> Mengirimkan
-                                  OTP...
-                                </>
-                              ) : (
-                                `Kirim Kode OTP via ${otpChannel === 3 ? "WhatsApp" : "SMS"}`
-                              )}
-                            </Button>
-                          </div>
-                        </>
-                      )}
+                    {otpStep === "requested" && (
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-foreground">Masukkan kode OTP</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Kode 6 digit telah dikirim lewat {channelLabel} ke{" "}
+                            <span className="font-semibold text-foreground">{phone}</span>.
+                          </p>
+                        </div>
 
-                      {otpStep === "requested" && (
-                        <>
-                          <div className="space-y-1 text-center sm:text-left">
-                            <h4 className="text-sm font-bold text-slate-800">
-                              Masukkan 6 Digit Kode OTP Shopee
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              Kode OTP telah dikirim via <strong>{channelLabel}</strong> ke nomor{" "}
-                              <strong>{phone}</strong>.
-                            </p>
-                          </div>
-
-                          <div className="space-y-4">
-                            {/* PIN-STYLE SEGMENTED 6-DIGIT BOX INPUT */}
-                            <div className="relative flex flex-col items-center justify-center my-3 w-full">
-                              <input
-                                ref={otpInputRef}
-                                type="text"
-                                inputMode="numeric"
-                                autoComplete="one-time-code"
-                                pattern="[0-9]*"
-                                maxLength={6}
-                                value={otp}
-                                onChange={(e) => {
-                                  const val = e.target.value.replace(/\D/g, "").slice(0, 6);
-                                  setOtp(val);
-                                }}
-                                className="absolute inset-0 size-full opacity-0 cursor-pointer z-10"
-                                autoFocus
+                        <InputOTP
+                          ref={otpInputRef}
+                          maxLength={6}
+                          value={otp}
+                          onChange={(val) => setOtp(val.replace(/\D/g, ""))}
+                          inputMode="numeric"
+                          autoComplete="one-time-code"
+                          autoFocus
+                          containerClassName="justify-start"
+                        >
+                          <InputOTPGroup>
+                            {Array.from({ length: 6 }, (_, i) => (
+                              <InputOTPSlot
+                                key={i}
+                                index={i}
+                                className="h-12 w-11 bg-background text-lg font-bold tabular-nums first:rounded-l-xl last:rounded-r-xl sm:w-12"
                               />
-                              <div className="flex items-center justify-center gap-1.5 sm:gap-2.5 max-w-full px-1">
-                                {Array.from({ length: 6 }).map((_, index) => {
-                                  const char = otp[index] || "";
-                                  const isCurrent = otp.length === index;
-                                  const isFilled = index < otp.length;
-                                  return (
-                                    <div
-                                      key={index}
-                                      onClick={() => otpInputRef.current?.focus()}
-                                      className={cn(
-                                        "size-10 sm:size-12 rounded-xl sm:rounded-2xl border-2 flex items-center justify-center font-mono text-lg sm:text-2xl font-black transition-all cursor-pointer select-none shrink-0",
-                                        isCurrent
-                                          ? "border-blue-600 bg-blue-50/80 shadow-md shadow-blue-500/20 scale-105 ring-2 ring-blue-500/20 text-blue-600"
-                                          : isFilled
-                                            ? "border-slate-300 bg-white text-slate-900 shadow-2xs"
-                                            : "border-slate-200 bg-white/70 text-slate-300",
-                                      )}
-                                    >
-                                      {char || (isCurrent ? <span className="inline-block w-0.5 h-5 sm:h-6 bg-blue-600 animate-pulse" /> : "•")}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <p className="text-[11px] text-muted-foreground mt-2 text-center">
-                                Klik kotak untuk mengetik atau menempel (paste) kode OTP Anda
-                              </p>
-                            </div>
-
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1 w-full">
-                              <Button
-                                className="h-11 flex-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-bold text-white shadow-md shadow-emerald-600/20"
-                                onClick={handleVerifyOtp}
-                                disabled={isVerifyingOtp || otp.length < 4}
-                              >
-                                {isVerifyingOtp ? (
-                                  <>
-                                    <Loader2 className="size-4 animate-spin mr-2" />{" "}
-                                    Memverifikasi...
-                                  </>
-                                ) : (
-                                  "Verifikasi & Hubungkan Akun"
-                                )}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="h-11 rounded-xl w-full sm:w-auto"
-                                onClick={() => {
-                                  setOtpStep("idle");
-                                  setOtp("");
-                                }}
-                              >
-                                Ganti Nomor / Batal
-                              </Button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-
-                      {otpStep === "merchant_select" && (
-                        <>
-                          <div className="space-y-1">
-                            <h4 className="text-sm font-bold text-slate-800">
-                              Pilih Profil Merchant
-                            </h4>
-                            <p className="text-xs text-muted-foreground">
-                              Ditemukan beberapa merchant pada akun Shopee ini. Pilih merchant yang
-                              akan digunakan di toko ini:
-                            </p>
-                          </div>
-
-                          <div className="space-y-2">
-                            {merchantsList.map((m) => (
-                              <button
-                                key={m.id}
-                                type="button"
-                                onClick={() => setSelectedMerchantId(m.id)}
-                                className={
-                                  "w-full flex items-center justify-between p-3.5 rounded-xl border text-left transition-all " +
-                                  (selectedMerchantId === m.id
-                                    ? "border-blue-600 bg-blue-50/80 font-bold text-blue-900 shadow-xs"
-                                    : "border-slate-200 bg-white hover:bg-slate-50")
-                                }
-                              >
-                                <div className="flex items-center gap-3">
-                                  <Building2 className="size-5 text-blue-600" />
-                                  <div>
-                                    <p className="text-sm font-bold">{m.name}</p>
-                                    <p className="text-xs text-muted-foreground">ID: {m.id}</p>
-                                  </div>
-                                </div>
-                                {selectedMerchantId === m.id && (
-                                  <div className="size-6 rounded-full bg-blue-600 text-white flex items-center justify-center">
-                                    <Check className="size-3.5 stroke-[3]" />
-                                  </div>
-                                )}
-                              </button>
                             ))}
+                          </InputOTPGroup>
+                        </InputOTP>
 
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 w-full">
-                              <Button
-                                className="h-11 flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 font-bold text-white shadow-md shadow-blue-500/20"
-                                onClick={handleCompleteMerchantSelection}
-                                disabled={isVerifyingOtp || !selectedMerchantId}
-                              >
-                                {isVerifyingOtp ? (
-                                  <>
-                                    <Loader2 className="size-4 animate-spin mr-2" /> Menghubungkan...
-                                  </>
-                                ) : (
-                                  "Selesai & Hubungkan Merchant"
-                                )}
-                              </Button>
-                              <Button
-                                variant="outline"
-                                className="h-11 rounded-xl w-full sm:w-auto"
-                                onClick={() => {
-                                  setOtpStep("idle");
-                                  setOtp("");
-                                }}
-                              >
-                                Batal
-                              </Button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                          <Button
+                            className="h-11 flex-1 rounded-xl font-bold"
+                            onClick={handleVerifyOtp}
+                            disabled={isVerifyingOtp || otp.length < 4}
+                          >
+                            {isVerifyingOtp ? (
+                              <>
+                                <Loader2 className="size-4 animate-spin mr-2" /> Memverifikasi...
+                              </>
+                            ) : (
+                              "Verifikasi & hubungkan"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-11 rounded-xl"
+                            onClick={() => {
+                              setOtpStep("idle");
+                              setOtp("");
+                            }}
+                          >
+                            Ganti nomor
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {otpStep === "merchant_select" && (
+                      <div className="space-y-4">
+                        <div className="space-y-1">
+                          <h4 className="text-sm font-bold text-foreground">Pilih merchant</h4>
+                          <p className="text-xs text-muted-foreground">
+                            Akun Shopee ini punya beberapa merchant. Pilih yang dipakai di toko ini.
+                          </p>
+                        </div>
+
+                        <RadioGroup
+                          value={selectedMerchantId ?? ""}
+                          onValueChange={setSelectedMerchantId}
+                          className="gap-2"
+                        >
+                          {merchantsList.map((m) => (
+                            <label
+                              key={m.id}
+                              htmlFor={`merchant-${m.id}`}
+                              className={cn(
+                                "flex cursor-pointer items-center gap-3 rounded-xl border p-3.5",
+                                selectedMerchantId === m.id
+                                  ? "border-primary bg-primary/5"
+                                  : "hover:bg-muted/50",
+                              )}
+                            >
+                              <RadioGroupItem value={m.id} id={`merchant-${m.id}`} />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-bold text-foreground">{m.name}</p>
+                                <p className="truncate font-mono text-xs text-muted-foreground">
+                                  ID {m.id}
+                                </p>
+                              </div>
+                            </label>
+                          ))}
+                        </RadioGroup>
+
+                        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                          <Button
+                            className="h-11 flex-1 rounded-xl font-bold"
+                            onClick={handleCompleteMerchantSelection}
+                            disabled={isVerifyingOtp || !selectedMerchantId}
+                          >
+                            {isVerifyingOtp ? (
+                              <>
+                                <Loader2 className="size-4 animate-spin mr-2" /> Menghubungkan...
+                              </>
+                            ) : (
+                              "Hubungkan merchant"
+                            )}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="h-11 rounded-xl"
+                            onClick={() => {
+                              setOtpStep("idle");
+                              setOtp("");
+                            }}
+                          >
+                            Batal
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
