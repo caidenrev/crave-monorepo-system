@@ -8,6 +8,8 @@ import type { CartLine } from "./pos-data";
 export type PendingCheckout = {
   transactionId: string;
   cart: CartLine[];
+  /** atas nama pelanggan (opsional) */
+  customerName?: string;
   method: "QRIS";
   /** total yang dibayar pelanggan (termasuk pajak), untuk ditampilkan ke kasir */
   paidAmount: number;

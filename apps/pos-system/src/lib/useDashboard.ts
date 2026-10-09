@@ -32,12 +32,7 @@ export function useDashboard() {
         .from("transactions")
         .select(
           `
-          id,
-          created_at,
-          total_amount,
-          total_items,
-          cashier_name,
-          payment_method,
+          *,
           transaction_items (
             qty,
             price,
@@ -138,6 +133,7 @@ export function useDashboard() {
         id: t.id.substring(0, 8).toUpperCase(),
         time: format(new Date(t.created_at), "HH:mm"),
         cashier: t.cashier_name || "Kasir",
+        customer: (t as { customer_name?: string | null }).customer_name || null,
         items: t.total_items,
         total: Number(t.total_amount),
         method: t.payment_method,

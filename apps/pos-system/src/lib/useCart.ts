@@ -15,6 +15,35 @@ const cache = new Map<string, CartLine[]>();
 const listeners = new Set<() => void>();
 
 const keyFor = (userId: string) => `crave_cart_${userId}`;
+// nama pelanggan untuk pesanan di keranjang (opsional), ikut terhapus saat keranjang kosong
+const customerKeyFor = (userId: string) => `crave_cart_customer_${userId}`;
+const customerKeyFromCart = (cartKey: string) =>
+  cartKey.replace("crave_cart_", "crave_cart_customer_");
+const customerCache = new Map<string, string>();
+
+function readCustomer(key: string): string {
+  const cached = customerCache.get(key);
+  if (cached !== undefined) return cached;
+  let v = "";
+  try {
+    v = localStorage.getItem(key) ?? "";
+  } catch {
+    // storage tidak tersedia
+  }
+  customerCache.set(key, v);
+  return v;
+}
+
+function writeCustomer(key: string, value: string) {
+  customerCache.set(key, value);
+  try {
+    if (value) localStorage.setItem(key, value);
+    else localStorage.removeItem(key);
+  } catch {
+    // storage diblokir
+  }
+  listeners.forEach((l) => l());
+}
 
 const isCartLine = (l: unknown): l is CartLine => {
   const line = l as CartLine | null;
@@ -47,6 +76,16 @@ function read(key: string): CartLine[] {
 
 function write(key: string, lines: CartLine[]) {
   cache.set(key, lines);
+  // keranjang dikosongkan (batal / transaksi selesai) → nama pelanggan ikut dihapus
+  if (!lines.length) {
+    const ck = customerKeyFromCart(key);
+    customerCache.set(ck, "");
+    try {
+      localStorage.removeItem(ck);
+    } catch {
+      // abaikan
+    }
+  }
   try {
     if (lines.length) localStorage.setItem(key, JSON.stringify(lines));
     else localStorage.removeItem(key);
@@ -95,4 +134,43 @@ export function useCart() {
   );
 
   return [cart, setCart] as const;
+}
+
+/** Atas nama pelanggan untuk pesanan di keranjang. Kosong = tanpa nama. */
+export function useCartCustomer() {
+  const { user } = useAuth();
+  const key = user ? customerKeyFor(user.id) : null;
+
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      listeners.add(onChange);
+      const onStorage = (e: StorageEvent) => {
+        if (key && e.key === key) {
+          customerCache.delete(key);
+          onChange();
+        }
+      };
+      window.addEventListener("storage", onStorage);
+      return () => {
+        listeners.delete(onChange);
+        window.removeEventListener("storage", onStorage);
+      };
+    },
+    [key],
+  );
+
+  const name = useSyncExternalStore(
+    subscribe,
+    () => (key ? readCustomer(key) : ""),
+    () => "",
+  );
+
+  const setName = useCallback(
+    (value: string) => {
+      if (key) writeCustomer(key, value.slice(0, 80));
+    },
+    [key],
+  );
+
+  return [name, setName] as const;
 }

@@ -8,6 +8,8 @@ export type ReportTransaction = {
   user_id?: string;
   created_at: string;
   cashier_name: string;
+  /** atas nama pelanggan; null/undefined = tanpa nama atau kolom belum ada */
+  customer_name?: string | null;
   payment_method: string;
   total_amount: number;
   total_items: number;

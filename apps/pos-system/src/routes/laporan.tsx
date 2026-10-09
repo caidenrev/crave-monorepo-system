@@ -68,9 +68,9 @@ function LaporanPage() {
   const handleExportCSV = (title: string) => {
     let csvContent = "";
     if (title === "Rekap penjualan harian") {
-      csvContent = "ID,Tanggal Waktu,Kasir,Metode Pembayaran,Total Item,Total Harga\n";
+      csvContent = "ID,Tanggal Waktu,Pelanggan,Kasir,Metode Pembayaran,Total Item,Total Harga\n";
       txs.forEach((t) => {
-        csvContent += `${t.id},"${format(new Date(t.created_at), "yyyy-MM-dd HH:mm:ss")}",${t.cashier_name || "Tidak Diketahui"},${t.payment_method},${t.total_items},${t.total_amount}\n`;
+        csvContent += `${t.id},"${format(new Date(t.created_at), "yyyy-MM-dd HH:mm:ss")}","${(t.customer_name || "").replace(/"/g, '""')}",${t.cashier_name || "Tidak Diketahui"},${t.payment_method},${t.total_items},${t.total_amount}\n`;
       });
     } else if (title === "Kartu stok barang") {
       csvContent = "ID,Nama Produk,Tipe,Qty,Deskripsi,Waktu\n";
@@ -200,6 +200,7 @@ function LaporanPage() {
                   <TableRow>
                     <TableHead>Struk</TableHead>
                     <TableHead>Waktu</TableHead>
+                    <TableHead>Pelanggan</TableHead>
                     <TableHead>Kasir</TableHead>
                     <TableHead>Metode</TableHead>
                     <TableHead className="text-right">Item</TableHead>
@@ -214,6 +215,9 @@ function LaporanPage() {
                       </TableCell>
                       <TableCell className="text-xs">
                         {format(new Date(t.created_at), "dd/MM/yy HH:mm")}
+                      </TableCell>
+                      <TableCell className={"text-xs " + (t.customer_name ? "font-semibold" : "text-muted-foreground")}>
+                        {t.customer_name || "Tanpa nama"}
                       </TableCell>
                       <TableCell className="text-xs">{t.cashier_name || "-"}</TableCell>
                       <TableCell>
@@ -232,7 +236,7 @@ function LaporanPage() {
                   ))}
                   {txs.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-6 text-muted-foreground">
+                      <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
                         Belum ada transaksi pada periode ini.
                       </TableCell>
                     </TableRow>

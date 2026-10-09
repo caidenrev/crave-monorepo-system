@@ -15,6 +15,8 @@ import {
   RefreshCw,
   AlertCircle,
   Loader2,
+  UserRound,
+  X,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
@@ -47,7 +49,7 @@ import { rupiah, type CartLine, type Product } from "@/lib/pos-data";
 import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useTransactions, newTransactionId } from "@/lib/useTransactions";
-import { useCart } from "@/lib/useCart";
+import { useCart, useCartCustomer } from "@/lib/useCart";
 import {
   clearPendingCheckout,
   readPendingCheckout,
@@ -118,6 +120,8 @@ function KasirPage() {
   const [q, setQ] = useState("");
   // Keranjang bertahan saat pindah menu / refresh, sampai dikosongkan atau transaksi selesai
   const [cart, setCart] = useCart();
+  // atas nama pelanggan (opsional); ikut terhapus saat keranjang dikosongkan
+  const [customerName, setCustomerName] = useCartCustomer();
   const [method, setMethod] = useState<"QRIS" | "Kartu" | "Tunai">("QRIS");
   const [mobileCartOpen, setMobileCartOpen] = useState(false);
 
@@ -143,6 +147,7 @@ function KasirPage() {
   const pendingQrisCheckoutRef = useRef<{
     cart: CartLine[];
     transactionId: string;
+    customerName: string;
   } | null>(null);
   const [qrisSave, setQrisSave] = useState<
     { status: "idle" | "saving" | "saved" } | { status: "failed"; message: string }
@@ -393,12 +398,17 @@ function KasirPage() {
     });
 
     // Snapshot keranjang & ID: dipakai lagi persis sama bila perlu "Simpan ulang"
-    pendingQrisCheckoutRef.current = { cart: [...cart], transactionId: getCheckoutId() };
+    pendingQrisCheckoutRef.current = {
+      cart: [...cart],
+      transactionId: getCheckoutId(),
+      customerName,
+    };
     // Simpan juga di HP: kalau halaman di-refresh sebelum tersimpan, transaksi ini tidak hilang
     if (user) {
       writePendingCheckout(user.id, {
         transactionId: pendingQrisCheckoutRef.current.transactionId,
         cart: pendingQrisCheckoutRef.current.cart,
+        customerName: pendingQrisCheckoutRef.current.customerName,
         method: "QRIS",
         paidAmount: total,
         paidAt: new Date().toISOString(),
@@ -416,7 +426,13 @@ function KasirPage() {
     if (!pending) return;
     setQrisSave({ status: "saving" });
     checkoutMutation.mutate(
-      { cart: pending.cart, method: "QRIS", cashierName: userName, transactionId: pending.transactionId },
+      {
+        cart: pending.cart,
+        method: "QRIS",
+        cashierName: userName,
+        transactionId: pending.transactionId,
+        customerName: pending.customerName,
+      },
       {
         onSuccess: () => {
           pendingQrisCheckoutRef.current = null;
@@ -458,6 +474,7 @@ function KasirPage() {
         method: pending.method,
         cashierName: userName,
         transactionId: pending.transactionId,
+        customerName: pending.customerName ?? "",
       },
       {
         onSuccess: () => {
@@ -543,7 +560,10 @@ function KasirPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-base font-extrabold text-foreground">Keranjang</p>
-                <p className="text-xs text-muted-foreground">Struk #{currentOrderId}</p>
+                <p className="text-xs text-muted-foreground">
+                  Struk #{currentOrderId}
+                  {customerName.trim() ? ` · a.n. ${customerName.trim()}` : ""}
+                </p>
               </div>
               {cart.length > 0 ? (
                 <AlertDialog>
@@ -632,6 +652,37 @@ function KasirPage() {
               </div>
             </div>
 
+            <div className="mt-4">
+              <label
+                htmlFor="customer-name"
+                className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground"
+              >
+                Atas Nama <span className="font-medium normal-case tracking-normal">(opsional)</span>
+              </label>
+              <div className="relative mt-2">
+                <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="customer-name"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Nama pelanggan, boleh dikosongkan"
+                  maxLength={80}
+                  autoComplete="off"
+                  className="h-11 rounded-2xl pl-9 pr-9"
+                />
+                {customerName && (
+                  <button
+                    type="button"
+                    onClick={() => setCustomerName("")}
+                    className="absolute right-2 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:bg-muted"
+                    aria-label="Hapus nama pelanggan"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
             <p className="mt-4 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               Metode Pembayaran
             </p>
@@ -689,7 +740,13 @@ function KasirPage() {
                       onClick={(e) => {
                         e.preventDefault();
                         checkoutMutation.mutate(
-                          { cart, method, cashierName: userName, transactionId: getCheckoutId() },
+                          {
+                            cart,
+                            method,
+                            cashierName: userName,
+                            transactionId: getCheckoutId(),
+                            customerName,
+                          },
                           {
                             onSuccess: () => {
                               checkoutIdRef.current = null;
@@ -794,7 +851,10 @@ function KasirPage() {
             ) : (
               <div className="flex flex-col items-center w-full max-w-[280px]">
                 <div className="text-center mb-3">
-                  <p className="text-xs text-slate-500 font-medium">Total Tagihan</p>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Total Tagihan
+                    {customerName.trim() ? ` · a.n. ${customerName.trim()}` : ""}
+                  </p>
                   <p className="text-2xl font-black text-blue-600 tracking-tight">{rupiah(total)}</p>
                 </div>
 

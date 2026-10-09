@@ -232,11 +232,20 @@ create policy "Users can manage own merchant settings" on public.merchant_settin
 --   hanya karena data stok tidak akurat.
 -- * Harga diambil dari tabel products, bukan dari HP kasir.
 -- * SECURITY INVOKER: aturan RLS tetap berlaku, hanya produk milik pengguna yang bisa dipakai.
+-- * customer_name = atas nama pelanggan (opsional); cashier_name = kasir yang melayani.
+
+-- nama pelanggan per transaksi (boleh kosong)
+alter table if exists public.transactions add column if not exists customer_name text;
+
+-- versi lama (4 parameter) dihapus agar tidak bentrok dengan versi baru
+drop function if exists public.checkout_transaction(uuid, text, text, jsonb);
+
 create or replace function public.checkout_transaction(
   p_transaction_id uuid,
   p_payment_method text,
   p_cashier_name text,
-  p_items jsonb -- [{"product_id": "<uuid>", "qty": 2}, ...]
+  p_items jsonb, -- [{"product_id": "<uuid>", "qty": 2}, ...]
+  p_customer_name text default null
 )
 returns public.transactions
 language plpgsql
@@ -259,8 +268,12 @@ begin
     raise exception 'Keranjang kosong' using errcode = '22023';
   end if;
 
-  insert into public.transactions (id, user_id, payment_method, total_amount, total_items, cashier_name)
-  values (p_transaction_id, v_user, p_payment_method, 0, 0, coalesce(nullif(trim(p_cashier_name), ''), 'Kasir'))
+  insert into public.transactions (id, user_id, payment_method, total_amount, total_items, cashier_name, customer_name)
+  values (
+    p_transaction_id, v_user, p_payment_method, 0, 0,
+    coalesce(nullif(trim(p_cashier_name), ''), 'Kasir'),
+    nullif(left(trim(p_customer_name), 80), '')
+  )
   on conflict (id) do nothing
   returning * into v_trx;
 
@@ -310,8 +323,8 @@ begin
 end;
 $$;
 
-revoke all on function public.checkout_transaction(uuid, text, text, jsonb) from public, anon;
-grant execute on function public.checkout_transaction(uuid, text, text, jsonb) to authenticated;
+revoke all on function public.checkout_transaction(uuid, text, text, jsonb, text) from public, anon;
+grant execute on function public.checkout_transaction(uuid, text, text, jsonb, text) to authenticated;
 
 -- 8. PROFIL TOKO (STRUK)
 -- Nama, alamat, telepon & pesan bawah struk per akun. Sebelumnya disimpan di

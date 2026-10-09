@@ -13,6 +13,8 @@ type CheckoutPayload = {
    * sama (mis. setelah gagal jaringan) agar tidak tercatat dua kali.
    */
   transactionId?: string;
+  /** Atas nama pelanggan (opsional). Kosong = transaksi tanpa nama. */
+  customerName?: string;
 };
 
 /** UUID v4 untuk ID transaksi; fallback untuk browser tanpa crypto.randomUUID. */
@@ -102,12 +104,21 @@ export function useTransactions() {
 
       // Satu panggilan ke database: transaksi, item, stok & riwayat stok tersimpan
       // sekaligus atau batal semua (lihat checkout_transaction di supabase_schema.sql).
-      const { data, error } = await supabase.rpc("checkout_transaction", {
+      const args = {
         p_transaction_id: payload.transactionId ?? newTransactionId(),
         p_payment_method: payload.method,
         p_cashier_name: payload.cashierName,
         p_items: payload.cart.map((l) => ({ product_id: l.product.id, qty: l.qty })),
+      };
+      let { data, error } = await supabase.rpc("checkout_transaction", {
+        ...args,
+        p_customer_name: payload.customerName?.trim() || null,
       });
+
+      // Database masih memakai fungsi lama (tanpa nama pelanggan): simpan tanpa nama
+      if (error && isMissingFunction(error)) {
+        ({ data, error } = await supabase.rpc("checkout_transaction", args));
+      }
 
       if (error) {
         if (isMissingFunction(error)) {
