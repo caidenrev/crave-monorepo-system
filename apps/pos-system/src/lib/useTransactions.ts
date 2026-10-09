@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 type CheckoutPayload = {
   cart: CartLine[];
-  method: "QRIS" | "Kartu" | "Tunai" | "Utang";
+  method: "QRIS" | "Kartu" | "Tunai";
   cashierName: string;
   /**
    * ID transaksi dari HP kasir. Kirim ID yang sama saat mengulang checkout yang

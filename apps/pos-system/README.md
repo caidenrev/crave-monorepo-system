@@ -16,9 +16,9 @@
 
 ## 📌 Latar Belakang & Permasalahan
 
-Pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) memegang peranan krusial bagi perekonomian. Namun, mayoritas masih mengandalkan **pencatatan manual** menggunakan kertas. Metode ini rentan terhadap human error, hilangnya catatan utang-piutang, serta kebocoran persediaan barang (stok) karena riwayat mutasi yang tidak tercatat secara kronologis.
+Pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) memegang peranan krusial bagi perekonomian. Namun, mayoritas masih mengandalkan **pencatatan manual** menggunakan kertas. Metode ini rentan terhadap human error, hilangnya catatan penjualan, serta kebocoran persediaan barang (stok) karena riwayat mutasi yang tidak tercatat secara kronologis.
 
-**Simple-Point** hadir sebagai solusi POS & Pembukuan digital tanpa biaya langganan yang rumit. Memungkinkan pemilik bisnis memantau penjualan, riwayat stok, serta utang-piutang secara instan untuk memperkuat kelangsungan finansial usaha.
+**Simple-Point** hadir sebagai solusi POS & Pembukuan digital tanpa biaya langganan yang rumit. Memungkinkan pemilik bisnis memantau penjualan, riwayat stok, serta pembayaran QRIS secara instan untuk memperkuat kelangsungan finansial usaha.
 
 ---
 
@@ -26,7 +26,7 @@ Pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) memegang peranan krusial bagi per
 
 - **⚡ Transaksi Kasir Cepat (POS)**: Layanan kasir digital responsif yang mempercepat transaksi penjualan produk harian.
 - **📦 Inventaris & Kartu Stok**: Pelacakan riwayat masuk-keluar stok secara detail (Kartu Stok) guna meminimalkan kebocoran inventaris.
-- **💸 Pelacakan Utang & Piutang**: Pengelolaan daftar utang (kepada supplier) dan piutang (oleh pelanggan) dengan batas jatuh tempo untuk kelancaran arus kas.
+- **💸 Pembayaran QRIS & Supplier**: Pembayaran QRIS dinamis yang terverifikasi otomatis, serta daftar pemasok untuk pemesanan ulang stok lewat WhatsApp.
 - **🔒 Keamanan PIN Karyawan**: Pembatasan akses operasional kasir dan menu krusial menggunakan sistem PIN individual karyawan.
 - **📊 Laporan Keuangan & Spreadsheet**: Tampilan interaktif pembukuan kas, laba rugi, dan integrasi spreadsheet interaktif untuk kebutuhan analisis lanjutan.
 

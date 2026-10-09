@@ -33,7 +33,7 @@ export const Route = createFileRoute("/laporan")({
       {
         name: "description",
         content:
-          "Unduh laporan penjualan, stok, dan piutang dalam format Excel atau PDF untuk pembukuan dan pengajuan modal.",
+          "Unduh laporan penjualan dan stok dalam format Excel atau PDF untuk pembukuan dan pengajuan modal.",
       },
     ],
   }),
@@ -218,7 +218,7 @@ function LaporanPage() {
                       <TableCell className="text-xs">{t.cashier_name || "-"}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={t.payment_method === "Utang" ? "destructive" : "secondary"}
+                          variant="secondary"
                           className="rounded-full text-[10px]"
                         >
                           {t.payment_method}

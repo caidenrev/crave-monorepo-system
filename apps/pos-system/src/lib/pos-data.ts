@@ -124,64 +124,6 @@ export const products: Product[] = [
 
 export const categories = ["Semua"] as const;
 
-export type Debt = {
-  id: string;
-  customer: string;
-  phone: string;
-  amount: number;
-  paid: number;
-  dueDate: string;
-  status: "Belum jatuh tempo" | "Jatuh tempo hari ini" | "Terlambat" | "Lunas";
-};
-
-export const debts: Debt[] = [
-  {
-    id: "d1",
-    customer: "Bu Sari",
-    phone: "0812-1111-2222",
-    amount: 350000,
-    paid: 100000,
-    dueDate: "2026-08-13",
-    status: "Jatuh tempo hari ini",
-  },
-  {
-    id: "d2",
-    customer: "Pak Andi",
-    phone: "0813-3333-4444",
-    amount: 180000,
-    paid: 0,
-    dueDate: "2026-08-09",
-    status: "Terlambat",
-  },
-  {
-    id: "d3",
-    customer: "Warung Maju",
-    phone: "0857-5555-6666",
-    amount: 1250000,
-    paid: 500000,
-    dueDate: "2026-08-20",
-    status: "Belum jatuh tempo",
-  },
-  {
-    id: "d4",
-    customer: "Mbak Rina",
-    phone: "0878-7777-8888",
-    amount: 90000,
-    paid: 90000,
-    dueDate: "2026-08-05",
-    status: "Lunas",
-  },
-  {
-    id: "d5",
-    customer: "Kantin Sekolah",
-    phone: "0821-9999-0000",
-    amount: 640000,
-    paid: 200000,
-    dueDate: "2026-08-25",
-    status: "Belum jatuh tempo",
-  },
-];
-
 export type Role = "Owner" | "Manajer" | "Kasir" | "Gudang";
 
 export type Employee = {
@@ -232,7 +174,6 @@ export const rolePermissions: { permission: string; roles: Role[] }[] = [
   { permission: "Transaksi kasir", roles: ["Owner", "Manajer", "Kasir"] },
   { permission: "Lihat laporan penjualan", roles: ["Owner", "Manajer"] },
   { permission: "Kelola stok & harga", roles: ["Owner", "Manajer", "Gudang"] },
-  { permission: "Catat & hapus utang", roles: ["Owner", "Manajer"] },
   { permission: "Kelola karyawan & peran", roles: ["Owner"] },
   { permission: "Ekspor data", roles: ["Owner", "Manajer"] },
 ];
@@ -317,7 +258,7 @@ export type Transaction = {
   id: string;
   time: string;
   cashier: string;
-  method: "QRIS" | "Kartu" | "Tunai" | "Utang";
+  method: "QRIS" | "Kartu" | "Tunai";
   items: number;
   total: number;
 };
@@ -333,7 +274,7 @@ export const transactions: Transaction[] = [
     items: 5,
     total: 112000,
   },
-  { id: "#27359", time: "19:20", cashier: "Dewi Lestari", method: "Utang", items: 4, total: 96000 },
+  { id: "#27359", time: "19:20", cashier: "Dewi Lestari", method: "Tunai", items: 4, total: 96000 },
   { id: "#27358", time: "18:52", cashier: "Adam Saputra", method: "QRIS", items: 1, total: 18000 },
   { id: "#27357", time: "18:30", cashier: "Dewi Lestari", method: "QRIS", items: 6, total: 143000 },
 ];

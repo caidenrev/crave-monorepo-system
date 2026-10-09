@@ -27,7 +27,7 @@ export function AboutSection() {
             </div>
             <h3 className="mt-8 text-lg font-bold text-foreground">Tantangan Pembukuan Manual</h3>
             <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Banyak pelaku UMKM kehilangan profit akibat kesalahan hitung manual, catatan utang kertas yang terselip, dan minimnya kontrol stok barang.
+              Banyak pelaku UMKM kehilangan profit akibat kesalahan hitung manual, catatan penjualan kertas yang terselip, dan minimnya kontrol stok barang.
             </p>
           </article>
 
@@ -55,7 +55,7 @@ export function AboutSection() {
             </div>
             <h3 className="mt-8 text-lg font-bold text-foreground">Bisnis Lebih Terkontrol</h3>
             <p className="mx-auto mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Pantau laporan keuangan harian, riwayat stok masuk-keluar secara otomatis, dan kelola utang pelanggan langsung dari satu dashboard.
+              Pantau laporan keuangan harian, riwayat stok masuk-keluar secara otomatis, dan terima pembayaran QRIS langsung dari satu dashboard.
             </p>
           </article>
         </div>

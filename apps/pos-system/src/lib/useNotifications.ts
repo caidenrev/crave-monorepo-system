@@ -4,7 +4,7 @@ import { useAuth } from "./useAuth";
 
 export type AppNotification = {
   id: string;
-  type: "stok" | "pesanan" | "utang";
+  type: "stok" | "pesanan";
   title: string;
   description: string;
   time: string;

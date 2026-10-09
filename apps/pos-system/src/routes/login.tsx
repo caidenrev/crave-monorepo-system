@@ -115,7 +115,7 @@ function LoginPage() {
             </h1>
           </div>
           <p className="hidden md:block mt-6 text-white/80 text-left max-w-sm text-base leading-relaxed font-medium">
-            Solusi POS Digital untuk UMKM. Kelola penjualan, stok, dan utang dengan mudah.
+            Solusi POS Digital untuk UMKM. Kelola penjualan, stok, dan laporan dengan mudah.
           </p>
 
           <div className="absolute top-6 right-6 md:top-auto md:bottom-12 md:left-16 md:right-auto flex items-center gap-3 text-sm pointer-events-auto z-50">

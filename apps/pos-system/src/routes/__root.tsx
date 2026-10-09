@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Aplikasi kasir digital untuk UMKM: barcode, stok otomatis, utang pelanggan, dan laporan real-time.",
+          "Aplikasi kasir digital untuk UMKM: barcode, pembayaran QRIS, stok otomatis, dan laporan real-time.",
       },
       { property: "og:title", content: "Crave — POS Digital untuk UMKM" },
       {

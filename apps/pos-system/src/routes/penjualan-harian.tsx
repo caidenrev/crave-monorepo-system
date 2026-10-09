@@ -59,9 +59,9 @@ function PenjualanHarianPage() {
     if (method !== "semua") {
       if (method === "qris" && t.payment_method !== "QRIS") matchesMethod = false;
       if (method === "tunai" && t.payment_method !== "Tunai") matchesMethod = false;
-      if (method === "kartu" && !["Kartu Kredit", "Kartu Debit"].includes(t.payment_method))
+      // kasir menyimpan metode kartu sebagai "Kartu"; varian lama tetap ikut terfilter
+      if (method === "kartu" && !["Kartu", "Kartu Kredit", "Kartu Debit"].includes(t.payment_method))
         matchesMethod = false;
-      if (method === "utang" && t.payment_method !== "Utang") matchesMethod = false;
     }
 
     return matchesSearch && matchesMethod;
@@ -154,7 +154,6 @@ function PenjualanHarianPage() {
                 <SelectItem value="qris">QRIS</SelectItem>
                 <SelectItem value="tunai">Tunai</SelectItem>
                 <SelectItem value="kartu">Kartu Kredit/Debit</SelectItem>
-                <SelectItem value="utang">Utang</SelectItem>
               </SelectContent>
             </Select>
             <Button
@@ -196,7 +195,7 @@ function PenjualanHarianPage() {
                       <TableCell>{t.cashier_name || "-"}</TableCell>
                       <TableCell>
                         <Badge
-                          variant={t.payment_method === "Utang" ? "destructive" : "secondary"}
+                          variant="secondary"
                           className="rounded-full text-[10px]"
                         >
                           {t.payment_method}

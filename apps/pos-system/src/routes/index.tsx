@@ -66,7 +66,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Kasir digital dengan pemindaian barcode, stok otomatis, catatan utang pelanggan, dan laporan penjualan real-time untuk UMKM.",
+          "Kasir digital dengan pemindaian barcode, pembayaran QRIS, stok otomatis, dan laporan penjualan real-time untuk UMKM.",
       },
       { property: "og:title", content: "Crave — Kasir POS Digital untuk UMKM" },
       {

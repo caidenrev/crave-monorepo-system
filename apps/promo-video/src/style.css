@@ -1,0 +1,13 @@
+/* Tema, token warna, font & utilitas (card-soft, shadow-soft) diambil langsung dari pos-system */
+@import "../../pos-system/src/styles.css";
+@source "./";
+
+/* Di video semua gerak digerakkan frame Remotion; transisi/animasi CSS bawaan
+   komponen dimatikan agar setiap frame hasil render deterministik. */
+*,
+*::before,
+*::after {
+  transition: none !important;
+  animation: none !important;
+  caret-color: transparent;
+}

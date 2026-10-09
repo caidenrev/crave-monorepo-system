@@ -378,7 +378,7 @@ function DashboardPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Badge
-                      variant={t.method === "Utang" ? "destructive" : "secondary"}
+                      variant="secondary"
                       className="rounded-full text-[10px]"
                     >
                       {t.method}

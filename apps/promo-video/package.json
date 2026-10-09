@@ -1,0 +1,18 @@
+{
+  "name": "promo-video",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio src/index.ts",
+    "render:landscape": "remotion render src/index.ts CravePromo-Landscape out/crave-promo-landscape.mp4",
+    "render:vertical": "remotion render src/index.ts CravePromo-Vertical out/crave-promo-vertical.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.533",
+    "@remotion/google-fonts": "4.0.533",
+    "@remotion/tailwind-v4": "4.0.533",
+    "@remotion/transitions": "4.0.533",
+    "react-qr-code": "^2.2.0",
+    "remotion": "4.0.533"
+  }
+}
