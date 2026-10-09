@@ -657,7 +657,8 @@ export const authApi = {
 
   async signOut() {
     if (!isSupabaseConfigured) return;
-    return await supabase.auth.signOut();
+    // hanya perangkat ini (default Supabase "global" mengeluarkan semua perangkat, termasuk kasir)
+    return await supabase.auth.signOut({ scope: "local" });
   },
 
   async getCurrentSession() {

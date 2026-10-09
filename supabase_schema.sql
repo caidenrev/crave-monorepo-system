@@ -330,3 +330,59 @@ alter table if exists public.store_profiles enable row level security;
 drop policy if exists "Users can manage own store profile" on public.store_profiles;
 create policy "Users can manage own store profile" on public.store_profiles
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- 9. PERANGKAT & SESI LOGIN
+-- Aplikasi tidak bisa membaca skema auth secara langsung. Dua fungsi ini hanya
+-- melihat/menghapus sesi milik akun yang sedang login (auth.uid()).
+-- Catatan: perangkat yang sesinya dihapus masih memegang access token sampai
+-- kedaluwarsa (default 1 jam); setelah itu sesinya tidak bisa diperpanjang.
+create or replace function public.list_my_sessions()
+returns table (
+  id uuid,
+  user_agent text,
+  ip text,
+  created_at timestamptz,
+  last_active_at timestamptz,
+  is_current boolean
+)
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select
+    s.id,
+    s.user_agent,
+    host(s.ip),
+    s.created_at,
+    coalesce(s.refreshed_at::timestamptz, s.updated_at, s.created_at),
+    s.id = nullif(auth.jwt() ->> 'session_id', '')::uuid
+  from auth.sessions s
+  where s.user_id = auth.uid()
+  order by coalesce(s.refreshed_at::timestamptz, s.updated_at, s.created_at) desc;
+$$;
+
+create or replace function public.revoke_my_session(p_session_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'Pengguna belum terautentikasi' using errcode = '28000';
+  end if;
+  if p_session_id = nullif(auth.jwt() ->> 'session_id', '')::uuid then
+    raise exception 'Gunakan tombol Keluar untuk mengakhiri sesi di perangkat ini' using errcode = '22023';
+  end if;
+  delete from auth.sessions where id = p_session_id and user_id = auth.uid();
+  if not found then
+    raise exception 'Sesi tidak ditemukan atau sudah berakhir' using errcode = 'P0002';
+  end if;
+end;
+$$;
+
+revoke all on function public.list_my_sessions() from public, anon;
+revoke all on function public.revoke_my_session(uuid) from public, anon;
+grant execute on function public.list_my_sessions() to authenticated;
+grant execute on function public.revoke_my_session(uuid) to authenticated;

@@ -28,7 +28,9 @@ export function useAuth() {
     typeof window !== "undefined" ? localStorage.getItem("app_unlocked") === "true" : false;
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Hanya perangkat ini. Default Supabase ("global") ikut mengeluarkan SEMUA perangkat;
+    // untuk itu ada tombol "Keluarkan semua perangkat lain" di Pengaturan > Profil.
+    await supabase.auth.signOut({ scope: "local" });
     localStorage.removeItem("app_unlocked");
     // Reload the page to clear all memory state and cache
     window.location.reload();

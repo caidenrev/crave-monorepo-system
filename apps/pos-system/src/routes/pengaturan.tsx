@@ -59,6 +59,7 @@ import {
   type MerchantSettings,
 } from "@/lib/useMerchantSettings";
 import { useStoreProfile } from "@/lib/useStoreProfile";
+import { DeviceSessions } from "@/components/DeviceSessions";
 import {
   requestShopeeOtp,
   verifyShopeeOtp,
@@ -1232,6 +1233,8 @@ function PengaturanPage() {
                   </div>
                 </div>
               </div>
+              {/* Card: Perangkat & Sesi Login */}
+              <DeviceSessions />
             </TabsContent>
 
             {/* ========================================================= */}
