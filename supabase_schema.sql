@@ -312,3 +312,21 @@ $$;
 
 revoke all on function public.checkout_transaction(uuid, text, text, jsonb) from public, anon;
 grant execute on function public.checkout_transaction(uuid, text, text, jsonb) to authenticated;
+
+-- 8. PROFIL TOKO (STRUK)
+-- Nama, alamat, telepon & pesan bawah struk per akun. Sebelumnya disimpan di
+-- localStorage HP kasir sehingga hilang saat pindah device. Berbeda dengan
+-- merchant_settings.store_name (nama toko Shopee dari login OTP).
+create table if not exists public.store_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade default auth.uid(),
+  name text not null default '',
+  address text not null default '',
+  phone text not null default '',
+  receipt_footer text not null default '',
+  updated_at timestamptz not null default now()
+);
+
+alter table if exists public.store_profiles enable row level security;
+drop policy if exists "Users can manage own store profile" on public.store_profiles;
+create policy "Users can manage own store profile" on public.store_profiles
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

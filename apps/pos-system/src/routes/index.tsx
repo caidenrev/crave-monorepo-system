@@ -48,6 +48,12 @@ import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useTransactions, newTransactionId } from "@/lib/useTransactions";
 import { useCart } from "@/lib/useCart";
+import {
+  clearPendingCheckout,
+  readPendingCheckout,
+  writePendingCheckout,
+  type PendingCheckout,
+} from "@/lib/pendingCheckout";
 import { useMerchantSettings } from "@/lib/useMerchantSettings";
 import { useAuth } from "@/lib/useAuth";
 import {
@@ -141,6 +147,12 @@ function KasirPage() {
   const [qrisSave, setQrisSave] = useState<
     { status: "idle" | "saving" | "saved" } | { status: "failed"; message: string }
   >({ status: "idle" });
+  // Transaksi QRIS terbayar yang belum tersimpan dari sesi sebelumnya (refresh / app ditutup)
+  const [recovered, setRecovered] = useState<PendingCheckout | null>(null);
+  const [recoverState, setRecoverState] = useState<
+    { status: "saving" } | { status: "failed"; message: string } | { status: "idle" }
+  >({ status: "idle" });
+
   // Guard anti-PAID palsu dari mutasi transaksi sebelumnya (nominal sama)
   const paymentGuardRef = useRef<ReturnType<typeof createPaymentGuard> | null>(null);
 
@@ -382,6 +394,16 @@ function KasirPage() {
 
     // Snapshot keranjang & ID: dipakai lagi persis sama bila perlu "Simpan ulang"
     pendingQrisCheckoutRef.current = { cart: [...cart], transactionId: getCheckoutId() };
+    // Simpan juga di HP: kalau halaman di-refresh sebelum tersimpan, transaksi ini tidak hilang
+    if (user) {
+      writePendingCheckout(user.id, {
+        transactionId: pendingQrisCheckoutRef.current.transactionId,
+        cart: pendingQrisCheckoutRef.current.cart,
+        method: "QRIS",
+        paidAmount: total,
+        paidAt: new Date().toISOString(),
+      });
+    }
     saveQrisCheckout();
   };
 
@@ -399,6 +421,7 @@ function KasirPage() {
         onSuccess: () => {
           pendingQrisCheckoutRef.current = null;
           checkoutIdRef.current = null;
+          if (user) clearPendingCheckout(user.id);
           setQrisSave({ status: "saved" });
           // Auto close sheet and reset state after displaying success animation
           setTimeout(() => {
@@ -416,6 +439,58 @@ function KasirPage() {
       },
     );
   };
+
+  const sameCart = (a: CartLine[], b: CartLine[]) => {
+    const key = (c: CartLine[]) =>
+      c
+        .map((l) => `${l.product.id}:${l.qty}`)
+        .sort()
+        .join("|");
+    return key(a) === key(b);
+  };
+
+  const saveRecovered = (pending: PendingCheckout) => {
+    if (!user) return;
+    setRecoverState({ status: "saving" });
+    checkoutMutation.mutate(
+      {
+        cart: pending.cart,
+        method: pending.method,
+        cashierName: userName,
+        transactionId: pending.transactionId,
+      },
+      {
+        onSuccess: () => {
+          clearPendingCheckout(user.id);
+          setRecovered(null);
+          setRecoverState({ status: "idle" });
+          // keranjang yang masih berisi pesanan yang sama ikut dikosongkan
+          setCart((current) => (sameCart(current, pending.cart) ? [] : current));
+          if (checkoutIdRef.current === pending.transactionId) checkoutIdRef.current = null;
+        },
+        onError: (err) => {
+          setRecoverState({ status: "failed", message: err.message || "Gagal menyimpan transaksi" });
+        },
+      },
+    );
+  };
+
+  const discardRecovered = () => {
+    if (!user) return;
+    clearPendingCheckout(user.id);
+    setRecovered(null);
+    setRecoverState({ status: "idle" });
+  };
+
+  // Saat halaman Kasir dibuka: cek transaksi terbayar yang tertinggal, lalu coba simpan sekali
+  useEffect(() => {
+    if (!user || pendingQrisCheckoutRef.current) return;
+    const pending = readPendingCheckout(user.id);
+    if (!pending) return;
+    setRecovered(pending);
+    saveRecovered(pending);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hanya saat akun terbaca
+  }, [user?.id]);
 
   const handleCartSheetChange = (open: boolean) => {
     if (!open && pendingQrisCheckoutRef.current) {
@@ -794,6 +869,80 @@ function KasirPage() {
     >
       <div className="grid gap-4">
         <section className="space-y-4 min-w-0">
+          {recovered && (
+            <div
+              role="alert"
+              className="flex flex-col gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center"
+            >
+              <AlertCircle className="size-5 shrink-0 text-amber-600" />
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <p className="text-sm font-bold text-amber-900">
+                  {recoverState.status === "saving"
+                    ? "Menyimpan transaksi QRIS yang tertunda..."
+                    : "Transaksi QRIS belum tersimpan"}
+                </p>
+                <p className="text-xs text-amber-800">
+                  Pembayaran {rupiah(recovered.paidAmount)} pada{" "}
+                  {new Date(recovered.paidAt).toLocaleString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
+                  sudah diterima, tapi belum masuk laporan dan stok.
+                </p>
+                {recoverState.status === "failed" && (
+                  <p className="break-words text-[11px] text-amber-700/90">{recoverState.message}</p>
+                )}
+              </div>
+              <div className="flex shrink-0 gap-2">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-xl text-amber-800 hover:bg-amber-100"
+                      disabled={recoverState.status === "saving"}
+                    >
+                      Hapus catatan
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent className="rounded-2xl max-w-sm">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Hapus catatan transaksi?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Pembayaran {rupiah(recovered.paidAmount)} tidak akan tercatat di laporan dan
+                        stok tidak dipotong. Lakukan ini hanya jika transaksi memang sudah dicatat
+                        dengan cara lain.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="rounded-xl bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={discardRecovered}
+                      >
+                        Ya, hapus
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+                <Button
+                  size="sm"
+                  className="rounded-xl bg-amber-600 font-bold text-white hover:bg-amber-700"
+                  onClick={() => saveRecovered(recovered)}
+                  disabled={recoverState.status === "saving"}
+                >
+                  {recoverState.status === "saving" ? (
+                    <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                  ) : (
+                    <RefreshCw className="size-3.5 mr-1.5" />
+                  )}
+                  Simpan sekarang
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="relative">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground sm:size-4.5" />
             <Input

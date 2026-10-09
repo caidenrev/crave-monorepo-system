@@ -58,6 +58,7 @@ import {
   useMerchantSettings,
   type MerchantSettings,
 } from "@/lib/useMerchantSettings";
+import { useStoreProfile } from "@/lib/useStoreProfile";
 import {
   requestShopeeOtp,
   verifyShopeeOtp,
@@ -99,11 +100,12 @@ function PengaturanPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  // Store & Business Info states
-  const [storeName, setStoreName] = useState("Crave - Point of Sales");
-  const [storeAddress, setStoreAddress] = useState("Jl. Sudirman No. 123, Jakarta Selatan");
-  const [storePhone, setStorePhone] = useState("0812-3456-7890");
-  const [storeFooter, setStoreFooter] = useState("Terima kasih atas kunjungannya!");
+  // Store & Business Info states (disimpan di database lewat useStoreProfile)
+  const { profile: storeProfile, save: saveStoreProfile, isSaving: isSavingStore } = useStoreProfile();
+  const [storeName, setStoreName] = useState("");
+  const [storeAddress, setStoreAddress] = useState("");
+  const [storePhone, setStorePhone] = useState("");
+  const [storeFooter, setStoreFooter] = useState("");
 
   // QRIS & Shopee Merchant Form States
   const [staticQris, setStaticQris] = useState("");
@@ -134,15 +136,16 @@ function PengaturanPage() {
         "";
       if (metaName) setUserName(metaName);
     }
-    const savedStoreName = localStorage.getItem("store_name");
-    if (savedStoreName) setStoreName(savedStoreName);
-    const savedStoreAddress = localStorage.getItem("store_address");
-    if (savedStoreAddress) setStoreAddress(savedStoreAddress);
-    const savedStorePhone = localStorage.getItem("store_phone");
-    if (savedStorePhone) setStorePhone(savedStorePhone);
-    const savedStoreFooter = localStorage.getItem("store_footer");
-    if (savedStoreFooter) setStoreFooter(savedStoreFooter);
   }, [user]);
+
+  // Isi form dari profil toko yang tersimpan
+  useEffect(() => {
+    if (!storeProfile) return;
+    setStoreName(storeProfile.name);
+    setStoreAddress(storeProfile.address);
+    setStorePhone(storeProfile.phone);
+    setStoreFooter(storeProfile.receipt_footer);
+  }, [storeProfile]);
 
   useEffect(() => {
     if (settings) {
@@ -205,14 +208,23 @@ function PengaturanPage() {
   };
 
   // Handle saving store & business information
-  const handleSaveStoreInfo = () => {
-    localStorage.setItem("store_name", storeName);
-    localStorage.setItem("store_address", storeAddress);
-    localStorage.setItem("store_phone", storePhone);
-    localStorage.setItem("store_footer", storeFooter);
-    toast.success("Informasi bisnis & toko berhasil disimpan!", {
-      description: "Data akan otomatis tercetak pada bagian atas & bawah struk.",
-    });
+  const handleSaveStoreInfo = async () => {
+    try {
+      const saved = await saveStoreProfile({
+        name: storeName,
+        address: storeAddress,
+        phone: storePhone,
+        receipt_footer: storeFooter,
+      });
+      toast.success("Informasi bisnis & toko berhasil disimpan!", {
+        description:
+          saved.source === "db"
+            ? "Tersimpan di akun Anda dan dipakai di semua perangkat."
+            : "Tersimpan di perangkat ini saja. Minta admin menjalankan pembaruan database agar tersinkron.",
+      });
+    } catch (err: any) {
+      toast.error("Gagal menyimpan info toko: " + err.message);
+    }
   };
 
   // Request OTP from Shopee with channel selection
@@ -1147,8 +1159,14 @@ function PengaturanPage() {
                     <Button
                       className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 shadow-md shadow-blue-500/20"
                       onClick={handleSaveStoreInfo}
+                      disabled={isSavingStore}
                     >
-                      <Save className="size-3.5 mr-1.5" /> Simpan Info Toko
+                      {isSavingStore ? (
+                        <Loader2 className="size-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Save className="size-3.5 mr-1.5" />
+                      )}
+                      {isSavingStore ? "Menyimpan..." : "Simpan Info Toko"}
                     </Button>
                   </div>
                 </div>
