@@ -56,7 +56,8 @@ import {
   useMerchantSettings,
   type MerchantSettings,
 } from "@/lib/useMerchantSettings";
-import { useStoreProfile } from "@/lib/useStoreProfile";
+import { useStoreProfile, type PaperWidth } from "@/lib/useStoreProfile";
+import { printReceipt, resizeLogo } from "@/lib/receipt";
 import { DeviceSessions } from "@/components/DeviceSessions";
 import {
   requestShopeeOtp,
@@ -105,6 +106,9 @@ function PengaturanPage() {
   const [storeAddress, setStoreAddress] = useState("");
   const [storePhone, setStorePhone] = useState("");
   const [storeFooter, setStoreFooter] = useState("");
+  const [storeLogo, setStoreLogo] = useState<string | null>(null);
+  const [paperWidth, setPaperWidth] = useState<PaperWidth>(58);
+  const logoInputRef = useRef<HTMLInputElement | null>(null);
 
   // QRIS & Shopee Merchant Form States
   const [staticQris, setStaticQris] = useState("");
@@ -144,6 +148,8 @@ function PengaturanPage() {
     setStoreAddress(storeProfile.address);
     setStorePhone(storeProfile.phone);
     setStoreFooter(storeProfile.receipt_footer);
+    setStoreLogo(storeProfile.logo_data);
+    setPaperWidth(storeProfile.paper_width);
   }, [storeProfile]);
 
   useEffect(() => {
@@ -206,15 +212,66 @@ function PengaturanPage() {
     }
   };
 
+  const currentStoreProfile = () => ({
+    name: storeName,
+    address: storeAddress,
+    phone: storePhone,
+    receipt_footer: storeFooter,
+    logo_data: storeLogo,
+    paper_width: paperWidth,
+  });
+
+  const handleLogoFile = async (file: File | undefined) => {
+    if (!file) return;
+    try {
+      setStoreLogo(await resizeLogo(file));
+    } catch (err: any) {
+      toast.error("Logo tidak bisa dipakai: " + err.message);
+    } finally {
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  // Contoh struk memakai isian form saat ini (belum perlu disimpan)
+  const handlePrintSampleReceipt = async () => {
+    const lines = [
+      { product: { id: "c1", name: "Es Kopi Susu", sku: "", category: "Minuman", price: 18000, stock: 0, minStock: 0 }, qty: 2 },
+      { product: { id: "c2", name: "Croissant Butter", sku: "", category: "Makanan", price: 25000, stock: 0, minStock: 0 }, qty: 1 },
+    ];
+    const subtotal = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
+    const tax = Math.round(subtotal * 0.11);
+    try {
+      await printReceipt(
+        {
+          transactionId: "00000000-contoh",
+          createdAt: new Date(),
+          cashierName: userName || "Kasir",
+          customerName: "Contoh Pelanggan",
+          method: "QRIS",
+          lines,
+          subtotal,
+          tax,
+          taxRate: 0.11,
+          total: subtotal + tax,
+        },
+        currentStoreProfile(),
+      );
+    } catch (err: any) {
+      toast.error("Gagal mencetak: " + err.message);
+    }
+  };
+
   // Handle saving store & business information
   const handleSaveStoreInfo = async () => {
     try {
-      const saved = await saveStoreProfile({
-        name: storeName,
-        address: storeAddress,
-        phone: storePhone,
-        receipt_footer: storeFooter,
-      });
+      const saved = await saveStoreProfile(currentStoreProfile());
+      if (!saved.supportsLogo && storeLogo) {
+        toast.warning("Info toko tersimpan, tapi logo belum", {
+          description:
+            "Database belum mendukung logo struk. Jalankan ulang bagian 8 di supabase_schema.sql.",
+        });
+        return;
+      }
       toast.success("Informasi bisnis & toko berhasil disimpan!", {
         description:
           saved.source === "db"
@@ -1042,6 +1099,60 @@ function PengaturanPage() {
                 </div>
 
                 <div className="space-y-4 max-w-2xl">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Logo Outlet
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4">
+                      <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl border bg-muted/30">
+                        {storeLogo ? (
+                          <img
+                            src={storeLogo}
+                            alt="Logo outlet"
+                            className="size-full object-contain p-1.5"
+                          />
+                        ) : (
+                          <Store className="size-6 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          <input
+                            ref={logoInputRef}
+                            id="store-logo"
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp"
+                            className="hidden"
+                            onChange={(e) => handleLogoFile(e.target.files?.[0])}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl"
+                            onClick={() => logoInputRef.current?.click()}
+                          >
+                            {storeLogo ? "Ganti logo" : "Unggah logo"}
+                          </Button>
+                          {storeLogo && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => setStoreLogo(null)}
+                            >
+                              Hapus
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          PNG atau JPG. Dikecilkan otomatis agar pas di struk.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -1092,9 +1203,28 @@ function PengaturanPage() {
                     />
                   </div>
 
-                  <div className="pt-2">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      Lebar Kertas Struk
+                    </p>
+                    <Tabs
+                      value={String(paperWidth)}
+                      onValueChange={(v) => setPaperWidth(v === "80" ? 80 : 58)}
+                    >
+                      <TabsList className="grid h-10 w-full max-w-xs grid-cols-2 rounded-xl">
+                        <TabsTrigger value="58" className="h-8 rounded-lg font-semibold">
+                          58 mm
+                        </TabsTrigger>
+                        <TabsTrigger value="80" className="h-8 rounded-lg font-semibold">
+                          80 mm
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2">
                     <Button
-                      className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 shadow-md shadow-blue-500/20"
+                      className="h-10 rounded-xl font-bold text-xs px-5"
                       onClick={handleSaveStoreInfo}
                       disabled={isSavingStore}
                     >
@@ -1104,6 +1234,13 @@ function PengaturanPage() {
                         <Save className="size-3.5 mr-1.5" />
                       )}
                       {isSavingStore ? "Menyimpan..." : "Simpan Info Toko"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="h-10 rounded-xl text-xs px-5"
+                      onClick={handlePrintSampleReceipt}
+                    >
+                      <Printer className="size-3.5 mr-1.5" /> Cetak contoh struk
                     </Button>
                   </div>
                 </div>

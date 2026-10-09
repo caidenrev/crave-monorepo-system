@@ -339,6 +339,15 @@ create table if not exists public.store_profiles (
   updated_at timestamptz not null default now()
 );
 
+-- logo outlet untuk struk (data URL gambar kecil, maks. ~384px) & lebar kertas printer
+alter table if exists public.store_profiles add column if not exists logo_data text;
+alter table if exists public.store_profiles add column if not exists paper_width int not null default 58;
+alter table if exists public.store_profiles drop constraint if exists store_profiles_paper_width_check;
+alter table if exists public.store_profiles add constraint store_profiles_paper_width_check check (paper_width in (58, 80));
+-- logo dibatasi ±300 KB agar baris profil tetap ringan
+alter table if exists public.store_profiles drop constraint if exists store_profiles_logo_size_check;
+alter table if exists public.store_profiles add constraint store_profiles_logo_size_check check (logo_data is null or length(logo_data) <= 400000);
+
 alter table if exists public.store_profiles enable row level security;
 drop policy if exists "Users can manage own store profile" on public.store_profiles;
 create policy "Users can manage own store profile" on public.store_profiles

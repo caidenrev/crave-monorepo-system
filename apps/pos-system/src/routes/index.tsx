@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Loader2,
   UserRound,
+  Printer,
   X,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -50,6 +51,8 @@ import { useProducts } from "@/lib/useProducts";
 import { useCategories } from "@/lib/useCategories";
 import { useTransactions, newTransactionId } from "@/lib/useTransactions";
 import { useCart, useCartCustomer } from "@/lib/useCart";
+import { useStoreProfile } from "@/lib/useStoreProfile";
+import { printReceipt, type ReceiptData } from "@/lib/receipt";
 import {
   clearPendingCheckout,
   readPendingCheckout,
@@ -149,6 +152,10 @@ function KasirPage() {
     transactionId: string;
     customerName: string;
   } | null>(null);
+  // Struk transaksi terakhir yang berhasil + hitung mundur tutup otomatis (15 detik)
+  const { profile: storeProfile } = useStoreProfile();
+  const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [autoCloseIn, setAutoCloseIn] = useState<number | null>(null);
   const [qrisSave, setQrisSave] = useState<
     { status: "idle" | "saving" | "saved" } | { status: "failed"; message: string }
   >({ status: "idle" });
@@ -229,8 +236,60 @@ function KasirPage() {
       setQrisPaid(false);
       setQrisError(null);
       setQrisSave({ status: "idle" });
+      setReceipt(null);
+      setAutoCloseIn(null);
     }
   }, [mobileCartOpen]);
+
+  // Hitung mundur setelah transaksi tersimpan; berhenti bila kasir menekan Cetak struk
+  useEffect(() => {
+    if (autoCloseIn === null) return;
+    if (autoCloseIn <= 0) {
+      setMobileCartOpen(false);
+      return;
+    }
+    const t = setTimeout(() => setAutoCloseIn((n) => (n === null ? null : n - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [autoCloseIn]);
+
+  const buildReceipt = (
+    lines: CartLine[],
+    method: ReceiptData["method"],
+    transactionId: string,
+    customer: string,
+  ): ReceiptData => {
+    const sub = lines.reduce((a, l) => a + l.product.price * l.qty, 0);
+    const tx = Math.round(sub * 0.11);
+    return {
+      transactionId,
+      createdAt: new Date(),
+      cashierName: userName,
+      customerName: customer,
+      method,
+      lines,
+      subtotal: sub,
+      tax: tx,
+      taxRate: 0.11,
+      total: sub + tx,
+    };
+  };
+
+  const handlePrintReceipt = async (r: ReceiptData | null) => {
+    if (!r) return;
+    setAutoCloseIn(null); // jangan tutup selagi dialog cetak terbuka
+    try {
+      await printReceipt(r, {
+        name: storeProfile?.name ?? "",
+        address: storeProfile?.address ?? "",
+        phone: storeProfile?.phone ?? "",
+        receipt_footer: storeProfile?.receipt_footer ?? "",
+        logo_data: storeProfile?.logo_data ?? null,
+        paper_width: storeProfile?.paper_width ?? 58,
+      });
+    } catch (err: any) {
+      toast.error("Gagal mencetak struk: " + (err?.message ?? ""));
+    }
+  };
 
   const startQrisPaymentFlow = async () => {
     // Dipanggil dari tap kasir → aktifkan audio sekarang agar suara sukses
@@ -438,15 +497,14 @@ function KasirPage() {
           pendingQrisCheckoutRef.current = null;
           checkoutIdRef.current = null;
           if (user) clearPendingCheckout(user.id);
+          setReceipt(
+            buildReceipt(pending.cart, "QRIS", pending.transactionId, pending.customerName),
+          );
           setQrisSave({ status: "saved" });
-          // Auto close sheet and reset state after displaying success animation
-          setTimeout(() => {
-            setCart([]);
-            setMobileCartOpen(false);
-            setCheckoutStep("cart");
-            setQrisPaid(false);
-            isSettlingRef.current = false;
-          }, 2200);
+          // keranjang langsung dikosongkan agar pesanan ini tidak bisa dibayar ulang;
+          // layar sukses tetap tampil (pakai data struk) sampai ditutup
+          setCart([]);
+          setAutoCloseIn(15);
         },
         onError: (err) => {
           // isSettlingRef tetap true: pembayaran ini sudah diterima, jangan diproses ulang
@@ -749,9 +807,20 @@ function KasirPage() {
                           },
                           {
                             onSuccess: () => {
+                              const r = buildReceipt(
+                                cart,
+                                method,
+                                checkoutIdRef.current ?? newTransactionId(),
+                                customerName,
+                              );
                               checkoutIdRef.current = null;
                               setCart([]);
                               setMobileCartOpen(false);
+                              toast.success(`Pembayaran ${method} tercatat`, {
+                                description: `Total ${rupiah(r.total)}`,
+                                duration: 15000,
+                                action: { label: "Cetak struk", onClick: () => handlePrintReceipt(r) },
+                              });
                             },
                           },
                         );
@@ -810,7 +879,7 @@ function KasirPage() {
             ) : qrisPaid ? (
               <div className="flex w-full flex-col items-center">
                 <PaymentSuccess
-                  amount={total}
+                  amount={receipt?.total ?? total}
                   format={rupiah}
                   description={
                     qrisSave.status === "saved"
@@ -877,6 +946,42 @@ function KasirPage() {
           </div>
 
           <div className="shrink-0 mt-auto pt-3 space-y-2">
+            {qrisPaid && qrisSave.status === "saved" && (
+              <>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    className="h-12 rounded-2xl text-sm font-bold"
+                    onClick={() => handlePrintReceipt(receipt)}
+                  >
+                    <Printer className="size-4 mr-2" /> Cetak struk
+                  </Button>
+                  <Button
+                    className="h-12 rounded-2xl text-sm font-bold"
+                    onClick={() => setMobileCartOpen(false)}
+                  >
+                    Selesai
+                  </Button>
+                </div>
+                {autoCloseIn !== null ? (
+                  <div className="space-y-1.5">
+                    <div className="h-1 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-primary transition-[width] duration-1000 ease-linear"
+                        style={{ width: `${(autoCloseIn / 15) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-center text-[11px] text-muted-foreground">
+                      Tertutup otomatis dalam {autoCloseIn} detik
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-center text-[11px] text-muted-foreground">
+                    Tekan Selesai untuk menutup.
+                  </p>
+                )}
+              </>
+            )}
             {!qrisPaid && (
               <>
                 <Button
@@ -1079,11 +1184,13 @@ function KasirPage() {
         </section>
       </div>
 
-      {cart.length > 0 && (
+      {(cart.length > 0 || mobileCartOpen) && (
         <div className="fixed bottom-[calc(88px+env(safe-area-inset-bottom,0px))] left-3 right-3 z-40 mx-auto w-[calc(100%-24px)] max-w-[480px] sm:w-[calc(100%-48px)] lg:bottom-10 lg:left-[256px]">
           <Sheet open={mobileCartOpen} onOpenChange={handleCartSheetChange}>
             <SheetTrigger asChild>
-              <button className="flex h-14 w-full items-center justify-between rounded-full bg-primary p-2 pl-3 transition-transform active:scale-[0.98] sm:h-16">
+              <button
+                hidden={cart.length === 0}
+                className="flex h-14 w-full items-center justify-between rounded-full bg-primary p-2 pl-3 transition-transform active:scale-[0.98] sm:h-16">
                 <div className="flex items-center gap-2 text-primary-foreground sm:gap-3">
                   <div className="grid size-9 place-items-center rounded-2xl bg-white/20 sm:size-11">
                     <ShoppingCart className="size-4 sm:size-5" />

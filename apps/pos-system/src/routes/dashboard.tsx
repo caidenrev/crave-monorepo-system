@@ -373,8 +373,7 @@ function DashboardPage() {
                       {t.id} · {t.items} item
                     </p>
                     <p className="truncate text-[11px] text-muted-foreground">
-                      {t.time}
-                      {t.customer ? ` · a.n. ${t.customer}` : ""} · {t.cashier}
+                      {t.time} · {t.customer || "Tanpa nama"}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
