@@ -26,8 +26,8 @@ export function Footer() {
             </div>
 
             {}
-            <a href="mailto:hello@crave.com" className="text-2xl font-medium text-slate-900 hover:opacity-80 transition-opacity">
-              hello@crave.com
+            <a href="mailto:hello@craveservices.my.id" className="text-2xl font-medium text-slate-900 hover:opacity-80 transition-opacity break-all">
+              hello@craveservices.my.id
             </a>
 
             {}

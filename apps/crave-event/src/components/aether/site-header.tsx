@@ -674,7 +674,7 @@ export function SiteFooter() {
                 <Linkedin className="size-4" />
               </a>
               <a
-                href="mailto:contact@craveevent.id"
+                href="mailto:support@craveservices.my.id"
                 aria-label="Email Support"
                 className="neu-btn-glass flex size-8.5 items-center justify-center p-0 text-ink-secondary hover:text-accent hover:scale-105 transition-transform"
               >
