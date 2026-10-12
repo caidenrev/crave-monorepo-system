@@ -32,6 +32,7 @@ import { Route as FounderIndexRouteImport } from './routes/founder/index'
 import { Route as FounderMerchantRouteImport } from './routes/founder/merchant'
 import { Route as FounderPembayaranRouteImport } from './routes/founder/pembayaran'
 import { Route as FounderPengaturanRouteImport } from './routes/founder/pengaturan'
+import { Route as ApiBillingCancelRouteImport } from './routes/api/billing/cancel'
 import { Route as ApiBillingCreateRouteImport } from './routes/api/billing/create'
 import { Route as ApiBillingHealthRouteImport } from './routes/api/billing/health'
 import { Route as ApiBillingNotifyRouteImport } from './routes/api/billing/notify'
@@ -152,6 +153,11 @@ const FounderPengaturanRoute = FounderPengaturanRouteImport.update({
   path: '/pengaturan',
   getParentRoute: () => FounderRoute,
 } as any)
+const ApiBillingCancelRoute = ApiBillingCancelRouteImport.update({
+  id: '/api/billing/cancel',
+  path: '/api/billing/cancel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBillingCreateRoute = ApiBillingCreateRouteImport.update({
   id: '/api/billing/create',
   path: '/api/billing/create',
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/founder/pembayaran': typeof FounderPembayaranRoute
   '/founder/pengaturan': typeof FounderPengaturanRoute
   '/founder/': typeof FounderIndexRoute
+  '/api/billing/cancel': typeof ApiBillingCancelRoute
   '/api/billing/create': typeof ApiBillingCreateRoute
   '/api/billing/health': typeof ApiBillingHealthRoute
   '/api/billing/notify': typeof ApiBillingNotifyRoute
@@ -225,6 +232,7 @@ export interface FileRoutesByTo {
   '/founder/pembayaran': typeof FounderPembayaranRoute
   '/founder/pengaturan': typeof FounderPengaturanRoute
   '/founder': typeof FounderIndexRoute
+  '/api/billing/cancel': typeof ApiBillingCancelRoute
   '/api/billing/create': typeof ApiBillingCreateRoute
   '/api/billing/health': typeof ApiBillingHealthRoute
   '/api/billing/notify': typeof ApiBillingNotifyRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/founder/pembayaran': typeof FounderPembayaranRoute
   '/founder/pengaturan': typeof FounderPengaturanRoute
   '/founder/': typeof FounderIndexRoute
+  '/api/billing/cancel': typeof ApiBillingCancelRoute
   '/api/billing/create': typeof ApiBillingCreateRoute
   '/api/billing/health': typeof ApiBillingHealthRoute
   '/api/billing/notify': typeof ApiBillingNotifyRoute
@@ -286,6 +295,7 @@ export interface FileRouteTypes {
     | '/founder/pembayaran'
     | '/founder/pengaturan'
     | '/founder/'
+    | '/api/billing/cancel'
     | '/api/billing/create'
     | '/api/billing/health'
     | '/api/billing/notify'
@@ -314,6 +324,7 @@ export interface FileRouteTypes {
     | '/founder/pembayaran'
     | '/founder/pengaturan'
     | '/founder'
+    | '/api/billing/cancel'
     | '/api/billing/create'
     | '/api/billing/health'
     | '/api/billing/notify'
@@ -343,6 +354,7 @@ export interface FileRouteTypes {
     | '/founder/pembayaran'
     | '/founder/pengaturan'
     | '/founder/'
+    | '/api/billing/cancel'
     | '/api/billing/create'
     | '/api/billing/health'
     | '/api/billing/notify'
@@ -369,6 +381,7 @@ export interface RootRouteChildren {
   SpreadsheetRoute: typeof SpreadsheetRoute
   StokRoute: typeof StokRoute
   SupplierRoute: typeof SupplierRoute
+  ApiBillingCancelRoute: typeof ApiBillingCancelRoute
   ApiBillingCreateRoute: typeof ApiBillingCreateRoute
   ApiBillingHealthRoute: typeof ApiBillingHealthRoute
   ApiBillingNotifyRoute: typeof ApiBillingNotifyRoute
@@ -538,6 +551,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FounderPengaturanRouteImport
       parentRoute: typeof FounderRoute
     }
+    '/api/billing/cancel': {
+      id: '/api/billing/cancel'
+      path: '/api/billing/cancel'
+      fullPath: '/api/billing/cancel'
+      preLoaderRoute: typeof ApiBillingCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/billing/create': {
       id: '/api/billing/create'
       path: '/api/billing/create'
@@ -606,6 +626,7 @@ const rootRouteChildren: RootRouteChildren = {
   SpreadsheetRoute: SpreadsheetRoute,
   StokRoute: StokRoute,
   SupplierRoute: SupplierRoute,
+  ApiBillingCancelRoute: ApiBillingCancelRoute,
   ApiBillingCreateRoute: ApiBillingCreateRoute,
   ApiBillingHealthRoute: ApiBillingHealthRoute,
   ApiBillingNotifyRoute: ApiBillingNotifyRoute,

@@ -171,5 +171,12 @@ export function useSubscriptionBilling() {
     onSettled: refresh,
   });
 
-  return { plans: plans.data ?? [], invoices: invoices.data ?? [], pay, sync, refresh };
+  /** Batalkan tagihan yang masih menunggu pembayaran. */
+  const cancel = useMutation({
+    mutationFn: (orderId: string) =>
+      callBilling<{ status: SubscriptionInvoice["status"] }>("cancel", { order_id: orderId }),
+    onSettled: refresh,
+  });
+
+  return { plans: plans.data ?? [], invoices: invoices.data ?? [], pay, sync, cancel, refresh };
 }

@@ -201,6 +201,20 @@ export async function fetchMidtransStatus(orderId: string): Promise<MidtransStat
   return body;
 }
 
+/** Batalkan transaksi yang masih menunggu di Midtrans. false = Midtrans menolak (mis. sudah lunas). */
+export async function cancelMidtransTransaction(orderId: string): Promise<boolean> {
+  const { serverKey, apiBase } = config();
+  const res = await fetch(`${apiBase}/v2/${encodeURIComponent(orderId)}/cancel`, {
+    method: "POST",
+    headers: { accept: "application/json", authorization: basicAuth(serverKey) },
+  });
+  const body = (await res.json().catch(() => null)) as MidtransStatus | null;
+  // 200 = dibatalkan, 404 = transaksinya memang belum ada di Midtrans
+  const ok = body?.status_code === "200" || body?.status_code === "404";
+  if (!ok) console.error("[billing] cancel ditolak", orderId, body?.status_code);
+  return ok;
+}
+
 /**
  * Terapkan status dari Midtrans ke tagihan kita.
  * Lunas → perpanjang masa aktif (idempoten di database); batal/kedaluwarsa → tandai tagihan.

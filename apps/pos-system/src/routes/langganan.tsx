@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { BadgeCheck, CreditCard, Loader2, RefreshCw, ShieldCheck } from "lucide-react";
+import { BadgeCheck, CreditCard, Loader2, RefreshCw, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,10 @@ export const Route = createFileRoute("/langganan")({
   head: () => ({
     meta: [
       { title: "Langganan — Crave" },
-      { name: "description", content: "Status langganan, perpanjangan, dan riwayat tagihan Crave POS." },
+      {
+        name: "description",
+        content: "Status langganan, perpanjangan, dan riwayat tagihan Crave POS.",
+      },
     ],
   }),
   component: LanggananPage,
@@ -61,7 +64,7 @@ function statusText(s: Subscription) {
 
 function LanggananPage() {
   const { subscription: s, isLoading } = useSubscription();
-  const { plans, invoices, pay, sync } = useSubscriptionBilling();
+  const { plans, invoices, pay, sync, cancel } = useSubscriptionBilling();
   const [months, setMonths] = useState<number>(1);
   const synced = useRef(false);
 
@@ -75,7 +78,8 @@ function LanggananPage() {
     synced.current = true;
     sync.mutate(orderId, {
       onSuccess: (res) => {
-        if (res.status === "paid") toast.success("Pembayaran diterima. Langganan sudah diperpanjang.");
+        if (res.status === "paid")
+          toast.success("Pembayaran diterima. Langganan sudah diperpanjang.");
         else if (fromUrl && res.status === "pending") toast.info("Pembayaran belum kami terima.");
       },
       // gagal cek otomatis bukan masalah pengguna; tombol "Cek status" tetap ada
@@ -102,6 +106,18 @@ function LanggananPage() {
     });
   };
 
+  const handleCancel = (orderId: string) => {
+    if (!window.confirm("Batalkan tagihan ini? Kamu bisa membuat tagihan baru kapan saja.")) return;
+    cancel.mutate(orderId, {
+      onSuccess: (res) =>
+        res.status === "paid"
+          ? toast.success("Tagihan ini ternyata sudah dibayar. Langganan sudah diperpanjang.")
+          : toast.success("Tagihan dibatalkan."),
+      onError: (err) => toast.error(err.message),
+    });
+  };
+  const busy = sync.isPending || cancel.isPending;
+
   return (
     <AppShell title="Langganan" subtitle="Status akun, perpanjangan, dan riwayat tagihan.">
       {isLoading || !s ? (
@@ -113,88 +129,104 @@ function LanggananPage() {
           Fitur langganan belum aktif untuk akun ini.
         </div>
       ) : (
-        <div className="mx-auto max-w-3xl space-y-4">
-          <div className="card-soft flex items-start gap-4 p-5">
-            <div
-              className={cn(
-                "grid size-12 shrink-0 place-items-center rounded-2xl",
-                s.can_write ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive",
-              )}
-            >
-              <ShieldCheck className="size-6" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-lg font-extrabold tracking-tight">Crave POS</p>
-                <Badge variant={s.can_write ? "secondary" : "destructive"} className="rounded-full">
-                  {STATE_LABEL[s.state]}
-                </Badge>
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">{statusText(s)}</p>
-            </div>
-          </div>
-
-          {s.state !== "suspended" && (
-            <div className="card-soft space-y-4 p-5">
-              <div>
-                <p className="text-sm font-bold">
-                  {s.state === "trial" ? "Mulai berlangganan" : "Perpanjang langganan"}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Satu paket, semua fitur. Durasi baru ditambahkan setelah masa aktif yang sedang berjalan.
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Durasi langganan">
-                {plans.map((p) => {
-                  const saving = monthly * p.months - p.price;
-                  const active = p.months === months;
-                  return (
-                    <button
-                      key={p.months}
-                      type="button"
-                      role="radio"
-                      aria-checked={active}
-                      onClick={() => setMonths(p.months)}
-                      className={cn(
-                        "rounded-2xl border p-4 text-left transition-colors",
-                        active ? "border-primary bg-primary/5 ring-1 ring-primary" : "hover:bg-accent",
-                      )}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-bold">{p.label}</p>
-                        {active && <BadgeCheck className="size-4 text-primary" />}
-                      </div>
-                      <p className="mt-2 text-xl font-extrabold tracking-tight">{rupiah(p.price)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {rupiah(Math.round(p.price / p.months))} / bulan
-                      </p>
-                      {saving > 0 && (
-                        <p className="mt-2 text-xs font-semibold text-primary">Hemat {rupiah(saving)}</p>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <Button
-                className="w-full rounded-xl font-bold"
-                size="lg"
-                disabled={!selected || pay.isPending || pay.isSuccess}
-                onClick={handlePay}
-              >
-                {pay.isPending || pay.isSuccess ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <CreditCard className="size-4" />
+        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+          <div className="min-w-0 space-y-4">
+            <div className="card-soft flex items-start gap-4 p-5">
+              <div
+                className={cn(
+                  "grid size-12 shrink-0 place-items-center rounded-2xl",
+                  s.can_write ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive",
                 )}
-                {selected ? `Bayar ${rupiah(selected.price)}` : "Pilih durasi"}
-              </Button>
-              <p className="text-center text-[11px] text-muted-foreground">
-                Pembayaran diproses oleh Midtrans (QRIS, transfer bank, e-wallet, kartu).
-              </p>
+              >
+                <ShieldCheck className="size-6" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-lg font-extrabold tracking-tight">Crave POS</p>
+                  <Badge
+                    variant={s.can_write ? "secondary" : "destructive"}
+                    className="rounded-full"
+                  >
+                    {STATE_LABEL[s.state]}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-sm text-muted-foreground">{statusText(s)}</p>
+              </div>
             </div>
-          )}
+
+            {s.state !== "suspended" && (
+              <div className="card-soft space-y-4 p-5">
+                <div>
+                  <p className="text-sm font-bold">
+                    {s.state === "trial" ? "Mulai berlangganan" : "Perpanjang langganan"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Satu paket, semua fitur. Durasi baru ditambahkan setelah masa aktif yang sedang
+                    berjalan.
+                  </p>
+                </div>
+
+                <div
+                  className="grid gap-3 sm:grid-cols-3"
+                  role="radiogroup"
+                  aria-label="Durasi langganan"
+                >
+                  {plans.map((p) => {
+                    const saving = monthly * p.months - p.price;
+                    const active = p.months === months;
+                    return (
+                      <button
+                        key={p.months}
+                        type="button"
+                        role="radio"
+                        aria-checked={active}
+                        onClick={() => setMonths(p.months)}
+                        className={cn(
+                          "rounded-2xl border p-4 text-left transition-colors",
+                          active
+                            ? "border-primary bg-primary/5 ring-1 ring-primary"
+                            : "hover:bg-accent",
+                        )}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-bold">{p.label}</p>
+                          {active && <BadgeCheck className="size-4 text-primary" />}
+                        </div>
+                        <p className="mt-2 text-xl font-extrabold tracking-tight">
+                          {rupiah(p.price)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {rupiah(Math.round(p.price / p.months))} / bulan
+                        </p>
+                        {saving > 0 && (
+                          <p className="mt-2 text-xs font-semibold text-primary">
+                            Hemat {rupiah(saving)}
+                          </p>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  className="w-full rounded-xl font-bold"
+                  size="lg"
+                  disabled={!selected || pay.isPending || pay.isSuccess}
+                  onClick={handlePay}
+                >
+                  {pay.isPending || pay.isSuccess ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="size-4" />
+                  )}
+                  {selected ? `Bayar ${rupiah(selected.price)}` : "Pilih durasi"}
+                </Button>
+                <p className="text-center text-[11px] text-muted-foreground">
+                  Pembayaran diproses oleh Midtrans (QRIS, transfer bank, e-wallet, kartu).
+                </p>
+              </div>
+            )}
+          </div>
 
           <div className="card-soft p-5">
             <p className="text-sm font-bold">Riwayat tagihan</p>
@@ -203,26 +235,31 @@ function LanggananPage() {
             ) : (
               <ul className="mt-3 divide-y">
                 {invoices.map((inv) => (
-                  <li key={inv.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 py-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold">
-                        {inv.months} bulan · {rupiah(inv.amount)}
-                      </p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {tanggal(inv.created_at)} · {inv.order_id}
-                        {inv.status === "paid" && inv.period_end
-                          ? ` · aktif s.d. ${tanggal(inv.period_end)}`
-                          : ""}
-                      </p>
+                  <li key={inv.id} className="space-y-2.5 py-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold">
+                          {inv.months} bulan · {rupiah(inv.amount)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {tanggal(inv.created_at)}
+                          {inv.status === "paid" && inv.period_end
+                            ? ` · aktif s.d. ${tanggal(inv.period_end)}`
+                            : ""}
+                        </p>
+                        <p className="truncate font-mono text-[11px] text-muted-foreground">
+                          {inv.order_id}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={inv.status === "paid" ? "secondary" : "outline"}
+                        className="shrink-0 rounded-full"
+                      >
+                        {INVOICE_LABEL[inv.status]}
+                      </Badge>
                     </div>
-                    <Badge
-                      variant={inv.status === "paid" ? "secondary" : "outline"}
-                      className="rounded-full"
-                    >
-                      {INVOICE_LABEL[inv.status]}
-                    </Badge>
                     {inv.status === "pending" && (
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {inv.snap_redirect_url && (
                           <Button asChild size="sm" className="rounded-xl">
                             <a href={inv.snap_redirect_url}>Lanjut bayar</a>
@@ -232,11 +269,25 @@ function LanggananPage() {
                           size="sm"
                           variant="outline"
                           className="rounded-xl"
-                          disabled={sync.isPending}
+                          disabled={busy}
                           onClick={() => handleCheck(inv.order_id)}
                         >
                           <RefreshCw className={cn("size-3.5", sync.isPending && "animate-spin")} />
                           Cek status
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+                          disabled={busy}
+                          onClick={() => handleCancel(inv.order_id)}
+                        >
+                          {cancel.isPending ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <X className="size-3.5" />
+                          )}
+                          Batalkan
                         </Button>
                       </div>
                     )}
