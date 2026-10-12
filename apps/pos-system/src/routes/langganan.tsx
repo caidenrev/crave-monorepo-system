@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { BadgeCheck, CreditCard, Loader2, RefreshCw, ShieldCheck, X } from "lucide-react";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
@@ -106,8 +107,15 @@ function LanggananPage() {
     });
   };
 
-  const handleCancel = (orderId: string) => {
-    if (!window.confirm("Batalkan tagihan ini? Kamu bisa membuat tagihan baru kapan saja.")) return;
+  const handleCancel = async (orderId: string) => {
+    const ok = await confirmDialog({
+      title: "Batalkan tagihan ini?",
+      description: "Kamu bisa membuat tagihan baru kapan saja.",
+      confirmLabel: "Batalkan tagihan",
+      cancelLabel: "Kembali",
+      destructive: true,
+    });
+    if (!ok) return;
     cancel.mutate(orderId, {
       onSuccess: (res) =>
         res.status === "paid"

@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
 import { ArrowUpDown, Download, Loader2, Search } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/founder/FounderShell";
 import {
@@ -340,10 +341,13 @@ function MerchantPanel({ merchant: m }: { merchant: Merchant }) {
                 variant="outline"
                 className="rounded-xl"
                 disabled={update.isPending}
-                onClick={() => {
-                  if (window.confirm(`Tambah ${n} bulan untuk ${m.email}?`)) {
-                    run("add_months", n, `Masa aktif ditambah ${n} bulan`);
-                  }
+                onClick={async () => {
+                  const ok = await confirmDialog({
+                    title: `Tambah ${n} bulan?`,
+                    description: `Masa aktif ${m.email} ditambah ${n} bulan dan dicatat sebagai pembayaran manual.`,
+                    confirmLabel: `Tambah ${n} bulan`,
+                  });
+                  if (ok) run("add_months", n, `Masa aktif ditambah ${n} bulan`);
                 }}
               >
                 +{n} bulan
@@ -391,10 +395,14 @@ function MerchantPanel({ merchant: m }: { merchant: Merchant }) {
               variant="destructive"
               className="w-full rounded-xl"
               disabled={update.isPending}
-              onClick={() => {
-                if (window.confirm(`Tangguhkan ${m.email}? Akun menjadi hanya baca sampai diaktifkan kembali.`)) {
-                  run("suspend", undefined, "Akun ditangguhkan");
-                }
+              onClick={async () => {
+                const ok = await confirmDialog({
+                  title: "Tangguhkan akun ini?",
+                  description: `${m.email} menjadi hanya baca sampai kamu aktifkan kembali. Datanya tidak dihapus.`,
+                  confirmLabel: "Tangguhkan",
+                  destructive: true,
+                });
+                if (ok) run("suspend", undefined, "Akun ditangguhkan");
               }}
             >
               Tangguhkan akun

@@ -137,6 +137,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 import { AuthWrapper } from "@/components/AuthWrapper";
 import { PersistentNav } from "@/components/PersistentNav";
+import { ConfirmHost } from "@/components/ConfirmDialog";
 import { FounderGate } from "@/components/founder/FounderGate";
 
 function RootComponent() {
@@ -150,6 +151,7 @@ function RootComponent() {
           <PersistentNav />
         </FounderGate>
       </AuthWrapper>
+      <ConfirmHost />
       <Toaster position="top-center" richColors />
     </QueryClientProvider>
   );

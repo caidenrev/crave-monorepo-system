@@ -3,6 +3,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { Wallet, Plus, Search, Trash2 } from "lucide-react";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
@@ -89,8 +90,14 @@ function PengeluaranPage() {
     );
   };
 
-  const handleDelete = (id: string) => {
-    if (window.confirm("Yakin ingin menghapus catatan pengeluaran ini?")) {
+  const handleDelete = async (id: string) => {
+    const ok = await confirmDialog({
+      title: "Hapus catatan pengeluaran ini?",
+      description: "Catatan yang dihapus tidak bisa dikembalikan dan laporan laba akan ikut berubah.",
+      confirmLabel: "Hapus",
+      destructive: true,
+    });
+    if (ok) {
       const loadingToast = toast.loading("Menghapus...");
       deleteExpenseMutation.mutate(id, {
         onSuccess: () => {

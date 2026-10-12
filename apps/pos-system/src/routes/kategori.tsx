@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Tags, Plus, Trash2, Loader2, Package, Truck } from "lucide-react";
+import { confirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
@@ -55,8 +56,14 @@ function KategoriPage() {
     );
   };
 
-  const handleDelete = (id: string, name: string) => {
-    if (!window.confirm(`Hapus kategori "${name}"?`)) return;
+  const handleDelete = async (id: string, name: string) => {
+    const ok = await confirmDialog({
+      title: `Hapus kategori "${name}"?`,
+      description: "Kategori yang dihapus tidak bisa dikembalikan.",
+      confirmLabel: "Hapus",
+      destructive: true,
+    });
+    if (!ok) return;
     deleteCategoryMutation.mutate(id, {
       onSuccess: () => toast.success("Kategori berhasil dihapus"),
       onError: (err) => toast.error(err.message),
