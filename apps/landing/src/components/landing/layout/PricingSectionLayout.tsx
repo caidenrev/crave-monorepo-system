@@ -15,7 +15,7 @@ export function PricingSectionLayout() {
           </span>
         </div>
         <h2 className="mx-auto mt-4 max-w-2xl text-center text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          Paket yang bisa anda pilih sesuai kebutuhan anda
+          Satu paket lengkap, tinggal pilih durasinya
         </h2>
 
         <div className="mt-10 w-full">
