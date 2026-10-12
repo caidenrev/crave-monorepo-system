@@ -137,6 +137,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 import { AuthWrapper } from "@/components/AuthWrapper";
 import { PersistentNav } from "@/components/PersistentNav";
+import { FounderGate } from "@/components/founder/FounderGate";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
@@ -144,8 +145,10 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthWrapper>
-        <Outlet />
-        <PersistentNav />
+        <FounderGate>
+          <Outlet />
+          <PersistentNav />
+        </FounderGate>
       </AuthWrapper>
       <Toaster position="top-center" richColors />
     </QueryClientProvider>

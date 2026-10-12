@@ -25,6 +25,7 @@ import {
   Truck,
   Tags,
   Lightbulb,
+  CreditCard,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -42,6 +43,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/lib/useNotifications";
 import { useAuth } from "@/lib/useAuth";
+import { useSubscription } from "@/lib/useSubscription";
 import profileLogo from "@/assets/profile-logo.jpeg";
 
 type Item = {
@@ -102,6 +104,8 @@ export function SideNav({
   const { dark, set } = useDarkMode();
   const { user, signOut } = useAuth();
 
+  const { subscription } = useSubscription();
+
   const { data: notifications = [] } = useNotifications();
   const stokCount = notifications.filter((n) => n.type === "stok").length;
 
@@ -134,6 +138,7 @@ export function SideNav({
     { to: "/supplier", label: "Supplier", icon: Truck },
     { to: "/kategori", label: "Kategori", icon: Tags },
     { to: "/pengaturan", label: "Pengaturan", icon: Settings },
+    ...(subscription?.available ? [{ to: "/langganan", label: "Langganan", icon: CreditCard }] : []),
     { to: "/karyawan", label: "Karyawan", icon: Users },
     { to: "/bantuan", label: "Bantuan", icon: MessageSquare },
   ];

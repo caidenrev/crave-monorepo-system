@@ -37,7 +37,8 @@ export function PersistentNav() {
   const dark = useHtmlDark();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const isAuthRoute = path === "/login" || path === "/pin";
+  // dashboard founder punya navigasinya sendiri (lihat FounderShell)
+  const isAuthRoute = path === "/login" || path === "/pin" || path.includes("/founder");
 
   const isMainRoute = bottomTabs.some((item) => item.to !== "#menu" && item.to === path);
   const activeTab =

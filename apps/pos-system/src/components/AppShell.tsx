@@ -4,6 +4,7 @@ import {
   Receipt,
   Search,
   Bell,
+  CreditCard,
   LogOut,
   User as UserIcon,
 } from "lucide-react";
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SideNav } from "@/components/SideNav";
+import { SubscriptionBanner } from "@/components/SubscriptionBanner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   DropdownMenu,
@@ -168,6 +170,12 @@ export function AppShell({
                       <span>Pengaturan Profil</span>
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" asChild>
+                    <Link to="/langganan">
+                      <CreditCard className="mr-2 size-4" />
+                      <span>Langganan</span>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={signOut}
                     className="cursor-pointer text-destructive focus:bg-destructive/10 focus:text-destructive"
@@ -182,6 +190,7 @@ export function AppShell({
         </header>
 
         <main className="mx-auto max-w-[1400px] px-3 pb-24 pt-3 sm:px-6 sm:pt-4 lg:pb-10">
+          <SubscriptionBanner />
           {children}
         </main>
       </div>

@@ -32,6 +32,7 @@ export function useAuth() {
     // untuk itu ada tombol "Keluarkan semua perangkat lain" di Pengaturan > Profil.
     await supabase.auth.signOut({ scope: "local" });
     localStorage.removeItem("app_unlocked");
+    localStorage.removeItem("crave_founder_hint");
     // Reload the page to clear all memory state and cache
     window.location.reload();
   };

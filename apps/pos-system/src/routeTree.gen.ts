@@ -12,10 +12,12 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BantuanRouteImport } from './routes/bantuan'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as FounderRouteImport } from './routes/founder'
 import { Route as InfoRouteImport } from './routes/info'
 import { Route as KartuStokRouteImport } from './routes/kartu-stok'
 import { Route as KaryawanRouteImport } from './routes/karyawan'
 import { Route as KategoriRouteImport } from './routes/kategori'
+import { Route as LanggananRouteImport } from './routes/langganan'
 import { Route as LaporanRouteImport } from './routes/laporan'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PengaturanRouteImport } from './routes/pengaturan'
@@ -26,6 +28,14 @@ import { Route as PinRouteImport } from './routes/pin'
 import { Route as SpreadsheetRouteImport } from './routes/spreadsheet'
 import { Route as StokRouteImport } from './routes/stok'
 import { Route as SupplierRouteImport } from './routes/supplier'
+import { Route as FounderIndexRouteImport } from './routes/founder/index'
+import { Route as FounderMerchantRouteImport } from './routes/founder/merchant'
+import { Route as FounderPembayaranRouteImport } from './routes/founder/pembayaran'
+import { Route as FounderPengaturanRouteImport } from './routes/founder/pengaturan'
+import { Route as ApiBillingCreateRouteImport } from './routes/api/billing/create'
+import { Route as ApiBillingHealthRouteImport } from './routes/api/billing/health'
+import { Route as ApiBillingNotifyRouteImport } from './routes/api/billing/notify'
+import { Route as ApiBillingSyncRouteImport } from './routes/api/billing/sync'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -40,6 +50,11 @@ const BantuanRoute = BantuanRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FounderRoute = FounderRouteImport.update({
+  id: '/founder',
+  path: '/founder',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InfoRoute = InfoRouteImport.update({
@@ -60,6 +75,11 @@ const KaryawanRoute = KaryawanRouteImport.update({
 const KategoriRoute = KategoriRouteImport.update({
   id: '/kategori',
   path: '/kategori',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LanggananRoute = LanggananRouteImport.update({
+  id: '/langganan',
+  path: '/langganan',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LaporanRoute = LaporanRouteImport.update({
@@ -112,15 +132,57 @@ const SupplierRoute = SupplierRouteImport.update({
   path: '/supplier',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FounderIndexRoute = FounderIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FounderRoute,
+} as any)
+const FounderMerchantRoute = FounderMerchantRouteImport.update({
+  id: '/merchant',
+  path: '/merchant',
+  getParentRoute: () => FounderRoute,
+} as any)
+const FounderPembayaranRoute = FounderPembayaranRouteImport.update({
+  id: '/pembayaran',
+  path: '/pembayaran',
+  getParentRoute: () => FounderRoute,
+} as any)
+const FounderPengaturanRoute = FounderPengaturanRouteImport.update({
+  id: '/pengaturan',
+  path: '/pengaturan',
+  getParentRoute: () => FounderRoute,
+} as any)
+const ApiBillingCreateRoute = ApiBillingCreateRouteImport.update({
+  id: '/api/billing/create',
+  path: '/api/billing/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingHealthRoute = ApiBillingHealthRouteImport.update({
+  id: '/api/billing/health',
+  path: '/api/billing/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingNotifyRoute = ApiBillingNotifyRouteImport.update({
+  id: '/api/billing/notify',
+  path: '/api/billing/notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBillingSyncRoute = ApiBillingSyncRouteImport.update({
+  id: '/api/billing/sync',
+  path: '/api/billing/sync',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bantuan': typeof BantuanRoute
   '/dashboard': typeof DashboardRoute
+  '/founder': typeof FounderRouteWithChildren
   '/info': typeof InfoRoute
   '/kartu-stok': typeof KartuStokRoute
   '/karyawan': typeof KaryawanRoute
   '/kategori': typeof KategoriRoute
+  '/langganan': typeof LanggananRoute
   '/laporan': typeof LaporanRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
@@ -131,6 +193,14 @@ export interface FileRoutesByFullPath {
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
   '/supplier': typeof SupplierRoute
+  '/founder/merchant': typeof FounderMerchantRoute
+  '/founder/pembayaran': typeof FounderPembayaranRoute
+  '/founder/pengaturan': typeof FounderPengaturanRoute
+  '/founder/': typeof FounderIndexRoute
+  '/api/billing/create': typeof ApiBillingCreateRoute
+  '/api/billing/health': typeof ApiBillingHealthRoute
+  '/api/billing/notify': typeof ApiBillingNotifyRoute
+  '/api/billing/sync': typeof ApiBillingSyncRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,6 +210,7 @@ export interface FileRoutesByTo {
   '/kartu-stok': typeof KartuStokRoute
   '/karyawan': typeof KaryawanRoute
   '/kategori': typeof KategoriRoute
+  '/langganan': typeof LanggananRoute
   '/laporan': typeof LaporanRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
@@ -150,16 +221,26 @@ export interface FileRoutesByTo {
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
   '/supplier': typeof SupplierRoute
+  '/founder/merchant': typeof FounderMerchantRoute
+  '/founder/pembayaran': typeof FounderPembayaranRoute
+  '/founder/pengaturan': typeof FounderPengaturanRoute
+  '/founder': typeof FounderIndexRoute
+  '/api/billing/create': typeof ApiBillingCreateRoute
+  '/api/billing/health': typeof ApiBillingHealthRoute
+  '/api/billing/notify': typeof ApiBillingNotifyRoute
+  '/api/billing/sync': typeof ApiBillingSyncRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bantuan': typeof BantuanRoute
   '/dashboard': typeof DashboardRoute
+  '/founder': typeof FounderRouteWithChildren
   '/info': typeof InfoRoute
   '/kartu-stok': typeof KartuStokRoute
   '/karyawan': typeof KaryawanRoute
   '/kategori': typeof KategoriRoute
+  '/langganan': typeof LanggananRoute
   '/laporan': typeof LaporanRoute
   '/login': typeof LoginRoute
   '/pengaturan': typeof PengaturanRoute
@@ -170,6 +251,14 @@ export interface FileRoutesById {
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
   '/supplier': typeof SupplierRoute
+  '/founder/merchant': typeof FounderMerchantRoute
+  '/founder/pembayaran': typeof FounderPembayaranRoute
+  '/founder/pengaturan': typeof FounderPengaturanRoute
+  '/founder/': typeof FounderIndexRoute
+  '/api/billing/create': typeof ApiBillingCreateRoute
+  '/api/billing/health': typeof ApiBillingHealthRoute
+  '/api/billing/notify': typeof ApiBillingNotifyRoute
+  '/api/billing/sync': typeof ApiBillingSyncRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -177,10 +266,12 @@ export interface FileRouteTypes {
     | '/'
     | '/bantuan'
     | '/dashboard'
+    | '/founder'
     | '/info'
     | '/kartu-stok'
     | '/karyawan'
     | '/kategori'
+    | '/langganan'
     | '/laporan'
     | '/login'
     | '/pengaturan'
@@ -191,6 +282,14 @@ export interface FileRouteTypes {
     | '/spreadsheet'
     | '/stok'
     | '/supplier'
+    | '/founder/merchant'
+    | '/founder/pembayaran'
+    | '/founder/pengaturan'
+    | '/founder/'
+    | '/api/billing/create'
+    | '/api/billing/health'
+    | '/api/billing/notify'
+    | '/api/billing/sync'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -200,6 +299,7 @@ export interface FileRouteTypes {
     | '/kartu-stok'
     | '/karyawan'
     | '/kategori'
+    | '/langganan'
     | '/laporan'
     | '/login'
     | '/pengaturan'
@@ -210,15 +310,25 @@ export interface FileRouteTypes {
     | '/spreadsheet'
     | '/stok'
     | '/supplier'
+    | '/founder/merchant'
+    | '/founder/pembayaran'
+    | '/founder/pengaturan'
+    | '/founder'
+    | '/api/billing/create'
+    | '/api/billing/health'
+    | '/api/billing/notify'
+    | '/api/billing/sync'
   id:
     | '__root__'
     | '/'
     | '/bantuan'
     | '/dashboard'
+    | '/founder'
     | '/info'
     | '/kartu-stok'
     | '/karyawan'
     | '/kategori'
+    | '/langganan'
     | '/laporan'
     | '/login'
     | '/pengaturan'
@@ -229,16 +339,26 @@ export interface FileRouteTypes {
     | '/spreadsheet'
     | '/stok'
     | '/supplier'
+    | '/founder/merchant'
+    | '/founder/pembayaran'
+    | '/founder/pengaturan'
+    | '/founder/'
+    | '/api/billing/create'
+    | '/api/billing/health'
+    | '/api/billing/notify'
+    | '/api/billing/sync'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BantuanRoute: typeof BantuanRoute
   DashboardRoute: typeof DashboardRoute
+  FounderRoute: typeof FounderRouteWithChildren
   InfoRoute: typeof InfoRoute
   KartuStokRoute: typeof KartuStokRoute
   KaryawanRoute: typeof KaryawanRoute
   KategoriRoute: typeof KategoriRoute
+  LanggananRoute: typeof LanggananRoute
   LaporanRoute: typeof LaporanRoute
   LoginRoute: typeof LoginRoute
   PengaturanRoute: typeof PengaturanRoute
@@ -249,6 +369,10 @@ export interface RootRouteChildren {
   SpreadsheetRoute: typeof SpreadsheetRoute
   StokRoute: typeof StokRoute
   SupplierRoute: typeof SupplierRoute
+  ApiBillingCreateRoute: typeof ApiBillingCreateRoute
+  ApiBillingHealthRoute: typeof ApiBillingHealthRoute
+  ApiBillingNotifyRoute: typeof ApiBillingNotifyRoute
+  ApiBillingSyncRoute: typeof ApiBillingSyncRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +396,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/founder': {
+      id: '/founder'
+      path: '/founder'
+      fullPath: '/founder'
+      preLoaderRoute: typeof FounderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/info': {
@@ -300,6 +431,13 @@ declare module '@tanstack/react-router' {
       path: '/kategori'
       fullPath: '/kategori'
       preLoaderRoute: typeof KategoriRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/langganan': {
+      id: '/langganan'
+      path: '/langganan'
+      fullPath: '/langganan'
+      preLoaderRoute: typeof LanggananRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/laporan': {
@@ -372,17 +510,92 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SupplierRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/founder/': {
+      id: '/founder/'
+      path: '/'
+      fullPath: '/founder/'
+      preLoaderRoute: typeof FounderIndexRouteImport
+      parentRoute: typeof FounderRoute
+    }
+    '/founder/merchant': {
+      id: '/founder/merchant'
+      path: '/merchant'
+      fullPath: '/founder/merchant'
+      preLoaderRoute: typeof FounderMerchantRouteImport
+      parentRoute: typeof FounderRoute
+    }
+    '/founder/pembayaran': {
+      id: '/founder/pembayaran'
+      path: '/pembayaran'
+      fullPath: '/founder/pembayaran'
+      preLoaderRoute: typeof FounderPembayaranRouteImport
+      parentRoute: typeof FounderRoute
+    }
+    '/founder/pengaturan': {
+      id: '/founder/pengaturan'
+      path: '/pengaturan'
+      fullPath: '/founder/pengaturan'
+      preLoaderRoute: typeof FounderPengaturanRouteImport
+      parentRoute: typeof FounderRoute
+    }
+    '/api/billing/create': {
+      id: '/api/billing/create'
+      path: '/api/billing/create'
+      fullPath: '/api/billing/create'
+      preLoaderRoute: typeof ApiBillingCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/health': {
+      id: '/api/billing/health'
+      path: '/api/billing/health'
+      fullPath: '/api/billing/health'
+      preLoaderRoute: typeof ApiBillingHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/notify': {
+      id: '/api/billing/notify'
+      path: '/api/billing/notify'
+      fullPath: '/api/billing/notify'
+      preLoaderRoute: typeof ApiBillingNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/billing/sync': {
+      id: '/api/billing/sync'
+      path: '/api/billing/sync'
+      fullPath: '/api/billing/sync'
+      preLoaderRoute: typeof ApiBillingSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
+
+interface FounderRouteChildren {
+  FounderMerchantRoute: typeof FounderMerchantRoute
+  FounderPembayaranRoute: typeof FounderPembayaranRoute
+  FounderPengaturanRoute: typeof FounderPengaturanRoute
+  FounderIndexRoute: typeof FounderIndexRoute
+}
+
+const FounderRouteChildren: FounderRouteChildren = {
+  FounderMerchantRoute: FounderMerchantRoute,
+  FounderPembayaranRoute: FounderPembayaranRoute,
+  FounderPengaturanRoute: FounderPengaturanRoute,
+  FounderIndexRoute: FounderIndexRoute,
+}
+
+const FounderRouteWithChildren =
+  FounderRoute._addFileChildren(FounderRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BantuanRoute: BantuanRoute,
   DashboardRoute: DashboardRoute,
+  FounderRoute: FounderRouteWithChildren,
   InfoRoute: InfoRoute,
   KartuStokRoute: KartuStokRoute,
   KaryawanRoute: KaryawanRoute,
   KategoriRoute: KategoriRoute,
+  LanggananRoute: LanggananRoute,
   LaporanRoute: LaporanRoute,
   LoginRoute: LoginRoute,
   PengaturanRoute: PengaturanRoute,
@@ -393,6 +606,10 @@ const rootRouteChildren: RootRouteChildren = {
   SpreadsheetRoute: SpreadsheetRoute,
   StokRoute: StokRoute,
   SupplierRoute: SupplierRoute,
+  ApiBillingCreateRoute: ApiBillingCreateRoute,
+  ApiBillingHealthRoute: ApiBillingHealthRoute,
+  ApiBillingNotifyRoute: ApiBillingNotifyRoute,
+  ApiBillingSyncRoute: ApiBillingSyncRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
