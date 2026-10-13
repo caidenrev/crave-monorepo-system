@@ -904,7 +904,7 @@ function PengaturanPage() {
                       rows={3}
                       value={staticQris}
                       onChange={(e) => setStaticQris(e.target.value)}
-                      placeholder="Contoh: 00020101021126610016ID.CO.SHOPEE.WWW01189360091800237970570208237970570303UMI51440014ID.CO.QRIS.WWW0215ID10266049176290303UMI5204572253033605802ID5923Crave Solutions Service6007TANGSEL61051531262070703A016304351F"
+                      placeholder="Tempel kode QRIS statis toko Anda di sini (diawali 000201...)"
                       className="font-mono text-xs rounded-xl bg-slate-50 border-slate-200"
                     />
                   </div>

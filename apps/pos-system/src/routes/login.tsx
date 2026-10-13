@@ -85,16 +85,33 @@ function LoginPage() {
     </svg>
   );
 
+  // Di aplikasi Android/iOS tidak ada halaman beranda di belakang layar masuk.
+  const isNativeApp =
+    typeof window !== "undefined" &&
+    !!(window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
+
+  // Dari form daftar → kembali ke form masuk; dari form masuk → kembali ke beranda Crave.
+  const handleBack = () => {
+    if (isRegistering) setIsRegistering(false);
+    else window.location.href = "/";
+  };
+
   const strength = password.length > 8 ? 3 : password.length > 5 ? 2 : password.length > 0 ? 1 : 0;
 
   return (
     <div className="relative min-h-screen bg-slate-50 md:flex md:items-center overflow-x-hidden">
       {}
-      <div className="absolute top-0 inset-x-0 z-50 p-6 flex items-center justify-between text-white/90">
-        <button className="flex items-center justify-center size-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors cursor-pointer">
+      {(isRegistering || !isNativeApp) && (
+        // hanya selebar tombolnya: pembungkus selebar layar dulu menutupi tombol "Get Started" di ponsel
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label={isRegistering ? "Kembali ke halaman masuk" : "Kembali ke beranda"}
+          className="absolute left-6 top-6 z-50 flex size-8 cursor-pointer items-center justify-center rounded-full bg-white/10 text-white/90 transition-colors hover:bg-white/20"
+        >
           <ChevronLeft className="size-5" />
         </button>
-      </div>
+      )}
 
       {}
       <div className="absolute top-0 inset-x-0 h-[45%] md:h-full md:w-1/2 bg-gradient-to-br from-blue-700 to-blue-500 md:rounded-r-[3rem] transition-all duration-500 z-0 overflow-hidden pointer-events-none">
