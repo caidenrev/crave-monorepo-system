@@ -4,6 +4,7 @@ import {
   LayoutGrid,
   LogOut,
   Moon,
+  QrCode,
   Settings,
   Store,
   Sun,
@@ -19,6 +20,7 @@ const NAV: { id: string; to: string; label: string; icon: LucideIcon }[] = [
   { id: "ringkasan", to: "/founder", label: "Ringkasan", icon: LayoutGrid },
   { id: "merchant", to: "/founder/merchant", label: "Merchant", icon: Store },
   { id: "pembayaran", to: "/founder/pembayaran", label: "Pembayaran", icon: CreditCard },
+  { id: "gateway", to: "/founder/gateway", label: "Gateway", icon: QrCode },
   { id: "pengaturan", to: "/founder/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 

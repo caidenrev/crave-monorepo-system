@@ -29,6 +29,7 @@ import { Route as SpreadsheetRouteImport } from './routes/spreadsheet'
 import { Route as StokRouteImport } from './routes/stok'
 import { Route as SupplierRouteImport } from './routes/supplier'
 import { Route as FounderIndexRouteImport } from './routes/founder/index'
+import { Route as FounderGatewayRouteImport } from './routes/founder/gateway'
 import { Route as FounderMerchantRouteImport } from './routes/founder/merchant'
 import { Route as FounderPembayaranRouteImport } from './routes/founder/pembayaran'
 import { Route as FounderPengaturanRouteImport } from './routes/founder/pengaturan'
@@ -37,6 +38,7 @@ import { Route as ApiBillingCreateRouteImport } from './routes/api/billing/creat
 import { Route as ApiBillingHealthRouteImport } from './routes/api/billing/health'
 import { Route as ApiBillingNotifyRouteImport } from './routes/api/billing/notify'
 import { Route as ApiBillingSyncRouteImport } from './routes/api/billing/sync'
+import { Route as ApiGatewayAdminRouteImport } from './routes/api/gateway/admin'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -138,6 +140,11 @@ const FounderIndexRoute = FounderIndexRouteImport.update({
   path: '/',
   getParentRoute: () => FounderRoute,
 } as any)
+const FounderGatewayRoute = FounderGatewayRouteImport.update({
+  id: '/gateway',
+  path: '/gateway',
+  getParentRoute: () => FounderRoute,
+} as any)
 const FounderMerchantRoute = FounderMerchantRouteImport.update({
   id: '/merchant',
   path: '/merchant',
@@ -178,6 +185,11 @@ const ApiBillingSyncRoute = ApiBillingSyncRouteImport.update({
   path: '/api/billing/sync',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGatewayAdminRoute = ApiGatewayAdminRouteImport.update({
+  id: '/api/gateway/admin',
+  path: '/api/gateway/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -199,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
   '/supplier': typeof SupplierRoute
+  '/founder/gateway': typeof FounderGatewayRoute
   '/founder/merchant': typeof FounderMerchantRoute
   '/founder/pembayaran': typeof FounderPembayaranRoute
   '/founder/pengaturan': typeof FounderPengaturanRoute
@@ -208,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/api/billing/health': typeof ApiBillingHealthRoute
   '/api/billing/notify': typeof ApiBillingNotifyRoute
   '/api/billing/sync': typeof ApiBillingSyncRoute
+  '/api/gateway/admin': typeof ApiGatewayAdminRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -228,6 +242,7 @@ export interface FileRoutesByTo {
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
   '/supplier': typeof SupplierRoute
+  '/founder/gateway': typeof FounderGatewayRoute
   '/founder/merchant': typeof FounderMerchantRoute
   '/founder/pembayaran': typeof FounderPembayaranRoute
   '/founder/pengaturan': typeof FounderPengaturanRoute
@@ -237,6 +252,7 @@ export interface FileRoutesByTo {
   '/api/billing/health': typeof ApiBillingHealthRoute
   '/api/billing/notify': typeof ApiBillingNotifyRoute
   '/api/billing/sync': typeof ApiBillingSyncRoute
+  '/api/gateway/admin': typeof ApiGatewayAdminRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -259,6 +275,7 @@ export interface FileRoutesById {
   '/spreadsheet': typeof SpreadsheetRoute
   '/stok': typeof StokRoute
   '/supplier': typeof SupplierRoute
+  '/founder/gateway': typeof FounderGatewayRoute
   '/founder/merchant': typeof FounderMerchantRoute
   '/founder/pembayaran': typeof FounderPembayaranRoute
   '/founder/pengaturan': typeof FounderPengaturanRoute
@@ -268,6 +285,7 @@ export interface FileRoutesById {
   '/api/billing/health': typeof ApiBillingHealthRoute
   '/api/billing/notify': typeof ApiBillingNotifyRoute
   '/api/billing/sync': typeof ApiBillingSyncRoute
+  '/api/gateway/admin': typeof ApiGatewayAdminRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -291,6 +309,7 @@ export interface FileRouteTypes {
     | '/spreadsheet'
     | '/stok'
     | '/supplier'
+    | '/founder/gateway'
     | '/founder/merchant'
     | '/founder/pembayaran'
     | '/founder/pengaturan'
@@ -300,6 +319,7 @@ export interface FileRouteTypes {
     | '/api/billing/health'
     | '/api/billing/notify'
     | '/api/billing/sync'
+    | '/api/gateway/admin'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -320,6 +340,7 @@ export interface FileRouteTypes {
     | '/spreadsheet'
     | '/stok'
     | '/supplier'
+    | '/founder/gateway'
     | '/founder/merchant'
     | '/founder/pembayaran'
     | '/founder/pengaturan'
@@ -329,6 +350,7 @@ export interface FileRouteTypes {
     | '/api/billing/health'
     | '/api/billing/notify'
     | '/api/billing/sync'
+    | '/api/gateway/admin'
   id:
     | '__root__'
     | '/'
@@ -350,6 +372,7 @@ export interface FileRouteTypes {
     | '/spreadsheet'
     | '/stok'
     | '/supplier'
+    | '/founder/gateway'
     | '/founder/merchant'
     | '/founder/pembayaran'
     | '/founder/pengaturan'
@@ -359,6 +382,7 @@ export interface FileRouteTypes {
     | '/api/billing/health'
     | '/api/billing/notify'
     | '/api/billing/sync'
+    | '/api/gateway/admin'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -386,6 +410,7 @@ export interface RootRouteChildren {
   ApiBillingHealthRoute: typeof ApiBillingHealthRoute
   ApiBillingNotifyRoute: typeof ApiBillingNotifyRoute
   ApiBillingSyncRoute: typeof ApiBillingSyncRoute
+  ApiGatewayAdminRoute: typeof ApiGatewayAdminRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -530,6 +555,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FounderIndexRouteImport
       parentRoute: typeof FounderRoute
     }
+    '/founder/gateway': {
+      id: '/founder/gateway'
+      path: '/gateway'
+      fullPath: '/founder/gateway'
+      preLoaderRoute: typeof FounderGatewayRouteImport
+      parentRoute: typeof FounderRoute
+    }
     '/founder/merchant': {
       id: '/founder/merchant'
       path: '/merchant'
@@ -586,10 +618,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiBillingSyncRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/gateway/admin': {
+      id: '/api/gateway/admin'
+      path: '/api/gateway/admin'
+      fullPath: '/api/gateway/admin'
+      preLoaderRoute: typeof ApiGatewayAdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface FounderRouteChildren {
+  FounderGatewayRoute: typeof FounderGatewayRoute
   FounderMerchantRoute: typeof FounderMerchantRoute
   FounderPembayaranRoute: typeof FounderPembayaranRoute
   FounderPengaturanRoute: typeof FounderPengaturanRoute
@@ -597,6 +637,7 @@ interface FounderRouteChildren {
 }
 
 const FounderRouteChildren: FounderRouteChildren = {
+  FounderGatewayRoute: FounderGatewayRoute,
   FounderMerchantRoute: FounderMerchantRoute,
   FounderPembayaranRoute: FounderPembayaranRoute,
   FounderPengaturanRoute: FounderPengaturanRoute,
@@ -631,6 +672,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiBillingHealthRoute: ApiBillingHealthRoute,
   ApiBillingNotifyRoute: ApiBillingNotifyRoute,
   ApiBillingSyncRoute: ApiBillingSyncRoute,
+  ApiGatewayAdminRoute: ApiGatewayAdminRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
