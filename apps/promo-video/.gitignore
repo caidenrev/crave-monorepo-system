@@ -1,1 +1,8 @@
 out/
+
+# Video peluncuran: disimpan lokal saja, tidak di-commit
+src/launch/
+VOICEOVER-LAUNCH.md
+*.mp4
+*.mov
+*.webm
