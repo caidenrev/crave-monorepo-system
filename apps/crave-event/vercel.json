@@ -13,6 +13,38 @@
       "destination": "/logo.png"
     },
     {
+      "source": "/crave-event/logo.svg",
+      "destination": "/logo.svg"
+    },
+    {
+      "source": "/crave-event/favicon.ico",
+      "destination": "/favicon.ico"
+    },
+    {
+      "source": "/crave-event/favicon.svg",
+      "destination": "/favicon.svg"
+    },
+    {
+      "source": "/crave-event/apple-touch-icon.png",
+      "destination": "/apple-touch-icon.png"
+    },
+    {
+      "source": "/crave-event/icon-192.png",
+      "destination": "/icon-192.png"
+    },
+    {
+      "source": "/crave-event/icon-512.png",
+      "destination": "/icon-512.png"
+    },
+    {
+      "source": "/crave-event/maskable-512.png",
+      "destination": "/maskable-512.png"
+    },
+    {
+      "source": "/crave-event/manifest.json",
+      "destination": "/manifest.json"
+    },
+    {
       "source": "/crave-event/robots.txt",
       "destination": "/robots.txt"
     }
