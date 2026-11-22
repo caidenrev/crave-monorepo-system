@@ -273,3 +273,123 @@ export function downloadCsv(filename: string, header: string[], rows: (string | 
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/* =========================================================================
+   CRAVE HRM INTERNAL TELEMETRY & CROSS-SAAS AGGREGATION
+   ========================================================================= */
+
+export type HrmCompany = {
+  id: number | string;
+  name: string;
+  email: string;
+  plan_name: string;
+  state: SubscriptionState;
+  trial_ends_at: string | null;
+  current_period_end: string | null;
+  ends_at: string | null;
+  total_employees: number;
+  paid_total: number;
+  registered_at: string;
+};
+
+export type HrmInvoice = {
+  order_id: string;
+  company_name: string;
+  email: string;
+  months: number;
+  amount: number;
+  status: InvoiceStatus;
+  source: string;
+  payment_type: string | null;
+  created_at: string;
+  paid_at: string | null;
+};
+
+export type HrmAnalytics = {
+  success: boolean;
+  product: string;
+  product_label: string;
+  timestamp: string;
+  kpi: {
+    mrr: number;
+    annual_mrr: number;
+    revenue_total: number;
+    revenue_period: number;
+    revenue_previous: number;
+    paying_companies: number;
+    conversion_rate: number;
+    total_companies: number;
+    active_companies: number;
+    trial_companies: number;
+    grace_companies: number;
+    expired_companies: number;
+    suspended_companies: number;
+    total_employees: number;
+    total_users: number;
+    attendance_today: number;
+    new_leads: number;
+    total_leads: number;
+    signups_period: number;
+  };
+  daily: { date: string; signups: number; revenue: number; attendance: number }[];
+  expiring: {
+    id: number | string;
+    name: string;
+    email: string;
+    hr_name: string;
+    state: SubscriptionState;
+    days_left: number;
+    ends_at: string;
+    total_employees: number;
+  }[];
+  feed: {
+    type: "signup" | "payment" | "lead";
+    at: string;
+    who: string;
+    detail: string;
+    amount: number | null;
+  }[];
+  companies: HrmCompany[];
+  invoices: HrmInvoice[];
+};
+
+const HRM_API_URL =
+  (import.meta as unknown as { env: Record<string, string> }).env?.VITE_HRM_API_URL ||
+  "http://localhost:8000/api/v1/internal/founder-stats";
+
+const HRM_INTERNAL_KEY =
+  (import.meta as unknown as { env: Record<string, string> }).env?.VITE_HRM_INTERNAL_KEY ||
+  "crave_sec_internal_hrm_2026_x89f7a";
+
+export async function fetchHrmAnalytics(days = 30): Promise<HrmAnalytics | null> {
+  try {
+    const fallbackBase = typeof window !== "undefined" ? window.location.origin : "http://localhost:8000";
+    const url = new URL(HRM_API_URL, fallbackBase);
+    url.searchParams.set("days", String(days));
+    const res = await fetch(url.toString(), {
+      headers: {
+        Accept: "application/json",
+        "X-Crave-Internal-Key": HRM_INTERNAL_KEY,
+      },
+    });
+    if (!res.ok) {
+      return null;
+    }
+    const data = (await res.json()) as HrmAnalytics;
+    return data;
+  } catch (err) {
+    console.warn("Unable to fetch HRM metrics (is Crave HRM running?):", err);
+    return null;
+  }
+}
+
+export function useHrmAnalytics(days: number) {
+  return useQuery({
+    queryKey: ["founder-hrm-analytics", days],
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    queryFn: () => fetchHrmAnalytics(days),
+    retry: 1,
+  });
+}
+
