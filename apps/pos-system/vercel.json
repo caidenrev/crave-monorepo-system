@@ -5,6 +5,10 @@
       "destination": "/assets/:path*"
     },
     {
+      "source": "/pos-system/brands/:path*",
+      "destination": "/brands/:path*"
+    },
+    {
       "source": "/pos-system/light-mode-logo.png",
       "destination": "/light-mode-logo.png"
     },

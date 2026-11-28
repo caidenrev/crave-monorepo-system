@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Download, Info, Share2, Store } from "lucide-react";
-
-const BASE_PATH = import.meta.env.BASE_URL.replace(/\/$/, "");
+import qrisWhiteLogo from "@/assets/qris-white.png";
+import qrisLogo from "@/assets/qris.png";
 
 export function qrisNmid(payload?: string): string | null {
   if (!payload || !payload.startsWith("000201")) return null;
@@ -178,7 +178,7 @@ export function QrisSnapCard({
         >
           <div className="flex items-center justify-between">
             <img
-              src={`${BASE_PATH}/brands/logo/qris-white.png`}
+              src={qrisWhiteLogo}
               alt="QRIS"
               className="h-4 w-auto object-contain select-none"
               draggable={false}
@@ -214,7 +214,7 @@ export function QrisSnapCard({
           <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0]">
             <span className="flex items-center gap-2 text-[12.5px] font-bold text-[#0F172A]">
               <img
-                src={`${BASE_PATH}/brands/logo/qris.png`}
+                src={qrisLogo}
                 alt="QRIS"
                 className="h-3 w-auto object-contain select-none"
                 draggable={false}
