@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
-import { ArrowUpDown, Download, Loader2, Search } from "lucide-react";
+import { ArrowUpDown, Download, ExternalLink, Loader2, Search, Building2, Store } from "lucide-react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { confirmDialog } from "@/components/ConfirmDialog";
 import { toast } from "sonner";
@@ -28,14 +28,18 @@ import {
   useFounderActions,
   useMerchantDetail,
   useMerchants,
+  useHrmAnalytics,
   type FounderAction,
   type Merchant,
+  type HrmCompany,
 } from "@/lib/useFounder";
 import type { SubscriptionState } from "@/lib/useSubscription";
 
 export const Route = createFileRoute("/founder/merchant")({
-  validateSearch: (search: Record<string, unknown>): { q?: string } =>
-    typeof search["q"] === "string" && search["q"] ? { q: search["q"] } : {},
+  validateSearch: (search: Record<string, unknown>): { q?: string; product?: string } => ({
+    q: typeof search["q"] === "string" && search["q"] ? search["q"] : undefined,
+    product: typeof search["product"] === "string" && search["product"] ? search["product"] : undefined,
+  }),
   component: MerchantPage,
 });
 
@@ -52,6 +56,11 @@ const matches = (m: Merchant, f: Filter) =>
 function MerchantPage() {
   const search = Route.useSearch();
   const merchants = useMerchants();
+  const hrmQuery = useHrmAnalytics(30);
+
+  const [product, setProduct] = useState<"pos" | "hrm">(
+    search.product === "hrm" ? "hrm" : "pos",
+  );
   const [q, setQ] = useState(search.q ?? "");
   const [filter, setFilter] = useState<Filter>("all");
   const [sort, setSort] = useState<SortKey>("registered_at");
@@ -59,9 +68,12 @@ function MerchantPage() {
 
   useEffect(() => {
     if (search.q) setQ(search.q);
-  }, [search.q]);
+    if (search.product === "hrm") setProduct("hrm");
+  }, [search.q, search.product]);
 
   const list = merchants.data ?? [];
+  const hrmCompanies = hrmQuery.data?.companies ?? [];
+
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
     const value = (m: Merchant): number =>
@@ -76,28 +88,85 @@ function MerchantPage() {
       .sort((x, y) => value(y) - value(x));
   }, [list, q, filter, sort]);
 
-  const selected = list.find((m) => m.user_id === selectedId) ?? null;
-  const count = (f: Filter) => list.filter((m) => matches(m, f)).length;
+  const hrmRows = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return hrmCompanies
+      .filter((c) => {
+        if (filter === "paying") return c.state === "active" || c.state === "grace";
+        if (filter === "trial") return c.state === "trial";
+        if (filter === "inactive") return c.state === "expired" || c.state === "suspended";
+        return true;
+      })
+      .filter(
+        (c) =>
+          !needle ||
+          c.name.toLowerCase().includes(needle) ||
+          c.email.toLowerCase().includes(needle) ||
+          c.plan_name.toLowerCase().includes(needle),
+      );
+  }, [hrmCompanies, q, filter]);
 
-  const exportCsv = () =>
-    downloadCsv(
-      `merchant-crave-${new Date().toISOString().slice(0, 10)}.csv`,
-      ["Toko", "Nama", "Email", "Status", "Berakhir", "Daftar", "Login terakhir", "Transaksi 30 hari", "Omzet 30 hari", "Total transaksi", "Total bayar langganan", "Catatan"],
-      rows.map((m) => [
-        m.store_name,
-        m.name,
-        m.email,
-        STATE_LABEL[m.state],
-        tanggal(berakhir(m), "yyyy-MM-dd"),
-        tanggal(m.registered_at, "yyyy-MM-dd"),
-        tanggal(m.last_sign_in_at, "yyyy-MM-dd HH:mm"),
-        m.tx_30d,
-        m.sales_30d,
-        m.tx_total,
-        m.paid_total,
-        m.note,
-      ]),
-    );
+  const selected = list.find((m) => m.user_id === selectedId) ?? null;
+  const count = (f: Filter) =>
+    product === "pos"
+      ? list.filter((m) => matches(m, f)).length
+      : hrmCompanies.filter((c) => {
+          if (f === "paying") return c.state === "active" || c.state === "grace";
+          if (f === "trial") return c.state === "trial";
+          if (f === "inactive") return c.state === "expired" || c.state === "suspended";
+          return true;
+        }).length;
+
+  const exportCsv = () => {
+    if (product === "pos") {
+      downloadCsv(
+        `merchant-crave-pos-${new Date().toISOString().slice(0, 10)}.csv`,
+        [
+          "Toko",
+          "Nama",
+          "Email",
+          "Status",
+          "Berakhir",
+          "Daftar",
+          "Login terakhir",
+          "Transaksi 30 hari",
+          "Omzet 30 hari",
+          "Total transaksi",
+          "Total bayar langganan",
+          "Catatan",
+        ],
+        rows.map((m) => [
+          m.store_name,
+          m.name,
+          m.email,
+          STATE_LABEL[m.state],
+          tanggal(berakhir(m), "yyyy-MM-dd"),
+          tanggal(m.registered_at, "yyyy-MM-dd"),
+          tanggal(m.last_sign_in_at, "yyyy-MM-dd HH:mm"),
+          m.tx_30d,
+          m.sales_30d,
+          m.tx_total,
+          m.paid_total,
+          m.note,
+        ]),
+      );
+    } else {
+      downloadCsv(
+        `perusahaan-crave-hrm-${new Date().toISOString().slice(0, 10)}.csv`,
+        ["Perusahaan", "Email HR", "Paket", "Status", "Karyawan", "Total Bayar", "Berakhir", "Daftar"],
+        hrmRows.map((c) => [
+          c.name,
+          c.email,
+          c.plan_name,
+          STATE_LABEL[c.state],
+          c.total_employees,
+          c.paid_total,
+          tanggal(c.ends_at, "yyyy-MM-dd"),
+          tanggal(c.registered_at, "yyyy-MM-dd"),
+        ]),
+      );
+    }
+  };
 
   const SortHead = ({ k, children, right }: { k: SortKey; children: string; right?: boolean }) => (
     <th className={"px-4 py-3 font-bold " + (right ? "text-right" : "")} aria-sort={sort === k ? "descending" : "none"}>
@@ -115,12 +184,32 @@ function MerchantPage() {
   return (
     <>
       <PageHeader
-        title="Merchant"
-        subtitle="Semua akun toko, status langganan, dan aktivitasnya."
+        title="Merchant & Tenant"
+        subtitle={
+          product === "pos"
+            ? "Semua akun merchant Crave POS, status langganan, dan aktivitas omzetnya."
+            : "Semua perusahaan tenant Crave HRM, jumlah karyawan, dan status langganannya."
+        }
         actions={
-          <Button variant="outline" className="rounded-xl" onClick={exportCsv} disabled={rows.length === 0}>
-            <Download className="size-4" /> Ekspor CSV
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmented
+              label="Produk"
+              value={product}
+              onChange={setProduct}
+              options={[
+                { value: "pos", label: `Crave POS (${list.length})` },
+                { value: "hrm", label: `Crave HRM (${hrmCompanies.length})` },
+              ]}
+            />
+            <Button
+              variant="outline"
+              className="rounded-xl"
+              onClick={exportCsv}
+              disabled={product === "pos" ? rows.length === 0 : hrmRows.length === 0}
+            >
+              <Download className="size-4" /> Ekspor CSV
+            </Button>
+          </div>
         }
       />
 
@@ -130,8 +219,8 @@ function MerchantPage() {
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Cari email, nama, atau nama toko"
-            aria-label="Cari merchant"
+            placeholder={product === "pos" ? "Cari email, nama, atau nama toko" : "Cari nama perusahaan atau email HR"}
+            aria-label="Cari tenant"
             className="rounded-xl pl-11"
           />
         </div>
@@ -148,72 +237,126 @@ function MerchantPage() {
         />
       </div>
 
-      <div className="overflow-x-auto rounded-3xl border bg-card shadow-soft">
-        <table className="w-full min-w-[860px] text-sm">
-          <thead>
-            <tr className="border-b text-left text-xs text-muted-foreground">
-              <th className="px-4 py-3 font-bold">Merchant</th>
-              <th className="px-4 py-3 font-bold">Status</th>
-              <SortHead k="ends">Berakhir</SortHead>
-              <th className="px-4 py-3 text-right font-bold">Transaksi 30 hari</th>
-              <SortHead k="sales_30d" right>
-                Omzet 30 hari
-              </SortHead>
-              <SortHead k="last_sign_in_at">Login terakhir</SortHead>
-              <SortHead k="registered_at">Daftar</SortHead>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {merchants.isLoading ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
-                  <Loader2 className="mx-auto size-5 animate-spin" />
-                </td>
+      {product === "pos" ? (
+        <div className="overflow-x-auto rounded-3xl border bg-card shadow-soft">
+          <table className="w-full min-w-[860px] text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs text-muted-foreground">
+                <th className="px-4 py-3 font-bold">Merchant</th>
+                <th className="px-4 py-3 font-bold">Status</th>
+                <SortHead k="ends">Berakhir</SortHead>
+                <th className="px-4 py-3 text-right font-bold">Transaksi 30 hari</th>
+                <SortHead k="sales_30d" right>
+                  Omzet 30 hari
+                </SortHead>
+                <SortHead k="last_sign_in_at">Login terakhir</SortHead>
+                <SortHead k="registered_at">Daftar</SortHead>
               </tr>
-            ) : merchants.error ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-destructive">
-                  {merchants.error.message}
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
-                  {list.length === 0 ? "Belum ada merchant yang mendaftar." : "Tidak ada merchant yang cocok."}
-                </td>
-              </tr>
-            ) : (
-              rows.map((m) => (
-                <tr
-                  key={m.user_id}
-                  tabIndex={0}
-                  onClick={() => setSelectedId(m.user_id)}
-                  onKeyDown={(e) => e.key === "Enter" && setSelectedId(m.user_id)}
-                  className="cursor-pointer outline-none hover:bg-muted/50 focus-visible:bg-muted/50"
-                >
-                  <td className="max-w-64 px-4 py-3">
-                    <p className="truncate font-semibold">{merchantName(m)}</p>
-                    <p className="truncate text-xs text-muted-foreground">{m.email}</p>
-                    {m.note && <p className="mt-0.5 truncate text-xs italic text-muted-foreground">{m.note}</p>}
+            </thead>
+            <tbody className="divide-y">
+              {merchants.isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    <Loader2 className="mx-auto size-5 animate-spin" />
                   </td>
-                  <td className="px-4 py-3">
-                    <StateBadge state={m.state} />
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{tanggal(berakhir(m))}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{angka(m.tx_30d)}</td>
-                  <td className="px-4 py-3 text-right tabular-nums">{rupiah(m.sales_30d)}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {m.last_sign_in_at
-                      ? formatDistanceToNow(new Date(m.last_sign_in_at), { addSuffix: true, locale: id })
-                      : "-"}
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">{tanggal(m.registered_at)}</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : merchants.error ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-destructive">
+                    {merchants.error.message}
+                  </td>
+                </tr>
+              ) : rows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    {list.length === 0 ? "Belum ada merchant yang mendaftar." : "Tidak ada merchant yang cocok."}
+                  </td>
+                </tr>
+              ) : (
+                rows.map((m) => (
+                  <tr
+                    key={m.user_id}
+                    tabIndex={0}
+                    onClick={() => setSelectedId(m.user_id)}
+                    onKeyDown={(e) => e.key === "Enter" && setSelectedId(m.user_id)}
+                    className="cursor-pointer outline-none hover:bg-muted/50 focus-visible:bg-muted/50"
+                  >
+                    <td className="max-w-64 px-4 py-3">
+                      <p className="truncate font-semibold">{merchantName(m)}</p>
+                      <p className="truncate text-xs text-muted-foreground">{m.email}</p>
+                      {m.note && <p className="mt-0.5 truncate text-xs italic text-muted-foreground">{m.note}</p>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <StateBadge state={m.state} />
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{tanggal(berakhir(m))}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{angka(m.tx_30d)}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">{rupiah(m.sales_30d)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {m.last_sign_in_at
+                        ? formatDistanceToNow(new Date(m.last_sign_in_at), { addSuffix: true, locale: id })
+                        : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{tanggal(m.registered_at)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded-3xl border bg-card shadow-soft">
+          <table className="w-full min-w-[860px] text-sm">
+            <thead>
+              <tr className="border-b text-left text-xs text-muted-foreground">
+                <th className="px-4 py-3 font-bold">Perusahaan</th>
+                <th className="px-4 py-3 font-bold">Paket</th>
+                <th className="px-4 py-3 font-bold">Status</th>
+                <th className="px-4 py-3 text-right font-bold">Tenaga Kerja</th>
+                <th className="px-4 py-3 text-right font-bold">Total Pembayaran</th>
+                <th className="px-4 py-3 font-bold">Masa Aktif</th>
+                <th className="px-4 py-3 font-bold">Terdaftar</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {hrmQuery.isLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    <Loader2 className="mx-auto size-5 animate-spin" />
+                  </td>
+                </tr>
+              ) : hrmRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    {hrmCompanies.length === 0
+                      ? "Belum ada perusahaan tenant di Crave HRM atau server HRM belum aktif."
+                      : "Tidak ada perusahaan yang cocok dengan pencarian."}
+                  </td>
+                </tr>
+              ) : (
+                hrmRows.map((c) => (
+                  <tr key={c.id} className="hover:bg-muted/50">
+                    <td className="max-w-64 px-4 py-3">
+                      <p className="truncate font-semibold">{c.name}</p>
+                      <p className="truncate text-xs text-muted-foreground">{c.email}</p>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-foreground">{c.plan_name}</td>
+                    <td className="px-4 py-3">
+                      <StateBadge state={c.state} />
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">{angka(c.total_employees)} staf</td>
+                    <td className="px-4 py-3 text-right tabular-nums font-bold">{rupiah(c.paid_total)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {c.ends_at ? tanggal(c.ends_at) : "-"}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{tanggal(c.registered_at)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <Sheet open={!!selected} onOpenChange={(open) => !open && setSelectedId(null)}>
         <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
@@ -278,117 +421,78 @@ function MerchantPanel({ merchant: m }: { merchant: Merchant }) {
         <h3 className="text-sm font-bold">Transaksi 30 hari terakhir</h3>
         <p className="text-xs text-muted-foreground">
           {d?.last_tx_at
-            ? `Transaksi terakhir ${formatDistanceToNow(new Date(d.last_tx_at), { addSuffix: true, locale: id })}`
-            : "Belum pernah bertransaksi"}
+            ? `Terakhir transaksi ${formatDistanceToNow(new Date(d.last_tx_at), { addSuffix: true, locale: id })}`
+            : "Belum pernah transaksi"}
         </p>
-        <div className="mt-2 h-28 w-full">
-          {detail.error ? (
-            <p className="text-xs text-destructive">{detail.error.message}</p>
-          ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={d?.daily ?? []} barCategoryGap={2}>
-                <XAxis dataKey="date" hide />
-                <Tooltip
-                  cursor={{ fill: "var(--color-muted)" }}
-                  formatter={(v: number, _n, item) => [
-                    `${angka(v)} transaksi · ${rupiah((item.payload as { gmv: number }).gmv)}`,
-                    "",
-                  ]}
-                  labelFormatter={(l: string) => tanggal(l, "EEEE, d MMM")}
-                  contentStyle={tooltipStyle}
-                  separator=""
-                />
-                <Bar dataKey="tx" fill="var(--color-chart-1)" radius={[3, 3, 0, 0]} minPointSize={2} />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
+        <div className="mt-2 h-24 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={d?.daily ?? []} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+              <Tooltip
+                cursor={{ fill: "var(--color-muted)" }}
+                formatter={(v: number) => [rupiah(v), "Omzet"]}
+                labelFormatter={(l: string) => tanggal(l, "EEEE, d MMM yyyy")}
+                contentStyle={tooltipStyle}
+              />
+              <XAxis dataKey="date" hide />
+              <Bar dataKey="gmv" fill="var(--color-chart-1)" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border p-4">
-        <h3 className="text-sm font-bold">Kelola langganan</h3>
+      <section className="space-y-2">
+        <Label htmlFor="catatan" className="text-xs font-bold">
+          Catatan founder
+        </Label>
+        <div className="flex gap-2">
+          <Input
+            id="catatan"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="mis. Toko langganan personal, sudah kenal"
+            className="rounded-xl"
+          />
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={update.isPending}
+            onClick={() => run("set_note", undefined, "Catatan disimpan.")}
+          >
+            Simpan
+          </Button>
+        </div>
+      </section>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="founder-note">Catatan (hanya terlihat founder)</Label>
-          <div className="flex gap-2">
-            <Input
-              id="founder-note"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              placeholder="Contoh: bayar transfer manual 12 Okt"
-              className="rounded-xl"
-            />
-            <Button
-              variant="outline"
-              className="shrink-0 rounded-xl"
-              disabled={update.isPending || note === (m.note ?? "")}
-              onClick={() => run("set_note", undefined, "Catatan disimpan")}
-            >
-              Simpan
-            </Button>
-          </div>
+      <section className="space-y-2 rounded-2xl border p-3">
+        <h3 className="text-xs font-bold text-muted-foreground">Tindakan langganan</h3>
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={update.isPending}
+            onClick={() => run("extend_trial", days, `Trial diperpanjang ${days} hari.`)}
+          >
+            + {days} hari trial
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-xl"
+            disabled={update.isPending}
+            onClick={() => run("add_months", 1, "Masa aktif ditambah 1 bulan.")}
+          >
+            + 1 bulan gratis
+          </Button>
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Aktifkan manual</Label>
-          <p className="text-xs text-muted-foreground">
-            Menambah masa aktif dan mencatatnya sebagai pembayaran manual seharga paket.
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            {[1, 6, 12].map((n) => (
-              <Button
-                key={n}
-                variant="outline"
-                className="rounded-xl"
-                disabled={update.isPending}
-                onClick={async () => {
-                  const ok = await confirmDialog({
-                    title: `Tambah ${n} bulan?`,
-                    description: `Masa aktif ${m.email} ditambah ${n} bulan dan dicatat sebagai pembayaran manual.`,
-                    confirmLabel: `Tambah ${n} bulan`,
-                  });
-                  if (ok) run("add_months", n, `Masa aktif ditambah ${n} bulan`);
-                }}
-              >
-                +{n} bulan
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="founder-trial">Perpanjang trial (hari)</Label>
-          <div className="flex gap-2">
-            <Input
-              id="founder-trial"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={365}
-              value={trialDays}
-              onChange={(e) => setTrialDays(e.target.value)}
-              className="rounded-xl"
-            />
-            <Button
-              variant="outline"
-              className="shrink-0 rounded-xl"
-              disabled={update.isPending || !(Number.isInteger(days) && days >= 1 && days <= 365)}
-              onClick={() => run("extend_trial", days, `Trial diperpanjang ${days} hari`)}
-            >
-              Perpanjang
-            </Button>
-          </div>
-        </div>
-
-        <div className="border-t pt-4">
+        <div className="pt-2">
           {m.state === "suspended" ? (
             <Button
               variant="outline"
               className="w-full rounded-xl"
               disabled={update.isPending}
-              onClick={() => run("unsuspend", undefined, "Akun diaktifkan kembali")}
+              onClick={() => run("unsuspend", undefined, "Penangguhan dicabut.")}
             >
-              Aktifkan kembali akun
+              Buka penangguhan
             </Button>
           ) : (
             <Button
@@ -397,40 +501,40 @@ function MerchantPanel({ merchant: m }: { merchant: Merchant }) {
               disabled={update.isPending}
               onClick={async () => {
                 const ok = await confirmDialog({
-                  title: "Tangguhkan akun ini?",
-                  description: `${m.email} menjadi hanya baca sampai kamu aktifkan kembali. Datanya tidak dihapus.`,
+                  title: `Tangguhkan ${merchantName(m)}?`,
+                  description: "Toko tidak akan bisa login atau memproses transaksi sampai dibuka kembali.",
                   confirmLabel: "Tangguhkan",
-                  destructive: true,
+                  tone: "destructive",
                 });
-                if (ok) run("suspend", undefined, "Akun ditangguhkan");
+                if (ok) run("suspend", undefined, "Toko ditangguhkan.");
               }}
             >
-              Tangguhkan akun
+              Tangguhkan toko
             </Button>
           )}
         </div>
       </section>
 
-      <section>
-        <h3 className="text-sm font-bold">Riwayat tagihan</h3>
+      <section className="space-y-2">
+        <h3 className="text-xs font-bold text-muted-foreground">Riwayat tagihan langganan</h3>
         {!d ? (
-          <Empty>{detail.isLoading ? "Memuat..." : "-"}</Empty>
+          <p className="text-xs text-muted-foreground">Memuat...</p>
         ) : d.invoices.length === 0 ? (
-          <Empty>Belum ada tagihan.</Empty>
+          <p className="text-xs text-muted-foreground">Belum ada tagihan.</p>
         ) : (
-          <ul className="mt-2 divide-y">
+          <ul className="space-y-1.5">
             {d.invoices.map((inv) => (
-              <li key={inv.order_id} className="flex items-center gap-3 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">
-                    {inv.months} bulan · {rupiah(inv.amount)}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {tanggal(inv.created_at)} · {inv.source === "manual" ? "manual" : (inv.payment_type ?? "Midtrans")} ·{" "}
-                    {inv.order_id}
+              <li key={inv.order_id} className="flex items-center justify-between rounded-xl bg-muted/40 p-2 text-xs">
+                <div>
+                  <p className="font-semibold">{inv.order_id}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {inv.months} bulan · {tanggal(inv.created_at)}
                   </p>
                 </div>
-                <InvoiceBadge status={inv.status} />
+                <div className="text-right">
+                  <p className="font-bold tabular-nums">{rupiah(inv.amount)}</p>
+                  <InvoiceBadge status={inv.status} />
+                </div>
               </li>
             ))}
           </ul>

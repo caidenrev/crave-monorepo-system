@@ -69,6 +69,7 @@ import {
 import { createPaymentGuard, type PaymentVerdict } from "@/lib/payment-guard";
 import { unlockCashierSound } from "@/lib/cashier-sound";
 import { PaymentSuccess } from "@/components/PaymentSuccess";
+import { QrisSnapCard } from "@/components/QrisSnapCard";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -837,32 +838,18 @@ function KasirPage() {
       ) : (
         // VIEW 2: IN-SHEET QRIS PAYMENT (CLEAN, NO AI SLOP)
         <div className="flex flex-1 flex-col justify-between py-1">
-          <div className="shrink-0">
-            <div className="flex items-center justify-between">
-              {!qrisPaid ? (
-                <>
-                  <button
-                    onClick={() => setCheckoutStep("cart")}
-                    className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors p-1"
-                  >
-                    <ChevronLeft className="size-4" /> Kembali ke Keranjang
-                  </button>
-                  <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
-                    {formatTimer(qrisTimeLeft)}
-                  </span>
-                </>
-              ) : (
-                <div className="w-full text-center py-1">
-                  <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                    Konfirmasi Transaksi
-                  </span>
-                </div>
-              )}
+          {qrisPaid && (
+            <div className="shrink-0">
+              <div className="w-full text-center py-1">
+                <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">
+                  Konfirmasi Transaksi
+                </span>
+              </div>
+              <Separator className="my-3" />
             </div>
-            <Separator className="my-3" />
-          </div>
+          )}
 
-          <div className="flex-1 flex flex-col items-center justify-center text-center my-auto py-2">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center justify-start text-center pt-0 pb-2">
             {qrisLoading ? (
               <div className="py-12 flex flex-col items-center space-y-3">
                 <Loader2 className="size-8 animate-spin text-blue-600" />
@@ -918,34 +905,26 @@ function KasirPage() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col items-center w-full max-w-[280px]">
-                <div className="text-center mb-3">
-                  <p className="text-xs text-slate-500 font-medium">
-                    Total Tagihan
-                    {customerName.trim() ? ` · a.n. ${customerName.trim()}` : ""}
-                  </p>
-                  <p className="text-2xl font-black text-blue-600 tracking-tight">{rupiah(total)}</p>
-                </div>
-
+              <div className="flex flex-col items-center w-full">
                 {qrisData?.qris_image_base64 && (
-                  <div className="p-2.5 bg-white rounded-2xl border border-slate-200 shadow-sm sm:p-3">
-                    <img
-                      src={qrisData.qris_image_base64}
-                      alt="QRIS"
-                      className="size-40 sm:size-52 object-contain rounded-lg"
-                    />
-                  </div>
+                  <QrisSnapCard
+                    qrImageBase64={qrisData.qris_image_base64}
+                    storeName={storeProfile?.name || "Toko Kami"}
+                    storeLogo={storeProfile?.logo_data}
+                    orderId={qrisData.order_id}
+                    customerName={customerName}
+                    qrisString={qrisData.qris_string}
+                    expiresAt={qrisData.expires_at}
+                    timeLeftSeconds={qrisTimeLeft}
+                    totalAmount={total}
+                    formatRupiah={rupiah}
+                  />
                 )}
-
-                <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>Menunggu pembayaran pelanggan...</span>
-                </div>
               </div>
             )}
           </div>
 
-          <div className="shrink-0 mt-auto pt-3 space-y-2">
+          <div className="shrink-0 pt-2 space-y-2">
             {qrisPaid && qrisSave.status === "saved" && (
               <>
                 <div className="grid grid-cols-2 gap-2">

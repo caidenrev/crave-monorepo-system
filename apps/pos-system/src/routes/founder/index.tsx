@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { id } from "date-fns/locale";
-import { CreditCard, Receipt, UserPlus } from "lucide-react";
+import { CreditCard, Receipt, UserPlus, Users, Sparkles } from "lucide-react";
 import {
   Area,
   AreaChart,
@@ -34,12 +34,22 @@ import {
   tooltipStyle,
 } from "@/components/founder/ui";
 import { rupiah } from "@/lib/pos-data";
-import { NotInstalledError, useAnalytics, useLive, type Analytics, type Live } from "@/lib/useFounder";
+import {
+  NotInstalledError,
+  useAnalytics,
+  useLive,
+  useHrmAnalytics,
+  type Analytics,
+  type Live,
+  type HrmAnalytics,
+} from "@/lib/useFounder";
 import type { SubscriptionState } from "@/lib/useSubscription";
 
 export const Route = createFileRoute("/founder/")({
   component: OverviewPage,
 });
+
+export type SaasFilter = "all" | "pos" | "hrm";
 
 type Metric = "gmv" | "tx" | "active";
 const METRIC: Record<Metric, { label: string; format: (v: number) => string }> = {
@@ -53,9 +63,13 @@ const bulan = (ym: string) => tanggal(`${ym}-01`, "MMM yy");
 
 function OverviewPage() {
   const [days, setDays] = useState(30);
+  const [saas, setSaas] = useState<SaasFilter>("all");
   const analytics = useAnalytics(days);
   const live = useLive();
+  const hrmQuery = useHrmAnalytics(days);
+
   const a = analytics.data;
+  const hrm = hrmQuery.data;
 
   if (analytics.error instanceof NotInstalledError) {
     return (
@@ -72,22 +86,41 @@ function OverviewPage() {
     );
   }
 
+  const subtitle =
+    saas === "hrm"
+      ? "Kesehatan bisnis Crave HRM: langganan perusahaan, arus kas, dan aktivitas absensi."
+      : saas === "pos"
+        ? "Kesehatan bisnis Crave POS: langganan, pendapatan, dan aktivitas merchant."
+        : "Pemantauan terpusat seluruh ekosistem Crave SaaS: Crave POS & Crave HRM.";
+
   return (
     <>
       <PageHeader
         title="Ringkasan"
-        subtitle="Kesehatan bisnis Crave POS: langganan, pendapatan, dan aktivitas merchant."
+        subtitle={subtitle}
         actions={
-          <Segmented
-            label="Rentang waktu"
-            value={days}
-            onChange={setDays}
-            options={[
-              { value: 7, label: "7 hari" },
-              { value: 30, label: "30 hari" },
-              { value: 90, label: "90 hari" },
-            ]}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Segmented
+              label="Ekosistem SaaS"
+              value={saas}
+              onChange={setSaas}
+              options={[
+                { value: "all", label: "Semua SaaS" },
+                { value: "pos", label: "Crave POS" },
+                { value: "hrm", label: "Crave HRM" },
+              ]}
+            />
+            <Segmented
+              label="Rentang waktu"
+              value={days}
+              onChange={setDays}
+              options={[
+                { value: 7, label: "7 hari" },
+                { value: 30, label: "30 hari" },
+                { value: 90, label: "90 hari" },
+              ]}
+            />
+          </div>
         }
       />
 
@@ -99,21 +132,21 @@ function OverviewPage() {
         <BentoSkeleton />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-6 xl:grid-cols-12">
-          <MrrTile a={a} className="md:col-span-3 xl:col-span-4 xl:row-span-2" />
-          <LiveTile live={live.data} className="md:col-span-3 xl:col-span-5 xl:row-span-2" />
-          <MerchantTile a={a} className="md:col-span-3 xl:col-span-3" />
-          <ConversionTile a={a} className="md:col-span-3 xl:col-span-3" />
+          <MrrTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-4 xl:row-span-2" />
+          <LiveTile live={live.data} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-5 xl:row-span-2" />
+          <MerchantTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-3" />
+          <ConversionTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-3" />
 
-          <ActivityTile a={a} className="md:col-span-6 xl:col-span-8" />
-          <StatusTile a={a} className="md:col-span-6 xl:col-span-4" />
+          <ActivityTile a={a} hrm={hrm} saas={saas} className="md:col-span-6 xl:col-span-8" />
+          <StatusTile a={a} hrm={hrm} saas={saas} className="md:col-span-6 xl:col-span-4" />
 
-          <RevenueTile a={a} className="md:col-span-3 xl:col-span-5" />
-          <SignupTile a={a} className="md:col-span-3 xl:col-span-4" />
-          <MixTile a={a} className="md:col-span-6 xl:col-span-3" />
+          <RevenueTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-5" />
+          <SignupTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-4" />
+          <MixTile a={a} hrm={hrm} saas={saas} className="md:col-span-6 xl:col-span-3" />
 
-          <FeedTile live={live.data} className="md:col-span-6 xl:col-span-5" />
-          <ExpiringTile a={a} className="md:col-span-3 xl:col-span-4" />
-          <TopTile a={a} className="md:col-span-3 xl:col-span-3" />
+          <FeedTile live={live.data} hrm={hrm} saas={saas} className="md:col-span-6 xl:col-span-5" />
+          <ExpiringTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-4" />
+          <TopTile a={a} hrm={hrm} saas={saas} className="md:col-span-3 xl:col-span-3" />
         </div>
       )}
     </>
@@ -132,21 +165,87 @@ function BentoSkeleton() {
   );
 }
 
-type TileProps = { a: Analytics; className?: string };
+type TileProps = {
+  a: Analytics;
+  hrm?: HrmAnalytics | null;
+  saas: SaasFilter;
+  className?: string;
+};
 
-function MrrTile({ a, className }: TileProps) {
-  const k = a.kpi;
+function MrrTile({ a, hrm, saas, className }: TileProps) {
+  const kPos = a.kpi;
+  const kHrm = hrm?.kpi;
+
+  const mrr =
+    saas === "hrm"
+      ? (kHrm?.mrr ?? 0)
+      : saas === "pos"
+        ? kPos.mrr
+        : kPos.mrr + (kHrm?.mrr ?? 0);
+
+  const annualMrr = mrr * 12;
+
+  const payingCount =
+    saas === "hrm"
+      ? (kHrm?.paying_companies ?? 0)
+      : saas === "pos"
+        ? kPos.active + kPos.grace
+        : kPos.active + kPos.grace + (kHrm?.paying_companies ?? 0);
+
+  const revenuePeriod =
+    saas === "hrm"
+      ? (kHrm?.revenue_period ?? 0)
+      : saas === "pos"
+        ? kPos.revenue
+        : kPos.revenue + (kHrm?.revenue_period ?? 0);
+
+  const revenuePrevious =
+    saas === "hrm"
+      ? (kHrm?.revenue_previous ?? 0)
+      : saas === "pos"
+        ? kPos.revenue_prev
+        : kPos.revenue_prev + (kHrm?.revenue_previous ?? 0);
+
+  const revenueTotal =
+    saas === "hrm"
+      ? (kHrm?.revenue_total ?? 0)
+      : saas === "pos"
+        ? kPos.revenue_total
+        : kPos.revenue_total + (kHrm?.revenue_total ?? 0);
+
+  const dailyChart =
+    saas === "hrm"
+      ? (hrm?.daily ?? [])
+      : saas === "pos"
+        ? a.daily
+        : a.daily.map((d) => {
+            const hrmDay = hrm?.daily.find((hd) => hd.date === d.date);
+            return {
+              ...d,
+              revenue: d.revenue + (hrmDay?.revenue ?? 0),
+            };
+          });
+
+  const hint =
+    saas === "hrm"
+      ? "Dari perusahaan Crave HRM yang langganannya aktif"
+      : saas === "pos"
+        ? "Dari merchant Crave POS yang langganannya aktif"
+        : "Total gabungan ekosistem Crave POS & Crave HRM";
+
+  const tenantLabel = saas === "hrm" ? "perusahaan" : saas === "pos" ? "merchant" : "tenant";
+
   return (
     <Tile tone="primary" className={className}>
-      <TileTitle title="Pendapatan berulang bulanan (MRR)" hint="Dari merchant yang langganannya masih aktif" inverted />
-      <p className="mt-4 text-4xl font-extrabold tracking-tight tabular-nums">{rupiah(k.mrr)}</p>
+      <TileTitle title="Pendapatan berulang bulanan (MRR)" hint={hint} inverted />
+      <p className="mt-4 text-4xl font-extrabold tracking-tight tabular-nums">{rupiah(mrr)}</p>
       <p className="mt-1 text-xs text-primary-foreground/75">
-        Setara {rupiah(k.mrr * 12)} per tahun · {angka(k.active + k.grace)} merchant berbayar
+        Setara {rupiah(annualMrr)} per tahun · {angka(payingCount)} {tenantLabel} berbayar
       </p>
 
       <div className="mt-4 h-28 w-full shrink-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={a.daily} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+          <AreaChart data={dailyChart} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
             <defs>
               <linearGradient id="fillMrr" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="currentColor" stopOpacity={0.45} />
@@ -168,25 +267,70 @@ function MrrTile({ a, className }: TileProps) {
         <div>
           <dt className="text-[11px] text-primary-foreground/75">Masuk {a.days} hari</dt>
           <dd className="flex flex-wrap items-baseline gap-x-2 text-lg font-extrabold tabular-nums">
-            {rupiah(k.revenue)}
-            <Delta current={k.revenue} previous={k.revenue_prev} inverted />
+            {rupiah(revenuePeriod)}
+            <Delta current={revenuePeriod} previous={revenuePrevious} inverted />
           </dd>
         </div>
         <div>
           <dt className="text-[11px] text-primary-foreground/75">Total sejak awal</dt>
-          <dd className="text-lg font-extrabold tabular-nums">{rupiah(k.revenue_total)}</dd>
+          <dd className="text-lg font-extrabold tabular-nums">{rupiah(revenueTotal)}</dd>
         </div>
       </dl>
     </Tile>
   );
 }
 
-function LiveTile({ live, className }: { live: Live | undefined; className?: string }) {
+function LiveTile({
+  live,
+  hrm,
+  saas,
+  className,
+}: {
+  live: Live | undefined;
+  hrm?: HrmAnalytics | null;
+  saas: SaasFilter;
+  className?: string;
+}) {
+  const statBoxes =
+    saas === "hrm"
+      ? [
+          { label: "Presensi hari ini", hint: "Karyawan hadir kantor/GPS", value: `${angka(hrm?.kpi.attendance_today ?? 0)} hadir` },
+          { label: "Akun login HR", hint: "Admin HR & Supervisor", value: `${angka(hrm?.kpi.total_users ?? 0)} user` },
+          { label: "Prospek baru", hint: "Permintaan demo sales", value: `${angka(hrm?.kpi.new_leads ?? 0)} leads` },
+        ]
+      : saas === "pos"
+        ? [
+            { label: "Kasir aktif", hint: "15 menit terakhir", value: live?.active_now === undefined ? "-" : angka(live.active_now) },
+            { label: "Transaksi", hint: "1 jam terakhir", value: live?.tx_hour === undefined ? "-" : angka(live.tx_hour) },
+            { label: "Akun online", hint: "1 jam terakhir", value: live?.online === undefined ? "-" : angka(live.online) },
+          ]
+        : [
+            {
+              label: "Kasir & Presensi",
+              hint: "Kasir aktif / Presensi hadir",
+              value: `${angka(live?.active_now ?? 0)} POS · ${angka(hrm?.kpi.attendance_today ?? 0)} HRM`,
+            },
+            {
+              label: "Transaksi (POS)",
+              hint: "1 jam terakhir",
+              value: live?.tx_hour === undefined ? "-" : `${angka(live.tx_hour)} tx`,
+            },
+            {
+              label: "Akun Online / User",
+              hint: "Sesi kasir & akun HR",
+              value: `${angka((live?.online ?? 0) + (hrm?.kpi.total_users ?? 0))} akun`,
+            },
+          ];
+
   return (
     <Tile className={className}>
       <TileTitle
         title="Pantauan langsung"
-        hint={live ? `Diperbarui ${tanggal(live.now, "HH:mm:ss")} · tiap 10 detik` : "Menghubungkan..."}
+        hint={
+          live
+            ? `Diperbarui ${tanggal(live.now, "HH:mm:ss")} · realtime`
+            : "Menghubungkan..."
+        }
         right={
           <span className="inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-bold">
             <span className="relative flex size-2">
@@ -199,15 +343,11 @@ function LiveTile({ live, className }: { live: Live | undefined; className?: str
       />
 
       <dl className="mt-4 grid grid-cols-3 gap-3">
-        {[
-          { label: "Kasir aktif", hint: "15 menit terakhir", value: live?.active_now },
-          { label: "Transaksi", hint: "1 jam terakhir", value: live?.tx_hour },
-          { label: "Akun online", hint: "1 jam terakhir", value: live?.online },
-        ].map((s) => (
+        {statBoxes.map((s) => (
           <div key={s.label} className="rounded-2xl bg-muted/60 p-3">
-            <dt className="text-[11px] font-bold text-muted-foreground">{s.label}</dt>
-            <dd className="text-2xl font-extrabold tabular-nums">{s.value === undefined ? "-" : angka(s.value)}</dd>
-            <p className="text-[10px] text-muted-foreground">{s.hint}</p>
+            <dt className="text-[11px] font-bold text-muted-foreground truncate">{s.label}</dt>
+            <dd className="text-xl sm:text-2xl font-extrabold tabular-nums truncate">{s.value}</dd>
+            <p className="text-[10px] text-muted-foreground truncate">{s.hint}</p>
           </div>
         ))}
       </dl>
@@ -230,20 +370,34 @@ function LiveTile({ live, className }: { live: Live | undefined; className?: str
       </div>
       <div className="flex justify-between text-[10px] text-muted-foreground">
         <span>60 menit lalu</span>
-        <span>Transaksi per menit</span>
+        <span>Aktivitas transaksi per menit</span>
         <span>sekarang</span>
       </div>
       <div className="h-4" />
 
       <dl className="mt-auto grid grid-cols-2 gap-3 border-t pt-4">
         <div>
-          <dt className="text-[11px] text-muted-foreground">Omzet merchant hari ini</dt>
-          <dd className="text-lg font-extrabold tabular-nums">{live ? rupiah(live.gmv_today) : "-"}</dd>
+          <dt className="text-[11px] text-muted-foreground">
+            {saas === "hrm" ? "Total tenaga kerja" : "Omzet merchant hari ini"}
+          </dt>
+          <dd className="text-lg font-extrabold tabular-nums">
+            {saas === "hrm"
+              ? `${angka(hrm?.kpi.total_employees ?? 0)} karyawan`
+              : live
+                ? rupiah(live.gmv_today)
+                : "-"}
+          </dd>
         </div>
         <div>
-          <dt className="text-[11px] text-muted-foreground">Hari ini</dt>
+          <dt className="text-[11px] text-muted-foreground">
+            {saas === "hrm" ? "Total perusahaan tenant" : "Hari ini"}
+          </dt>
           <dd className="text-lg font-extrabold tabular-nums">
-            {live ? `${angka(live.tx_today)} transaksi · ${angka(live.merchants_today)} toko` : "-"}
+            {saas === "hrm"
+              ? `${angka(hrm?.kpi.total_companies ?? 0)} perusahaan`
+              : live
+                ? `${angka(live.tx_today)} transaksi · ${angka(live.merchants_today)} toko`
+                : "-"}
           </dd>
         </div>
       </dl>
@@ -251,26 +405,63 @@ function LiveTile({ live, className }: { live: Live | undefined; className?: str
   );
 }
 
-function MerchantTile({ a, className }: TileProps) {
+function MerchantTile({ a, hrm, saas, className }: TileProps) {
   const k = a.kpi;
+  const count =
+    saas === "hrm"
+      ? (hrm?.kpi.total_companies ?? 0)
+      : saas === "pos"
+        ? k.merchants
+        : k.merchants + (hrm?.kpi.total_companies ?? 0);
+
+  const signups =
+    saas === "hrm"
+      ? (hrm?.kpi.signups_period ?? 0)
+      : saas === "pos"
+        ? k.signups
+        : k.signups + (hrm?.kpi.signups_period ?? 0);
+
+  const title =
+    saas === "hrm" ? "Perusahaan terdaftar" : saas === "pos" ? "Merchant terdaftar" : "Tenant terdaftar";
+
+  const subtext =
+    saas === "hrm"
+      ? `${angka(hrm?.kpi.total_employees ?? 0)} karyawan aktif dikelola`
+      : saas === "pos"
+        ? `${angka(k.active_merchants)} toko bertransaksi dalam ${a.days} hari`
+        : `${angka(k.merchants)} toko POS · ${angka(hrm?.kpi.total_companies ?? 0)} perusahaan HRM`;
+
   return (
     <Tile className={className}>
-      <TileTitle title="Merchant terdaftar" />
-      <p className="mt-3 text-3xl font-extrabold tracking-tight tabular-nums">{angka(k.merchants)}</p>
+      <TileTitle title={title} />
+      <p className="mt-3 text-3xl font-extrabold tracking-tight tabular-nums">{angka(count)}</p>
       <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-        +{angka(k.signups)} dalam {a.days} hari
-        <Delta current={k.signups} previous={k.signups_prev} />
+        +{angka(signups)} dalam {a.days} hari
       </p>
-      <p className="mt-auto pt-3 text-xs text-muted-foreground">
-        {angka(k.active_merchants)} toko bertransaksi dalam {a.days} hari
-      </p>
+      <p className="mt-auto pt-3 text-xs text-muted-foreground truncate">{subtext}</p>
     </Tile>
   );
 }
 
-function ConversionTile({ a, className }: TileProps) {
+function ConversionTile({ a, hrm, saas, className }: TileProps) {
   const k = a.kpi;
-  const rate = k.merchants > 0 ? (k.paid_merchants / k.merchants) * 100 : 0;
+  const total =
+    saas === "hrm"
+      ? (hrm?.kpi.total_companies ?? 0)
+      : saas === "pos"
+        ? k.merchants
+        : k.merchants + (hrm?.kpi.total_companies ?? 0);
+
+  const paid =
+    saas === "hrm"
+      ? (hrm?.kpi.paying_companies ?? 0)
+      : saas === "pos"
+        ? k.paid_merchants
+        : k.paid_merchants + (hrm?.kpi.paying_companies ?? 0);
+
+  const rate = total > 0 ? (paid / total) * 100 : 0;
+  const pendingCount = k.pending_invoices;
+
   return (
     <Tile className={className}>
       <TileTitle title="Konversi ke berbayar" />
@@ -288,18 +479,18 @@ function ConversionTile({ a, className }: TileProps) {
         <div className="h-full rounded-full bg-success" style={{ width: `${Math.min(rate, 100)}%` }} />
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        {angka(k.paid_merchants)} dari {angka(k.merchants)} merchant pernah membayar
+        {angka(paid)} dari {angka(total)} {saas === "hrm" ? "perusahaan" : saas === "pos" ? "merchant" : "tenant"} pernah membayar
       </p>
-      {k.pending_invoices > 0 && (
+      {pendingCount > 0 && saas !== "hrm" && (
         <Link to="/founder/pembayaran" className="mt-auto pt-3 text-xs font-semibold text-primary hover:underline">
-          {angka(k.pending_invoices)} tagihan menunggu pembayaran
+          {angka(pendingCount)} tagihan menunggu pembayaran
         </Link>
       )}
     </Tile>
   );
 }
 
-function ActivityTile({ a, className }: TileProps) {
+function ActivityTile({ a, hrm, saas, className }: TileProps) {
   const [metric, setMetric] = useState<Metric>("gmv");
   const k = a.kpi;
   const totals: Record<Metric, [number, number]> = {
@@ -308,6 +499,67 @@ function ActivityTile({ a, className }: TileProps) {
     active: [k.active_merchants, k.active_merchants_prev],
   };
   const [current, previous] = totals[metric];
+
+  if (saas === "hrm") {
+    const hrmDaily = hrm?.daily ?? [];
+    return (
+      <Tile className={className}>
+        <TileTitle
+          title="Tren Arus Kas Langganan HRM"
+          hint={`Seluruh perusahaan tenant, ${a.days} hari terakhir`}
+        />
+        <p className="mt-3 text-2xl font-extrabold tracking-tight tabular-nums">
+          {rupiah(hrm?.kpi.revenue_period ?? 0)}
+          <span className="text-xs font-normal text-muted-foreground ml-2">
+            dari {angka(hrm?.kpi.paying_companies ?? 0)} perusahaan berlangganan
+          </span>
+        </p>
+        <div className="mt-3 h-64 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={hrmDaily} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+              <defs>
+                <linearGradient id="fillHrmActivity" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="var(--color-chart-1)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="4 4" stroke="var(--color-border)" />
+              <XAxis
+                dataKey="date"
+                tickFormatter={hari}
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                minTickGap={28}
+                stroke="var(--color-muted-foreground)"
+              />
+              <YAxis
+                tickFormatter={rupiahShort}
+                tickLine={false}
+                axisLine={false}
+                fontSize={11}
+                width={48}
+                stroke="var(--color-muted-foreground)"
+              />
+              <Tooltip
+                formatter={(v: number) => [rupiah(v), "Pembayaran Masuk"]}
+                labelFormatter={(l: string) => tanggal(l, "EEEE, d MMM yyyy")}
+                contentStyle={tooltipStyle}
+              />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="var(--color-chart-1)"
+                strokeWidth={2.5}
+                fill="url(#fillHrmActivity)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </Tile>
+    );
+  }
+
   return (
     <Tile className={className}>
       <TileTitle
@@ -380,12 +632,38 @@ function ActivityTile({ a, className }: TileProps) {
 
 const STATES: SubscriptionState[] = ["active", "trial", "grace", "expired", "suspended"];
 
-function StatusTile({ a, className }: TileProps) {
-  const data = STATES.map((s) => ({ state: s, name: STATE_LABEL[s], value: a.kpi[s] }));
-  const total = a.kpi.merchants;
+function StatusTile({ a, hrm, saas, className }: TileProps) {
+  const k = a.kpi;
+  const h = hrm?.kpi;
+
+  const data = STATES.map((s) => {
+    let value = 0;
+    if (saas === "pos") {
+      value = k[s];
+    } else if (saas === "hrm") {
+      if (s === "active") value = h?.active_companies ?? 0;
+      else if (s === "trial") value = h?.trial_companies ?? 0;
+      else if (s === "grace") value = h?.grace_companies ?? 0;
+      else if (s === "expired") value = h?.expired_companies ?? 0;
+      else if (s === "suspended") value = h?.suspended_companies ?? 0;
+    } else {
+      let hVal = 0;
+      if (s === "active") hVal = h?.active_companies ?? 0;
+      else if (s === "trial") hVal = h?.trial_companies ?? 0;
+      else if (s === "grace") hVal = h?.grace_companies ?? 0;
+      else if (s === "expired") hVal = h?.expired_companies ?? 0;
+      else if (s === "suspended") hVal = h?.suspended_companies ?? 0;
+      value = k[s] + hVal;
+    }
+    return { state: s, name: STATE_LABEL[s], value };
+  });
+
+  const total = data.reduce((sum, d) => sum + d.value, 0);
+  const label = saas === "hrm" ? "perusahaan" : saas === "pos" ? "merchant" : "tenant";
+
   return (
     <Tile className={className}>
-      <TileTitle title="Status langganan" hint="Sebaran seluruh merchant saat ini" />
+      <TileTitle title="Status langganan" hint={`Sebaran seluruh ${label} saat ini`} />
       <div className="relative mx-auto mt-2 h-48 w-full max-w-[220px]">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
@@ -403,13 +681,13 @@ function StatusTile({ a, className }: TileProps) {
                 <Cell key={d.state} fill={total > 0 ? STATE_COLOR[d.state] : "var(--color-muted)"} />
               ))}
             </Pie>
-            {total > 0 && <Tooltip formatter={(v: number) => `${angka(v)} merchant`} contentStyle={tooltipStyle} />}
+            {total > 0 && <Tooltip formatter={(v: number) => `${angka(v)} ${label}`} contentStyle={tooltipStyle} />}
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
             <p className="text-2xl font-extrabold tabular-nums">{angka(total)}</p>
-            <p className="text-[11px] text-muted-foreground">merchant</p>
+            <p className="text-[11px] text-muted-foreground">{label}</p>
           </div>
         </div>
       </div>
@@ -475,17 +753,40 @@ function RevenueTile({ a, className }: TileProps) {
   );
 }
 
-function SignupTile({ a, className }: TileProps) {
+function SignupTile({ a, hrm, saas, className }: TileProps) {
+  const signupsCount =
+    saas === "hrm"
+      ? (hrm?.kpi.signups_period ?? 0)
+      : saas === "pos"
+        ? a.kpi.signups
+        : a.kpi.signups + (hrm?.kpi.signups_period ?? 0);
+
+  const prevCount = saas === "pos" ? a.kpi.signups_prev : undefined;
+  const label = saas === "hrm" ? "perusahaan" : saas === "pos" ? "merchant" : "tenant";
+
+  const chartData =
+    saas === "hrm"
+      ? (hrm?.daily ?? [])
+      : saas === "pos"
+        ? a.daily
+        : a.daily.map((d) => {
+            const hd = hrm?.daily.find((h) => h.date === d.date);
+            return {
+              ...d,
+              signups: d.signups + (hd?.signups ?? 0),
+            };
+          });
+
   return (
     <Tile className={className}>
       <TileTitle
         title="Pendaftaran baru"
-        hint={`${angka(a.kpi.signups)} merchant dalam ${a.days} hari`}
-        right={<Delta current={a.kpi.signups} previous={a.kpi.signups_prev} />}
+        hint={`${angka(signupsCount)} ${label} dalam ${a.days} hari`}
+        right={prevCount !== undefined ? <Delta current={signupsCount} previous={prevCount} /> : undefined}
       />
       <div className="mt-3 h-56 w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={a.daily} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+          <BarChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} strokeDasharray="4 4" stroke="var(--color-border)" />
             <XAxis
               dataKey="date"
@@ -506,7 +807,7 @@ function SignupTile({ a, className }: TileProps) {
             />
             <Tooltip
               cursor={{ fill: "var(--color-muted)" }}
-              formatter={(v: number) => [`${angka(v)} merchant`, "Daftar"]}
+              formatter={(v: number) => [`${angka(v)} ${label}`, "Daftar"]}
               labelFormatter={(l: string) => tanggal(l, "EEEE, d MMM yyyy")}
               contentStyle={tooltipStyle}
             />
@@ -570,20 +871,38 @@ function MixTile({ a, className }: TileProps) {
   );
 }
 
-const FEED_ICON = { transaction: Receipt, signup: UserPlus, payment: CreditCard } as const;
+const FEED_ICON = { transaction: Receipt, signup: UserPlus, payment: CreditCard, lead: Sparkles } as const;
 
-function FeedTile({ live, className }: { live: Live | undefined; className?: string }) {
+function FeedTile({
+  live,
+  hrm,
+  saas,
+  className,
+}: {
+  live: Live | undefined;
+  hrm?: HrmAnalytics | null;
+  saas: SaasFilter;
+  className?: string;
+}) {
+  const posFeed = (live?.feed ?? []).map((f) => ({ ...f, source: "Crave POS" }));
+  const hrmFeed = (hrm?.feed ?? []).map((f) => ({ ...f, source: "Crave HRM" }));
+
+  const combined =
+    saas === "pos"
+      ? posFeed
+      : saas === "hrm"
+        ? hrmFeed
+        : [...posFeed, ...hrmFeed].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
   return (
     <Tile className={className}>
       <TileTitle title="Aktivitas terbaru" hint="Transaksi kasir, pendaftaran, dan pembayaran langganan" />
-      {!live ? (
-        <Empty>Memuat...</Empty>
-      ) : live.feed.length === 0 ? (
+      {combined.length === 0 ? (
         <Empty>Belum ada aktivitas.</Empty>
       ) : (
         <ul className="mt-3 max-h-80 space-y-1 overflow-y-auto pr-1">
-          {live.feed.map((f, i) => {
-            const Icon = FEED_ICON[f.type];
+          {combined.slice(0, 15).map((f, i) => {
+            const Icon = FEED_ICON[f.type as keyof typeof FEED_ICON] ?? Receipt;
             return (
               <li key={`${f.type}-${f.at}-${i}`} className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted/60">
                 <span
@@ -599,7 +918,14 @@ function FeedTile({ live, className }: { live: Live | undefined; className?: str
                   <Icon className="size-4" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{f.who}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold">{f.who}</p>
+                    {saas === "all" && (
+                      <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
+                        {f.source}
+                      </span>
+                    )}
+                  </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {f.type === "transaction"
                       ? `Transaksi ${f.detail ?? ""}`
@@ -622,23 +948,56 @@ function FeedTile({ live, className }: { live: Live | undefined; className?: str
   );
 }
 
-function ExpiringTile({ a, className }: TileProps) {
+function ExpiringTile({ a, hrm, saas, className }: TileProps) {
+  const posExpiring = a.expiring.map((e) => ({
+    id: e.user_id,
+    title: e.store_name || e.email,
+    source: "Crave POS",
+    state: e.state,
+    ends_at: e.ends_at,
+    link: `/founder/merchant?q=${encodeURIComponent(e.email)}`,
+  }));
+
+  const hrmExpiring = (hrm?.expiring ?? []).map((e) => ({
+    id: String(e.id),
+    title: `${e.name} (${e.total_employees} staf)`,
+    source: "Crave HRM",
+    state: e.state,
+    ends_at: e.ends_at,
+    link: `/founder/merchant?product=hrm&q=${encodeURIComponent(e.email)}`,
+  }));
+
+  const list =
+    saas === "pos"
+      ? posExpiring
+      : saas === "hrm"
+        ? hrmExpiring
+        : [...posExpiring, ...hrmExpiring].sort(
+            (x, y) => new Date(x.ends_at).getTime() - new Date(y.ends_at).getTime()
+          );
+
   return (
     <Tile className={className}>
       <TileTitle title="Perlu ditindaklanjuti" hint="Trial atau masa aktif berakhir dalam 7 hari" />
-      {a.expiring.length === 0 ? (
+      {list.length === 0 ? (
         <Empty>Tidak ada yang akan berakhir minggu ini.</Empty>
       ) : (
         <ul className="mt-3 max-h-80 space-y-1 overflow-y-auto pr-1">
-          {a.expiring.map((e) => (
-            <li key={e.user_id}>
+          {list.map((e) => (
+            <li key={`${e.source}-${e.id}`}>
               <Link
-                to="/founder/merchant"
-                search={{ q: e.email }}
+                to={e.link}
                 className="flex items-center gap-3 rounded-xl p-2 hover:bg-muted/60"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{e.store_name || e.email}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-semibold">{e.title}</p>
+                    {saas === "all" && (
+                      <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
+                        {e.source}
+                      </span>
+                    )}
+                  </div>
                   <p className="truncate text-xs text-muted-foreground">
                     {new Date(e.ends_at) < new Date() ? "Habis " : "Berakhir "}
                     {formatDistanceToNow(new Date(e.ends_at), { addSuffix: true, locale: id })} ·{" "}
